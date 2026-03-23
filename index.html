@@ -1,1 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Piston Cup: Turbo Race</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="score">Pontos: <span id="scoreVal">0</span></div>
+        <div class="track">
+            <div id="player" class="car mcqueen">
+                <div class="eyes"></div>
+            </div>
+        </div>
+        <div class="overlay" id="overlay">
+            <h1>KACHOW!</h1>
+            <p>Pressione qualquer tecla para começar</p>
+        </div>
+    </div>
 
+    <script>
+        const player = document.getElementById('player');
+        const scoreVal = document.getElementById('scoreVal');
+        const overlay = document.getElementById('overlay');
+        let score = 0;
+        let playerPos = 125; // Posição central
+        let gameActive = false;
+
+        document.addEventListener('keydown', (e) => {
+            if (!gameActive) {
+                startGame();
+                return;
+            }
+            if (e.key === 'ArrowLeft' && playerPos > 10) playerPos -= 20;
+            if (e.key === 'ArrowRight' && playerPos < 240) playerPos += 20;
+            player.style.left = playerPos + 'px';
+        });
+
+        function startGame() {
+            gameActive = true;
+            score = 0;
+            overlay.style.display = 'none';
+            gameLoop();
+        }
+
+        function createObstacle() {
+            if (!gameActive) return;
+            const obstacle = document.createElement('div');
+            obstacle.classList.add('obstacle');
+            obstacle.style.left = Math.floor(Math.random() * 250) + 'px';
+            document.querySelector('.track').appendChild(obstacle);
+
+            let top = -50;
+            const interval = setInterval(() => {
+                top += 5;
+                obstacle.style.top = top + 'px';
+
+                // Colisão simples
+                const pRect = player.getBoundingClientRect();
+                const oRect = obstacle.getBoundingClientRect();
+
+                if (pRect.left < oRect.right && pRect.right > oRect.left &&
+                    pRect.top < oRect.bottom && pRect.bottom > oRect.top) {
+                    gameOver();
+                    clearInterval(interval);
+                }
+
+                if (top > 600) {
+                    obstacle.remove();
+                    score++;
+                    scoreVal.innerText = score;
+                    clearInterval(interval);
+                }
+            }, 20);
+        }
+
+        function gameLoop() {
+            if (gameActive) {
+                createObstacle();
+                setTimeout(gameLoop, 1000 - Math.min(score * 10, 500));
+            }
+        }
+
+        function gameOver() {
+            gameActive = false;
+            overlay.innerHTML = `<h1>FIM DE CORRIDA!</h1><p>Você fez ${score} pontos.</p><p>Aperte tecla para reiniciar</p>`;
+            overlay.style.display = 'flex';
+            document.querySelectorAll('.obstacle').forEach(o => o.remove());
+        }
+    </script>
+</body>
+</html>
