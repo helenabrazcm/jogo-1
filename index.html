@@ -3,46 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mini Farm Valley</title>
+    <title>Stardew Mini Clone</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="game-container">
-        <div id="map"></div>
-        <div id="player"></div>
+    <div id="game-viewport">
+        <div id="day-overlay"></div> <div id="map"></div>
+        <div id="player">
+            <div class="hat"></div>
+        </div>
     </div>
 
-    <div id="ui">
-        <p>Use <b>WASD</b> para mover | <b>Clique</b> na terra para arar</p>
+    <div id="hud">
+        <div class="inventory">
+            <div class="slot active" onclick="selectTool('hoe', this)">🪓 <small>Enxada</small></div>
+            <div class="slot" onclick="selectTool('seed', this)">🌱 <small>Semente</small></div>
+        </div>
+        <div id="clock">06:00 AM</div>
     </div>
 
     <script>
         const player = document.getElementById('player');
         const map = document.getElementById('map');
-        let pX = 50;
-        let pY = 50;
+        const overlay = document.getElementById('day-overlay');
+        const clockEl = document.getElementById('clock');
+        
+        let pX = 225, pY = 225;
+        let selectedTool = 'hoe';
+        let gameTime = 360; // 6:00 AM em minutos
 
-        // Gerar o chão (Grid)
+        // Criar o Grid 10x10
         for (let i = 0; i < 100; i++) {
             const tile = document.createElement('div');
             tile.classList.add('tile');
-            tile.addEventListener('click', () => {
-                tile.classList.add('plowed');
-            });
+            tile.addEventListener('click', () => interact(tile));
             map.appendChild(tile);
         }
 
-        // Movimentação
-        window.addEventListener('keydown', (e) => {
-            const step = 10;
-            if (e.key.toLowerCase() === 'w') pY -= step;
-            if (e.key.toLowerCase() === 's') pY += step;
-            if (e.key.toLowerCase() === 'a') pX -= step;
-            if (e.key.toLowerCase() === 'd') pX += step;
+        function interact(tile) {
+            if (selectedTool === 'hoe') {
+                tile.classList.add('plowed');
+            } else if (selectedTool === 'seed' && tile.classList.contains('plowed')) {
+                tile.innerHTML = '<div class="plant"></div>';
+            }
+        }
 
-            player.style.top = pY + 'px';
-            player.style.left = pX + 'px';
+        function selectTool(tool, el) {
+            selectedTool = tool;
+            document.querySelectorAll('.slot').forEach(s => s.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        // Movimentação suave
+        window.addEventListener('keydown', (e) => {
+            const step = 15;
+            const key = e.key.toLowerCase();
+            if (key === 'w' && pY > 0) pY -= step;
+            if (key === 's' && pY < 460) pY += step;
+            if (key === 'a' && pX > 0) pX -= step;
+            if (key === 'd' && pX < 470) pX += step;
+            
+            player.style.transform = `translate(${pX}px, ${pY}px)`;
         });
+
+        // Ciclo de Tempo
+        setInterval(() => {
+            gameTime += 5;
+            let hours = Math.floor(gameTime / 60) % 24;
+            let mins = gameTime % 60;
+            clockEl.innerText = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+            
+            // Escurecer à noite (após as 18h)
+            if (hours >= 18 || hours < 6) overlay.style.background = "rgba(20, 20, 80, 0.4)";
+            else overlay.style.background = "transparent";
+        }, 2000);
     </script>
 </body>
 </html>
