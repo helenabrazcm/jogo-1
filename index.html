@@ -3,80 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stardew Mini Clone</title>
+    <title>Pixel Farm Deluxe</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="game-viewport">
-        <div id="day-overlay"></div> <div id="map"></div>
-        <div id="player">
-            <div class="hat"></div>
-        </div>
+    <div id="world">
+        <div id="map"></div>
     </div>
 
-    <div id="hud">
-        <div class="inventory">
-            <div class="slot active" onclick="selectTool('hoe', this)">🪓 <small>Enxada</small></div>
-            <div class="slot" onclick="selectTool('seed', this)">🌱 <small>Semente</small></div>
-        </div>
+    <div id="player">
+        <div class="hair"></div>
+        <div class="body"></div>
+    </div>
+
+    <div id="night-overlay"></div>
+
+    <div id="ui-container">
         <div id="clock">06:00 AM</div>
+        <div class="toolbar">
+            <div class="slot active" data-tool="hoe">🪓</div>
+            <div class="slot" data-tool="seed">🌱</div>
+            <div class="slot" data-tool="water">💧</div>
+        </div>
     </div>
 
     <script>
-        const player = document.getElementById('player');
-        const map = document.getElementById('map');
-        const overlay = document.getElementById('day-overlay');
+        const world = document.getElementById('map');
+        const nightOverlay = document.getElementById('night-overlay');
         const clockEl = document.getElementById('clock');
+        const slots = document.querySelectorAll('.slot');
         
-        let pX = 225, pY = 225;
+        let posX = 2000, posY = 2000; // Posição inicial no grande mapa
         let selectedTool = 'hoe';
-        let gameTime = 360; // 6:00 AM em minutos
+        let gameMinutes = 360;
 
-        // Criar o Grid 10x10
-        for (let i = 0; i < 100; i++) {
+        // Criar um mapa gigante (50x50 tiles de 60px)
+        for (let i = 0; i < 2500; i++) {
             const tile = document.createElement('div');
             tile.classList.add('tile');
-            tile.addEventListener('click', () => interact(tile));
-            map.appendChild(tile);
+            tile.addEventListener('mousedown', () => useTool(tile));
+            world.appendChild(tile);
         }
 
-        function interact(tile) {
-            if (selectedTool === 'hoe') {
-                tile.classList.add('plowed');
-            } else if (selectedTool === 'seed' && tile.classList.contains('plowed')) {
-                tile.innerHTML = '<div class="plant"></div>';
+        function useTool(tile) {
+            if (selectedTool === 'hoe') tile.classList.add('plowed');
+            if (selectedTool === 'seed' && tile.classList.contains('plowed')) {
+                tile.innerHTML = '<div class="crop"></div>';
+            }
+            if (selectedTool === 'water' && tile.classList.contains('plowed')) {
+                tile.style.backgroundColor = '#5d4037'; // Terra molhada
+                tile.style.border = "1px solid #3498db";
             }
         }
 
-        function selectTool(tool, el) {
-            selectedTool = tool;
-            document.querySelectorAll('.slot').forEach(s => s.classList.remove('active'));
-            el.classList.add('active');
-        }
+        // Movimentação Estilo Câmera
+        const keys = {};
+        window.onkeydown = (e) => keys[e.key.toLowerCase()] = true;
+        window.onkeyup = (e) => keys[e.key.toLowerCase()] = false;
 
-        // Movimentação suave
-        window.addEventListener('keydown', (e) => {
-            const step = 15;
-            const key = e.key.toLowerCase();
-            if (key === 'w' && pY > 0) pY -= step;
-            if (key === 's' && pY < 460) pY += step;
-            if (key === 'a' && pX > 0) pX -= step;
-            if (key === 'd' && pX < 470) pX += step;
-            
-            player.style.transform = `translate(${pX}px, ${pY}px)`;
-        });
+        function update() {
+            const speed = 5;
+            if (keys['w']) posY -= speed;
+            if (keys['s']) posY += speed;
+            if (keys['a']) posX -= speed;
+            if (keys['d']) posX += speed;
+
+            // Move o mapa, não o jogador (Efeito de câmera)
+            world.style.transform = `translate(${-posX + window.innerWidth/2}px, ${-posY + window.innerHeight/2}px)`;
+            requestAnimationFrame(update);
+        }
+        update();
 
         // Ciclo de Tempo
         setInterval(() => {
-            gameTime += 5;
-            let hours = Math.floor(gameTime / 60) % 24;
-            let mins = gameTime % 60;
-            clockEl.innerText = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+            gameMinutes += 1;
+            let h = Math.floor(gameMinutes / 60) % 24;
+            let m = gameMinutes % 60;
+            clockEl.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`;
             
-            // Escurecer à noite (após as 18h)
-            if (hours >= 18 || hours < 6) overlay.style.background = "rgba(20, 20, 80, 0.4)";
-            else overlay.style.background = "transparent";
-        }, 2000);
+            // Escurece gradualmente
+            if (h >= 19 || h < 5) nightOverlay.style.opacity = 0.5;
+            else if (h >= 17) nightOverlay.style.opacity = 0.2;
+            else nightOverlay.style.opacity = 0;
+        }, 1000);
+
+        // Seleção de itens
+        slots.forEach(s => s.onclick = () => {
+            slots.forEach(x => x.classList.remove('active'));
+            s.classList.add('active');
+            selectedTool = s.dataset.tool;
+        });
     </script>
 </body>
 </html>

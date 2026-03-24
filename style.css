@@ -1,123 +1,122 @@
 :root {
-    --grass: #78ab46;
-    --dirt: #5d4037;
-    --ui-bg: #f3e5ab; /* Cor de pergaminho Stardew */
+    --grass-color: #5ba339;
+    --ui-border: #5d4037;
+    --ui-bg: #e5d3b3;
 }
 
 body {
-    background: #1a1a1a;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
     margin: 0;
-    font-family: 'Trebuchet MS', sans-serif;
+    overflow: hidden;
+    background: #222;
+    font-family: 'Courier New', Courier, monospace;
 }
 
-#game-viewport {
-    position: relative;
-    width: 500px;
-    height: 500px;
-    background: var(--grass);
-    border: 8px solid #3e2723;
-    image-rendering: pixelated;
-    box-shadow: 0 0 50px rgba(0,0,0,0.5);
-}
-
-#day-overlay {
-    position: absolute;
-    width: 100%; height: 100%;
-    pointer-events: none;
-    z-index: 100;
-    transition: background 5s ease;
-}
-
+/* O Mundo infinito */
 #map {
+    position: absolute;
     display: grid;
-    grid-template-columns: repeat(10, 50px);
+    grid-template-columns: repeat(50, 60px);
+    grid-template-rows: repeat(50, 60px);
+    background-color: var(--grass-color);
+    gap: 1px;
 }
 
 .tile {
-    width: 50px;
-    height: 50px;
-    border: 1px solid rgba(0,0,0,0.03);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 60px;
+    height: 60px;
+    background: var(--grass-color);
+    transition: 0.2s;
+}
+
+.tile:hover {
+    box-shadow: inset 0 0 10px rgba(255,255,255,0.3);
 }
 
 .plowed {
-    background-color: var(--dirt);
-    box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3);
+    background: #8b4513 !important;
+    box-shadow: inset 3px 3px 5px rgba(0,0,0,0.4);
 }
 
-.plant {
+.crop {
     width: 20px;
-    height: 20px;
-    background: #27ae60;
-    border-radius: 50% 50% 0 0;
-    animation: grow 2s ease;
+    height: 25px;
+    background: #2ecc71;
+    margin: 15px auto;
+    border-radius: 10px 10px 0 0;
+    animation: sway 2s infinite ease-in-out;
 }
 
-@keyframes grow { from { transform: scale(0); } to { transform: scale(1); } }
+@keyframes sway {
+    0%, 100% { transform: rotate(-5deg); }
+    50% { transform: rotate(5deg); }
+}
 
+/* Jogador */
 #player {
-    position: absolute;
-    width: 30px;
-    height: 40px;
-    background: #ffccbc;
+    position: fixed;
+    top: 50%; left: 50%;
+    width: 32px; height: 48px;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+}
+
+.hair { width: 32px; height: 15px; background: #4e342e; border-radius: 5px 5px 0 0; }
+.body { width: 32px; height: 33px; background: #3498db; border-radius: 0 0 5px 5px; }
+
+/* Efeitos Atmosféricos */
+#night-overlay {
+    position: fixed;
     top: 0; left: 0;
-    transition: transform 0.1s;
-    z-index: 50;
-    border-radius: 4px;
+    width: 100vw; height: 100vh;
+    background: #000033;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 20;
+    transition: opacity 10s;
 }
 
-.hat {
-    width: 34px;
-    height: 10px;
-    background: #2980b9;
-    position: absolute;
-    top: -5px; left: -2px;
-}
-
-#hud {
-    margin-top: 15px;
-    display: flex;
-    gap: 20px;
-    align-items: center;
-}
-
-.inventory {
-    display: flex;
-    background: var(--ui-bg);
-    padding: 10px;
-    border: 4px solid #8d6e63;
-    border-radius: 4px;
-}
-
-.slot {
-    width: 60px;
-    height: 60px;
-    border: 2px solid #bcaaa4;
-    margin: 0 5px;
+/* Interface */
+#ui-container {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    background: #fff;
-}
-
-.slot.active {
-    border-color: #f1c40f;
-    background: #fff9c4;
+    z-index: 30;
 }
 
 #clock {
     background: var(--ui-bg);
-    padding: 15px;
-    border: 4px solid #8d6e63;
+    border: 4px solid var(--ui-border);
+    padding: 10px 20px;
     font-weight: bold;
-    color: #5d4037;
+    margin-bottom: 10px;
+    border-radius: 10px;
+}
+
+.toolbar {
+    display: flex;
+    background: var(--ui-bg);
+    padding: 8px;
+    border: 4px solid var(--ui-border);
+    gap: 10px;
+}
+
+.slot {
+    width: 50px;
+    height: 50px;
+    background: #fff;
+    border: 2px solid #aaa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.slot.active {
+    border: 4px solid #f1c40f;
+    transform: scale(1.1);
 }
