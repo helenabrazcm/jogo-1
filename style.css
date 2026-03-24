@@ -1,122 +1,79 @@
 :root {
-    --grass-color: #5ba339;
-    --ui-border: #5d4037;
-    --ui-bg: #e5d3b3;
+    --stardew-green: #71ad44;
+    --stardew-brown: #5d4037;
+    --ui-panel: #f8e4b3;
 }
 
-body {
-    margin: 0;
-    overflow: hidden;
-    background: #222;
-    font-family: 'Courier New', Courier, monospace;
-}
+body { margin: 0; overflow: hidden; background: #222; font-family: 'Trebuchet MS', sans-serif; }
 
-/* O Mundo infinito */
-#map {
-    position: absolute;
-    display: grid;
-    grid-template-columns: repeat(50, 60px);
-    grid-template-rows: repeat(50, 60px);
-    background-color: var(--grass-color);
-    gap: 1px;
-}
+#game-container { width: 100vw; height: 100vh; position: relative; }
 
+#world { position: absolute; transition: transform 0.1s linear; }
+
+/* Grid e Ambiente */
 .tile {
-    width: 60px;
-    height: 60px;
-    background: var(--grass-color);
-    transition: 0.2s;
+    position: absolute; width: 80px; height: 80px;
+    background: var(--stardew-green);
+    border: 0.5px solid rgba(0,0,0,0.05);
 }
 
-.tile:hover {
-    box-shadow: inset 0 0 10px rgba(255,255,255,0.3);
+.plowed { background: #8b4513 !important; box-shadow: inset 4px 4px 0 rgba(0,0,0,0.2); }
+
+.tree {
+    position: absolute; bottom: 10px; left: 0;
+    width: 80px; height: 120px;
+    background: #2d5a27; border-radius: 40px 40px 10px 10px;
+    border: 4px solid #1a3316;
 }
 
-.plowed {
-    background: #8b4513 !important;
-    box-shadow: inset 3px 3px 5px rgba(0,0,0,0.4);
+.rock {
+    position: absolute; bottom: 10px; left: 20px;
+    width: 40px; height: 30px;
+    background: #888; border-radius: 50%;
+    border-bottom: 5px solid #444;
 }
 
-.crop {
-    width: 20px;
-    height: 25px;
-    background: #2ecc71;
-    margin: 15px auto;
-    border-radius: 10px 10px 0 0;
-    animation: sway 2s infinite ease-in-out;
-}
-
-@keyframes sway {
-    0%, 100% { transform: rotate(-5deg); }
-    50% { transform: rotate(5deg); }
-}
-
-/* Jogador */
+/* Jogador Detalhado */
 #player {
-    position: fixed;
-    top: 50%; left: 50%;
-    width: 32px; height: 48px;
-    transform: translate(-50%, -50%);
-    z-index: 10;
+    position: absolute; width: 32px; height: 48px;
+    transition: 0.1s;
 }
 
-.hair { width: 32px; height: 15px; background: #4e342e; border-radius: 5px 5px 0 0; }
-.body { width: 32px; height: 33px; background: #3498db; border-radius: 0 0 5px 5px; }
+.p-hair { width: 32px; height: 16px; background: #4e342e; border-radius: 8px 8px 0 0; }
+.p-body { width: 32px; height: 20px; background: #3498db; }
+.p-legs { width: 32px; height: 12px; background: #2c3e50; }
 
-/* Efeitos Atmosféricos */
-#night-overlay {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    background: #000033;
-    opacity: 0;
-    pointer-events: none;
-    z-index: 20;
-    transition: opacity 10s;
+/* Animação simples de balanço ao andar */
+.walking { animation: bob 0.2s infinite; }
+@keyframes bob { 0% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+
+/* UI de Stardew */
+#ui-overlay { position: fixed; width: 100%; height: 100%; pointer-events: none; z-index: 1000; }
+
+#top-right {
+    position: absolute; top: 20px; right: 20px;
+    background: var(--ui-panel); border: 4px solid var(--stardew-brown);
+    padding: 10px; border-radius: 5px;
 }
 
-/* Interface */
-#ui-container {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    z-index: 30;
+#energy-bar {
+    width: 20px; height: 150px; background: #eee;
+    border: 3px solid var(--stardew-brown); margin-top: 10px;
+    display: flex; align-items: flex-end;
 }
 
-#clock {
-    background: var(--ui-bg);
-    border: 4px solid var(--ui-border);
-    padding: 10px 20px;
-    font-weight: bold;
-    margin-bottom: 10px;
-    border-radius: 10px;
-}
+#energy-fill { width: 100%; height: 100%; background: #4caf50; transition: 0.3s; }
 
-.toolbar {
-    display: flex;
-    background: var(--ui-bg);
-    padding: 8px;
-    border: 4px solid var(--ui-border);
-    gap: 10px;
+#inventory-bar {
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+    display: flex; background: var(--ui-panel); padding: 5px;
+    border: 4px solid var(--stardew-brown); pointer-events: all;
 }
 
 .slot {
-    width: 50px;
-    height: 50px;
-    background: #fff;
-    border: 2px solid #aaa;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    cursor: pointer;
+    width: 60px; height: 60px; background: #fff; margin: 2px;
+    border: 2px solid #999; display: flex; align-items: center; justify-content: center;
+    font-size: 24px; cursor: pointer;
 }
 
-.slot.active {
-    border: 4px solid #f1c40f;
-    transform: scale(1.1);
-}
+.slot.active { border: 4px solid #f1c40f; background: #fffde7; }

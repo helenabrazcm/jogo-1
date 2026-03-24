@@ -2,97 +2,131 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixel Farm Deluxe</title>
+    <title>Stardew HTML5 Canvas Edition</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="world">
-        <div id="map"></div>
-    </div>
-
-    <div id="player">
-        <div class="hair"></div>
-        <div class="body"></div>
-    </div>
-
-    <div id="night-overlay"></div>
-
-    <div id="ui-container">
-        <div id="clock">06:00 AM</div>
-        <div class="toolbar">
+    <div id="ui-overlay">
+        <div id="top-right">
+            <div id="clock-box">
+                <div id="day-text">Seg. 01</div>
+                <div id="time-text">06:00 AM</div>
+            </div>
+            <div id="energy-bar"><div id="energy-fill"></div></div>
+        </div>
+        
+        <div id="inventory-bar">
             <div class="slot active" data-tool="hoe">🪓</div>
-            <div class="slot" data-tool="seed">🌱</div>
+            <div class="slot" data-tool="seeds">🌱</div>
             <div class="slot" data-tool="water">💧</div>
+            <div class="slot" data-tool="axe">🪚</div>
         </div>
     </div>
 
+    <div id="game-container">
+        <div id="world"></div>
+    </div>
+
     <script>
-        const world = document.getElementById('map');
-        const nightOverlay = document.getElementById('night-overlay');
-        const clockEl = document.getElementById('clock');
-        const slots = document.querySelectorAll('.slot');
+        const world = document.getElementById('world');
+        const energyFill = document.getElementById('energy-fill');
+        const timeText = document.getElementById('time-text');
         
-        let posX = 2000, posY = 2000; // Posição inicial no grande mapa
-        let selectedTool = 'hoe';
-        let gameMinutes = 360;
+        let pPos = { x: 1200, y: 1200 };
+        let energy = 100;
+        let gameTime = 360;
+        let currentTool = 'hoe';
 
-        // Criar um mapa gigante (50x50 tiles de 60px)
-        for (let i = 0; i < 2500; i++) {
-            const tile = document.createElement('div');
-            tile.classList.add('tile');
-            tile.addEventListener('mousedown', () => useTool(tile));
-            world.appendChild(tile);
+        // Geração do Mapa com Profundidade
+        const mapSize = 30; 
+        const tileSize = 80;
+
+        for (let y = 0; y < mapSize; y++) {
+            for (let x = 0; x < mapSize; x++) {
+                const tile = document.createElement('div');
+                tile.className = 'tile grass';
+                tile.style.left = `${x * tileSize}px`;
+                tile.style.top = `${y * tileSize}px`;
+                
+                // Elementos Aleatórios (Árvores/Pedras)
+                if (Math.random() > 0.9) {
+                    const obj = document.createElement('div');
+                    obj.className = Math.random() > 0.5 ? 'tree' : 'rock';
+                    // Z-Index baseado na posição Y para profundidade
+                    obj.style.zIndex = y * tileSize + 50;
+                    tile.appendChild(obj);
+                    tile.dataset.occupied = "true";
+                }
+
+                tile.onclick = () => handleInteract(tile);
+                world.appendChild(tile);
+            }
         }
 
-        function useTool(tile) {
-            if (selectedTool === 'hoe') tile.classList.add('plowed');
-            if (selectedTool === 'seed' && tile.classList.contains('plowed')) {
-                tile.innerHTML = '<div class="crop"></div>';
-            }
-            if (selectedTool === 'water' && tile.classList.contains('plowed')) {
-                tile.style.backgroundColor = '#5d4037'; // Terra molhada
-                tile.style.border = "1px solid #3498db";
+        // Jogador com camadas de "Sprite"
+        const player = document.createElement('div');
+        player.id = 'player';
+        player.innerHTML = `
+            <div class="p-hair"></div>
+            <div class="p-body"></div>
+            <div class="p-legs"></div>
+        `;
+        world.appendChild(player);
+
+        function handleInteract(tile) {
+            if (energy <= 0) return alert("Exausto!");
+            
+            if (currentTool === 'hoe' && !tile.dataset.occupied) {
+                tile.classList.add('plowed');
+                updateEnergy(-5);
+            } else if (currentTool === 'seeds' && tile.classList.contains('plowed')) {
+                tile.innerHTML = '<div class="crop stage1"></div>';
+                updateEnergy(-2);
+            } else if (currentTool === 'axe' && tile.querySelector('.tree')) {
+                tile.querySelector('.tree').remove();
+                tile.dataset.occupied = "";
+                updateEnergy(-10);
             }
         }
 
-        // Movimentação Estilo Câmera
+        function updateEnergy(amt) {
+            energy = Math.max(0, Math.min(100, energy + amt));
+            energyFill.style.height = energy + '%';
+        }
+
+        // Loop de Movimento e Câmera
         const keys = {};
         window.onkeydown = (e) => keys[e.key.toLowerCase()] = true;
         window.onkeyup = (e) => keys[e.key.toLowerCase()] = false;
 
         function update() {
-            const speed = 5;
-            if (keys['w']) posY -= speed;
-            if (keys['s']) posY += speed;
-            if (keys['a']) posX -= speed;
-            if (keys['d']) posX += speed;
+            let moved = false;
+            if (keys['w']) { pPos.y -= 5; player.className = 'up'; moved = true; }
+            if (keys['s']) { pPos.y += 5; player.className = 'down'; moved = true; }
+            if (keys['a']) { pPos.x -= 5; player.className = 'left'; moved = true; }
+            if (keys['d']) { pPos.x += 5; player.className = 'right'; moved = true; }
 
-            // Move o mapa, não o jogador (Efeito de câmera)
-            world.style.transform = `translate(${-posX + window.innerWidth/2}px, ${-posY + window.innerHeight/2}px)`;
+            if (moved) player.classList.add('walking');
+            else player.classList.remove('walking');
+
+            player.style.left = pPos.x + 'px';
+            player.style.top = pPos.y + 'px';
+            player.style.zIndex = pPos.y + 40; // Profundidade dinâmica
+
+            // Câmera segue jogador
+            world.style.transform = `translate(${-pPos.x + window.innerWidth/2}px, ${-pPos.y + window.innerHeight/2}px)`;
             requestAnimationFrame(update);
         }
-        update();
 
-        // Ciclo de Tempo
+        // Tempo
         setInterval(() => {
-            gameMinutes += 1;
-            let h = Math.floor(gameMinutes / 60) % 24;
-            let m = gameMinutes % 60;
-            clockEl.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`;
-            
-            // Escurece gradualmente
-            if (h >= 19 || h < 5) nightOverlay.style.opacity = 0.5;
-            else if (h >= 17) nightOverlay.style.opacity = 0.2;
-            else nightOverlay.style.opacity = 0;
+            gameTime += 1;
+            let h = Math.floor(gameTime / 60) % 24;
+            let m = Math.floor(gameTime % 60);
+            timeText.innerText = `${h % 12 || 12}:${m < 10 ? '0'+m : m} ${h < 12 ? 'AM' : 'PM'}`;
         }, 1000);
 
-        // Seleção de itens
-        slots.forEach(s => s.onclick = () => {
-            slots.forEach(x => x.classList.remove('active'));
-            s.classList.add('active');
-            selectedTool = s.dataset.tool;
-        });
+        update();
     </script>
 </body>
 </html>
