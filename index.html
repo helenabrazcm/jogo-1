@@ -2,131 +2,107 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Stardew HTML5 Canvas Edition</title>
+    <title>Stardew Clone - Fixed Map</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="ui-overlay">
-        <div id="top-right">
-            <div id="clock-box">
-                <div id="day-text">Seg. 01</div>
-                <div id="time-text">06:00 AM</div>
+    <div id="camera">
+        <div id="world">
             </div>
-            <div id="energy-bar"><div id="energy-fill"></div></div>
-        </div>
-        
-        <div id="inventory-bar">
-            <div class="slot active" data-tool="hoe">🪓</div>
-            <div class="slot" data-tool="seeds">🌱</div>
-            <div class="slot" data-tool="water">💧</div>
-            <div class="slot" data-tool="axe">🪚</div>
+        <div id="player">
+            <div class="p-hair"></div>
+            <div class="p-body"></div>
+            <div class="p-legs"></div>
         </div>
     </div>
 
-    <div id="game-container">
-        <div id="world"></div>
+    <div id="ui">
+        <div class="stats">
+            <div id="clock">06:00 AM</div>
+            <div class="energy-container"><div id="energy-bar"></div></div>
+        </div>
+        <div class="hotbar">
+            <div class="slot active" data-tool="hoe">⛏️</div>
+            <div class="slot" data-tool="seed">🌱</div>
+            <div class="slot" data-tool="axe">🪓</div>
+        </div>
     </div>
 
     <script>
         const world = document.getElementById('world');
-        const energyFill = document.getElementById('energy-fill');
-        const timeText = document.getElementById('time-text');
+        const player = document.getElementById('player');
+        const energyBar = document.getElementById('energy-bar');
         
-        let pPos = { x: 1200, y: 1200 };
+        let pX = 500, pY = 500; // Posição inicial no centro
         let energy = 100;
-        let gameTime = 360;
-        let currentTool = 'hoe';
+        let selectedTool = 'hoe';
 
-        // Geração do Mapa com Profundidade
-        const mapSize = 30; 
+        // 1. Gerar o Mapa (Grid de 20x20 para performance)
+        const size = 20;
         const tileSize = 80;
 
-        for (let y = 0; y < mapSize; y++) {
-            for (let x = 0; x < mapSize; x++) {
-                const tile = document.createElement('div');
-                tile.className = 'tile grass';
-                tile.style.left = `${x * tileSize}px`;
-                tile.style.top = `${y * tileSize}px`;
-                
-                // Elementos Aleatórios (Árvores/Pedras)
-                if (Math.random() > 0.9) {
-                    const obj = document.createElement('div');
-                    obj.className = Math.random() > 0.5 ? 'tree' : 'rock';
-                    // Z-Index baseado na posição Y para profundidade
-                    obj.style.zIndex = y * tileSize + 50;
-                    tile.appendChild(obj);
-                    tile.dataset.occupied = "true";
-                }
-
-                tile.onclick = () => handleInteract(tile);
-                world.appendChild(tile);
-            }
-        }
-
-        // Jogador com camadas de "Sprite"
-        const player = document.createElement('div');
-        player.id = 'player';
-        player.innerHTML = `
-            <div class="p-hair"></div>
-            <div class="p-body"></div>
-            <div class="p-legs"></div>
-        `;
-        world.appendChild(player);
-
-        function handleInteract(tile) {
-            if (energy <= 0) return alert("Exausto!");
+        for (let i = 0; i < size * size; i++) {
+            const tile = document.createElement('div');
+            tile.className = 'tile';
             
-            if (currentTool === 'hoe' && !tile.dataset.occupied) {
-                tile.classList.add('plowed');
-                updateEnergy(-5);
-            } else if (currentTool === 'seeds' && tile.classList.contains('plowed')) {
-                tile.innerHTML = '<div class="crop stage1"></div>';
-                updateEnergy(-2);
-            } else if (currentTool === 'axe' && tile.querySelector('.tree')) {
-                tile.querySelector('.tree').remove();
-                tile.dataset.occupied = "";
-                updateEnergy(-10);
+            // Adicionar obstáculos aleatórios
+            if (Math.random() > 0.9) {
+                const tree = document.createElement('div');
+                tree.className = 'tree';
+                tile.appendChild(tree);
             }
+
+            tile.onclick = () => {
+                if (energy <= 0) return;
+                if (selectedTool === 'hoe') {
+                    tile.classList.add('plowed');
+                    updateEnergy(-5);
+                }
+                if (selectedTool === 'axe' && tile.querySelector('.tree')) {
+                    tile.querySelector('.tree').remove();
+                    updateEnergy(-10);
+                }
+            };
+            world.appendChild(tile);
         }
 
-        function updateEnergy(amt) {
-            energy = Math.max(0, Math.min(100, energy + amt));
-            energyFill.style.height = energy + '%';
+        function updateEnergy(val) {
+            energy = Math.max(0, energy + val);
+            energyBar.style.width = energy + '%';
         }
 
-        // Loop de Movimento e Câmera
+        // 2. Movimentação e Câmera
         const keys = {};
         window.onkeydown = (e) => keys[e.key.toLowerCase()] = true;
         window.onkeyup = (e) => keys[e.key.toLowerCase()] = false;
 
-        function update() {
-            let moved = false;
-            if (keys['w']) { pPos.y -= 5; player.className = 'up'; moved = true; }
-            if (keys['s']) { pPos.y += 5; player.className = 'down'; moved = true; }
-            if (keys['a']) { pPos.x -= 5; player.className = 'left'; moved = true; }
-            if (keys['d']) { pPos.x += 5; player.className = 'right'; moved = true; }
+        function gameLoop() {
+            const speed = 4;
+            if (keys['w']) pY -= speed;
+            if (keys['s']) pY += speed;
+            if (keys['a']) pX -= speed;
+            if (keys['d']) pX += speed;
 
-            if (moved) player.classList.add('walking');
-            else player.classList.remove('walking');
+            // Atualiza posição do jogador
+            player.style.left = pX + 'px';
+            player.style.top = pY + 'px';
 
-            player.style.left = pPos.x + 'px';
-            player.style.top = pPos.y + 'px';
-            player.style.zIndex = pPos.y + 40; // Profundidade dinâmica
+            // Câmera: move o "world" no sentido oposto para manter o player no centro
+            world.parentElement.style.transform = `translate(${-pX + window.innerWidth/2}px, ${-pY + window.innerHeight/2}px)`;
 
-            // Câmera segue jogador
-            world.style.transform = `translate(${-pPos.x + window.innerWidth/2}px, ${-pPos.y + window.innerHeight/2}px)`;
-            requestAnimationFrame(update);
+            requestAnimationFrame(gameLoop);
         }
 
-        // Tempo
-        setInterval(() => {
-            gameTime += 1;
-            let h = Math.floor(gameTime / 60) % 24;
-            let m = Math.floor(gameTime % 60);
-            timeText.innerText = `${h % 12 || 12}:${m < 10 ? '0'+m : m} ${h < 12 ? 'AM' : 'PM'}`;
-        }, 1000);
+        // Troca de ferramenta
+        document.querySelectorAll('.slot').forEach(s => {
+            s.onclick = () => {
+                document.querySelectorAll('.slot').forEach(x => x.classList.remove('active'));
+                s.classList.add('active');
+                selectedTool = s.dataset.tool;
+            };
+        });
 
-        update();
+        gameLoop();
     </script>
 </body>
 </html>
