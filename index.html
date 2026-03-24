@@ -2,159 +2,88 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Stardew Ultra Pixel</title>
+    <title>Stardew Ultra Pixel - Animated</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="camera">
         <div id="world">
             <div id="ground"></div>
-            <div id="entities"></div>
+            <div id="entities">
+                </div>
         </div>
     </div>
 
     <div id="ui">
-        <div class="top-bar">
-            <div id="clock">06:20 AM</div>
-            <div class="energy-meter">
-                <div id="energy-fill"></div>
-                <span class="e-label">E</span>
-            </div>
-        </div>
         <div class="inventory">
-            <div class="slot active" data-tool="hoe">⛏️<small>Enxada</small></div>
-            <div class="slot" data-tool="seed">🌱<small>Semente</small></div>
-            <div class="slot" data-tool="water">💧<small>Regar</small></div>
-            <div class="slot" data-tool="axe">🪓<small>Machado</small></div>
+            <div class="slot active" data-tool="hoe">⛏️</div>
+            <div class="slot" data-tool="seed">🌱</div>
+            <div class="slot" data-tool="axe">🪓</div>
         </div>
     </div>
 
     <script>
         const entities = document.getElementById('entities');
-        const ground = document.getElementById('ground');
-        const energyFill = document.getElementById('energy-fill');
+        const world = document.getElementById('world');
         
         let pX = 800, pY = 800;
-        let energy = 100;
-        let selectedTool = 'hoe';
-        const obstacles = [];
+        let frame = 0;
+        let direction = 'down';
+        let isWalking = false;
 
-        // 1. Gerar Chão e Obstáculos
-        for (let i = 0; i < 400; i++) {
-            const x = (i % 20) * 80;
-            const y = Math.floor(i / 20) * 80;
-            
-            const tile = document.createElement('div');
-            tile.className = 'tile';
-            tile.style.left = x + 'px';
-            tile.style.top = y + 'px';
-            tile.onclick = () => interact(x, y, tile);
-            ground.appendChild(tile);
-
-            if (Math.random() > 0.85) {
-                createTree(x, y);
-            }
-        }
-
-        function createTree(x, y) {
-            const tree = document.createElement('div');
-            tree.className = 'tree entity';
-            tree.style.left = (x + 10) + 'px';
-            tree.style.top = (y - 40) + 'px';
-            tree.dataset.y = y; // Para o Sort
-            entities.appendChild(tree);
-            obstacles.push({x, y, w: 60, h: 40, el: tree});
-        }
-
-        // 2. O Jogador
+        // Criar Jogador com a imagem do link
         const player = document.createElement('div');
         player.id = 'player';
-        player.className = 'entity';
-        player.innerHTML = `<div class="p-sprite"></div>`;
+        player.style.backgroundImage = "url('https://i.pinimg.com/1200x/ca/d4/d8/cad4d84af7271755cc49ad13b650a113.jpg')";
         entities.appendChild(player);
 
-        // 3. Sistema de Interação
-        function interact(x, y, tile) {
-            if (energy <= 0) return;
-            
-            if (selectedTool === 'hoe' && !tile.classList.contains('plowed')) {
-                tile.classList.add('plowed');
-                useEnergy(4);
-            } else if (selectedTool === 'seed' && tile.classList.contains('plowed')) {
-                if (!tile.querySelector('.crop')) {
-                    tile.innerHTML = '<div class="crop stage1"></div>';
-                    useEnergy(2);
-                    setTimeout(() => grow(tile), 5000);
-                }
-            } else if (selectedTool === 'axe') {
-                const treeIdx = obstacles.findIndex(o => o.x === x && o.y === y);
-                if (treeIdx > -1) {
-                    obstacles[treeIdx].el.remove();
-                    obstacles.splice(treeIdx, 1);
-                    useEnergy(10);
-                }
-            }
+        // Gerar chão simples (sem poluição visual)
+        for (let i = 0; i < 400; i++) {
+            const tile = document.createElement('div');
+            tile.className = 'tile';
+            tile.style.left = (i % 20) * 80 + 'px';
+            tile.style.top = Math.floor(i / 20) * 80 + 'px';
+            tile.onclick = () => tile.classList.add('plowed');
+            document.getElementById('ground').appendChild(tile);
         }
 
-        function grow(tile) {
-            const c = tile.querySelector('.crop');
-            if (c && c.classList.contains('stage1')) {
-                c.className = 'crop stage2';
-                setTimeout(() => c.className = 'crop stage3', 5000);
-            }
-        }
-
-        function useEnergy(amt) {
-            energy -= amt;
-            energyFill.style.height = energy + '%';
-        }
-
-        // 4. Loop de Movimento com Colisão
         const keys = {};
-        window.onkeydown = (e) => keys[e.key.toLowerCase()] = true;
-        window.onkeyup = (e) => keys[e.key.toLowerCase()] = false;
+        window.onkeydown = (e) => { keys[e.key.toLowerCase()] = true; isWalking = true; };
+        window.onkeyup = (e) => { keys[e.key.toLowerCase()] = false; isWalking = false; };
 
         function update() {
-            let nextX = pX;
-            let nextY = pY;
-            const speed = 4;
+            if (keys['w']) { pY -= 4; direction = 'up'; }
+            else if (keys['s']) { pY += 4; direction = 'down'; }
+            else if (keys['a']) { pX -= 4; direction = 'left'; }
+            else if (keys['d']) { pX += 4; direction = 'right'; }
 
-            if (keys['w']) nextY -= speed;
-            if (keys['s']) nextY += speed;
-            if (keys['a']) nextX -= speed;
-            if (keys['d']) nextX += speed;
-
-            // Checar Colisão
-            const colliding = obstacles.some(o => 
-                nextX < o.x + 60 && nextX + 30 > o.x &&
-                nextY < o.y + 40 && nextY + 20 > o.y
-            );
-
-            if (!colliding) {
-                pX = nextX; pY = nextY;
+            // Animação de Sprite baseada na imagem (Grid da imagem)
+            if (isWalking) {
+                frame = (Math.floor(Date.now() / 150) % 4); // Alterna 4 quadros
+            } else {
+                frame = 0; // Parado
             }
 
+            // Ajuste das posições do Sprite (aproximado para essa imagem)
+            let row = 0;
+            if (direction === 'down') row = 0;
+            if (direction === 'up') row = 1;
+            if (direction === 'left') row = 2;
+            if (direction === 'right') row = 3;
+
+            // Move o background da imagem para mostrar o boneco certo
+            player.style.backgroundPosition = `-${frame * 48}px -${row * 48}px`;
+            
             player.style.left = pX + 'px';
             player.style.top = pY + 'px';
-            player.style.zIndex = Math.floor(pY); // Y-Sorting
+            player.style.zIndex = Math.floor(pY);
 
             // Câmera
-            const camX = -pX + window.innerWidth / 2;
-            const camY = -pY + window.innerHeight / 2;
-            document.getElementById('world').style.transform = `translate(${camX}px, ${camY}px)`;
+            world.style.transform = `translate(${-pX + window.innerWidth/2}px, ${-pY + window.innerHeight/2}px)`;
 
             requestAnimationFrame(update);
         }
         update();
-
-        // Ferramentas
-        document.querySelectorAll('.slot').forEach(s => {
-            s.onclick = () => {
-                document.querySelectorAll('.slot').forEach(x => x.classList.remove('active'));
-                s.classList.add('active');
-                selectedTool = s.dataset.tool;
-            };
-        });
     </script>
 </body>
 </html>
