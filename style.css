@@ -1,67 +1,120 @@
-body { 
-    margin: 0; 
-    overflow: hidden; 
-    background: #000; /* Fundo preto para focar no mapa */
+:root {
+    --green: #4caf50;
+    --dark-green: #388e3c;
+    --brown: #5d4037;
 }
 
-#camera { width: 100vw; height: 100vh; position: relative; }
-
-#world { 
-    position: absolute; 
-    width: 1600px; 
-    height: 1600px; 
+body {
+    margin: 0;
+    overflow: hidden;
+    background: #1a1a1a;
 }
 
-#ground { 
-    position: absolute; 
-    display: grid; 
-    grid-template: repeat(20, 80px) / repeat(20, 80px);
-    background: #43a047; /* Verde grama limpo */
+#game-container {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
 }
 
-.tile { 
-    width: 80px; height: 80px; 
-    border: 1px solid rgba(255,255,255,0.05); 
+#world {
     position: absolute;
+    width: 1600px;
+    height: 1600px;
 }
 
-.plowed { background: #6d4c41 !important; }
+#ground {
+    display: grid;
+    grid-template-columns: repeat(20, 80px);
+    grid-template-rows: repeat(20, 80px);
+    background: var(--green);
+    /* Textura de grama realista */
+    background-image: 
+        radial-gradient(circle at 10% 20%, var(--dark-green) 1px, transparent 1px),
+        radial-gradient(circle at 50% 50%, var(--dark-green) 1px, transparent 1px);
+    background-size: 30px 30px;
+}
 
-/* PERSONAGEM COM SPRITE SHEET */
+.tile {
+    width: 80px; height: 80px;
+    border: 1px solid rgba(0,0,0,0.02);
+    transition: background 0.5s;
+}
+
+.plowed {
+    background: var(--brown) !important;
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.4);
+    border: none;
+}
+
+/* O PERSONAGEM */
 #player {
     position: absolute;
-    width: 48px; /* Tamanho de um frame do boneco */
-    height: 48px;
-    background-size: 192px 192px; /* Ajusta o tamanho total da imagem carregada */
-    image-rendering: pixelated; /* Mantém o estilo Pixel Art sem borrar */
-    transition: none;
+    width: 64px; /* Tamanho de um recorte do sprite */
+    height: 64px;
+    background-image: url('https://i.pinimg.com/1200x/7b/bf/ee/7bbfee1f9ef36762eb90e7805077060c.jpg');
+    background-repeat: no-repeat;
+    background-size: 256px 256px; /* Ajuste para o grid 4x4 da imagem */
+    image-rendering: pixelated;
+    transform: translate(-16px, -32px); /* Centraliza o pé no ponto X,Y */
 }
 
-.inventory {
+/* Sombra do Personagem */
+#player::before {
+    content: "";
+    position: absolute;
+    bottom: 5px; left: 16px;
+    width: 32px; height: 12px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 50%;
+    z-index: -1;
+}
+
+/* Efeito de Vinheta (Foco no Centro) */
+#vignette {
     position: fixed;
-    bottom: 20px;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.4) 100%);
+    pointer-events: none;
+}
+
+/* UI */
+.hotbar {
+    position: fixed;
+    bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    background: #fdf5e6;
+    gap: 10px;
+    background: rgba(255, 248, 225, 0.9);
     padding: 10px;
-    border: 4px solid #5d4037;
-    border-radius: 12px;
+    border: 4px solid var(--brown);
+    border-radius: 15px;
+    box-shadow: 0 10px 0 #3e2723;
 }
 
 .slot {
-    width: 50px;
-    height: 50px;
-    border: 2px solid #bcaaa4;
-    margin: 0 5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    cursor: pointer;
+    width: 60px; height: 60px;
+    background: #fff;
+    border: 3px solid #bcaaa4;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; cursor: pointer; border-radius: 10px;
 }
 
 .slot.active {
-    border: 4px solid #f1c40f;
-    background: #fff;
+    border-color: #f1c40f;
+    transform: scale(1.1) translateY(-5px);
+    background: #fffde7;
+}
+
+/* Partículas */
+.dust {
+    position: absolute;
+    width: 5px; height: 5px;
+    background: var(--brown);
+    border-radius: 50%;
+    animation: puff 0.5s forwards;
+}
+
+@keyframes puff {
+    to { transform: translateY(-20px) scale(3); opacity: 0; }
 }

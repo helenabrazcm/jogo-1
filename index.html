@@ -2,88 +2,100 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Stardew Ultra Pixel - Animated</title>
+    <title>Stardew Ultra Realistic</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="camera">
+    <div id="game-container">
         <div id="world">
             <div id="ground"></div>
             <div id="entities">
-                </div>
+                <div id="player"></div>
+            </div>
         </div>
-    </div>
+        <div id="vignette"></div> </div>
 
     <div id="ui">
-        <div class="inventory">
+        <div class="hotbar">
             <div class="slot active" data-tool="hoe">⛏️</div>
             <div class="slot" data-tool="seed">🌱</div>
-            <div class="slot" data-tool="axe">🪓</div>
+            <div class="slot" data-tool="water">💧</div>
         </div>
     </div>
 
     <script>
-        const entities = document.getElementById('entities');
         const world = document.getElementById('world');
+        const player = document.getElementById('player');
+        const ground = document.getElementById('ground');
         
         let pX = 800, pY = 800;
         let frame = 0;
-        let direction = 'down';
-        let isWalking = false;
+        let direction = 0; // 0: Down, 1: Left, 2: Right, 3: Up
+        let isMoving = false;
+        let lastTime = 0;
 
-        // Criar Jogador com a imagem do link
-        const player = document.createElement('div');
-        player.id = 'player';
-        player.style.backgroundImage = "url('https://i.pinimg.com/1200x/ca/d4/d8/cad4d84af7271755cc49ad13b650a113.jpg')";
-        entities.appendChild(player);
-
-        // Gerar chão simples (sem poluição visual)
+        // Criar o chão detalhado
         for (let i = 0; i < 400; i++) {
             const tile = document.createElement('div');
             tile.className = 'tile';
-            tile.style.left = (i % 20) * 80 + 'px';
-            tile.style.top = Math.floor(i / 20) * 80 + 'px';
-            tile.onclick = () => tile.classList.add('plowed');
-            document.getElementById('ground').appendChild(tile);
+            tile.onclick = () => {
+                tile.classList.add('plowed');
+                createDust(pX, pY);
+            };
+            ground.appendChild(tile);
         }
 
         const keys = {};
-        window.onkeydown = (e) => { keys[e.key.toLowerCase()] = true; isWalking = true; };
-        window.onkeyup = (e) => { keys[e.key.toLowerCase()] = false; isWalking = false; };
+        window.onkeydown = (e) => keys[e.key.toLowerCase()] = true;
+        window.onkeyup = (e) => keys[e.key.toLowerCase()] = false;
 
-        function update() {
-            if (keys['w']) { pY -= 4; direction = 'up'; }
-            else if (keys['s']) { pY += 4; direction = 'down'; }
-            else if (keys['a']) { pX -= 4; direction = 'left'; }
-            else if (keys['d']) { pX += 4; direction = 'right'; }
+        function createDust(x, y) {
+            const dust = document.createElement('div');
+            dust.className = 'dust';
+            dust.style.left = x + 'px';
+            dust.style.top = y + 'px';
+            document.getElementById('entities').appendChild(dust);
+            setTimeout(() => dust.remove(), 500);
+        }
 
-            // Animação de Sprite baseada na imagem (Grid da imagem)
-            if (isWalking) {
-                frame = (Math.floor(Date.now() / 150) % 4); // Alterna 4 quadros
+        function gameLoop(timestamp) {
+            isMoving = false;
+            const speed = 3.5;
+
+            if (keys['w']) { pY -= speed; direction = 3; isMoving = true; }
+            if (keys['s']) { pY += speed; direction = 0; isMoving = true; }
+            if (keys['a']) { pX -= speed; direction = 1; isMoving = true; }
+            if (keys['d']) { pX += speed; direction = 2; isMoving = true; }
+
+            // Animação de Sprite baseada no tempo
+            if (isMoving) {
+                if (timestamp - lastTime > 120) {
+                    frame = (frame + 1) % 4; // Assume 4 frames de animação por linha
+                    lastTime = timestamp;
+                }
             } else {
-                frame = 0; // Parado
+                frame = 0;
             }
 
-            // Ajuste das posições do Sprite (aproximado para essa imagem)
-            let row = 0;
-            if (direction === 'down') row = 0;
-            if (direction === 'up') row = 1;
-            if (direction === 'left') row = 2;
-            if (direction === 'right') row = 3;
-
-            // Move o background da imagem para mostrar o boneco certo
-            player.style.backgroundPosition = `-${frame * 48}px -${row * 48}px`;
+            // Cálculo do Sprite Sheet (Ajustado para o link enviado)
+            // Cada frame tem aprox 48px a 64px na imagem original
+            const spriteW = 64; 
+            const spriteH = 64;
+            player.style.backgroundPosition = `-${frame * spriteW}px -${direction * spriteH}px`;
             
             player.style.left = pX + 'px';
             player.style.top = pY + 'px';
             player.style.zIndex = Math.floor(pY);
 
-            // Câmera
-            world.style.transform = `translate(${-pX + window.innerWidth/2}px, ${-pY + window.innerHeight/2}px)`;
+            // Câmera Suave
+            const camX = -pX + window.innerWidth / 2;
+            const camY = -pY + window.innerHeight / 2;
+            world.style.transform = `translate(${camX}px, ${camY}px)`;
 
-            requestAnimationFrame(update);
+            requestAnimationFrame(gameLoop);
         }
-        update();
+
+        requestAnimationFrame(gameLoop);
     </script>
 </body>
 </html>
