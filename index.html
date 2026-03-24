@@ -2,97 +2,157 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Stardew Clone - Mapa Fixo</title>
+    <title>Stardew Ultra Pixel</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="viewport">
+    <div id="camera">
         <div id="world">
-            </div>
-        <div id="player">
-            <div class="p-hair"></div>
-            <div class="p-body"></div>
+            <div id="ground"></div>
+            <div id="entities"></div>
         </div>
     </div>
 
     <div id="ui">
-        <div class="status">
-            <div id="clock">06:00 AM</div>
-            <div class="energy-slot"><div id="energy-bar"></div></div>
+        <div class="top-bar">
+            <div id="clock">06:20 AM</div>
+            <div class="energy-meter">
+                <div id="energy-fill"></div>
+                <span class="e-label">E</span>
+            </div>
         </div>
-        <div class="hotbar">
-            <div class="slot active" data-tool="hoe">⛏️</div>
-            <div class="slot" data-tool="seed">🌱</div>
-            <div class="slot" data-tool="axe">🪓</div>
+        <div class="inventory">
+            <div class="slot active" data-tool="hoe">⛏️<small>Enxada</small></div>
+            <div class="slot" data-tool="seed">🌱<small>Semente</small></div>
+            <div class="slot" data-tool="water">💧<small>Regar</small></div>
+            <div class="slot" data-tool="axe">🪓<small>Machado</small></div>
         </div>
     </div>
 
     <script>
-        const world = document.getElementById('world');
-        const player = document.getElementById('player');
-        const energyBar = document.getElementById('energy-bar');
+        const entities = document.getElementById('entities');
+        const ground = document.getElementById('ground');
+        const energyFill = document.getElementById('energy-fill');
         
-        // Configurações do Mundo
-        const tileSize = 80;
-        const mapSize = 20; // 20x20 tiles
-        let pX = 800, pY = 800; // Começa no meio do mapa (20*80 / 2)
+        let pX = 800, pY = 800;
         let energy = 100;
+        let selectedTool = 'hoe';
+        const obstacles = [];
 
-        // Gerar o Chão Corretamente
-        for (let i = 0; i < mapSize * mapSize; i++) {
+        // 1. Gerar Chão e Obstáculos
+        for (let i = 0; i < 400; i++) {
+            const x = (i % 20) * 80;
+            const y = Math.floor(i / 20) * 80;
+            
             const tile = document.createElement('div');
             tile.className = 'tile';
-            
-            // Adicionar árvores aleatórias para teste de visão
-            if (Math.random() > 0.9) {
-                const tree = document.createElement('div');
-                tree.className = 'tree';
-                tile.appendChild(tree);
-            }
+            tile.style.left = x + 'px';
+            tile.style.top = y + 'px';
+            tile.onclick = () => interact(x, y, tile);
+            ground.appendChild(tile);
 
-            tile.onclick = () => {
-                const tool = document.querySelector('.slot.active').dataset.tool;
-                if (tool === 'hoe') tile.classList.add('plowed');
-                if (tool === 'axe' && tile.querySelector('.tree')) {
-                    tile.querySelector('.tree').remove();
-                }
-                energy -= 5;
-                energyBar.style.width = energy + '%';
-            };
-            world.appendChild(tile);
+            if (Math.random() > 0.85) {
+                createTree(x, y);
+            }
         }
 
-        // Movimentação
+        function createTree(x, y) {
+            const tree = document.createElement('div');
+            tree.className = 'tree entity';
+            tree.style.left = (x + 10) + 'px';
+            tree.style.top = (y - 40) + 'px';
+            tree.dataset.y = y; // Para o Sort
+            entities.appendChild(tree);
+            obstacles.push({x, y, w: 60, h: 40, el: tree});
+        }
+
+        // 2. O Jogador
+        const player = document.createElement('div');
+        player.id = 'player';
+        player.className = 'entity';
+        player.innerHTML = `<div class="p-sprite"></div>`;
+        entities.appendChild(player);
+
+        // 3. Sistema de Interação
+        function interact(x, y, tile) {
+            if (energy <= 0) return;
+            
+            if (selectedTool === 'hoe' && !tile.classList.contains('plowed')) {
+                tile.classList.add('plowed');
+                useEnergy(4);
+            } else if (selectedTool === 'seed' && tile.classList.contains('plowed')) {
+                if (!tile.querySelector('.crop')) {
+                    tile.innerHTML = '<div class="crop stage1"></div>';
+                    useEnergy(2);
+                    setTimeout(() => grow(tile), 5000);
+                }
+            } else if (selectedTool === 'axe') {
+                const treeIdx = obstacles.findIndex(o => o.x === x && o.y === y);
+                if (treeIdx > -1) {
+                    obstacles[treeIdx].el.remove();
+                    obstacles.splice(treeIdx, 1);
+                    useEnergy(10);
+                }
+            }
+        }
+
+        function grow(tile) {
+            const c = tile.querySelector('.crop');
+            if (c && c.classList.contains('stage1')) {
+                c.className = 'crop stage2';
+                setTimeout(() => c.className = 'crop stage3', 5000);
+            }
+        }
+
+        function useEnergy(amt) {
+            energy -= amt;
+            energyFill.style.height = energy + '%';
+        }
+
+        // 4. Loop de Movimento com Colisão
         const keys = {};
         window.onkeydown = (e) => keys[e.key.toLowerCase()] = true;
         window.onkeyup = (e) => keys[e.key.toLowerCase()] = false;
 
         function update() {
-            const speed = 5;
-            if (keys['w']) pY -= speed;
-            if (keys['s']) pY += speed;
-            if (keys['a']) pX -= speed;
-            if (keys['d']) pX += speed;
+            let nextX = pX;
+            let nextY = pY;
+            const speed = 4;
 
-            // Posiciona o jogador no mundo
+            if (keys['w']) nextY -= speed;
+            if (keys['s']) nextY += speed;
+            if (keys['a']) nextX -= speed;
+            if (keys['d']) nextX += speed;
+
+            // Checar Colisão
+            const colliding = obstacles.some(o => 
+                nextX < o.x + 60 && nextX + 30 > o.x &&
+                nextY < o.y + 40 && nextY + 20 > o.y
+            );
+
+            if (!colliding) {
+                pX = nextX; pY = nextY;
+            }
+
             player.style.left = pX + 'px';
             player.style.top = pY + 'px';
+            player.style.zIndex = Math.floor(pY); // Y-Sorting
 
-            // MOVE A CÂMERA (Viewport)
-            // Isso centraliza o jogador na tela
+            // Câmera
             const camX = -pX + window.innerWidth / 2;
             const camY = -pY + window.innerHeight / 2;
-            world.parentElement.style.transform = `translate(${camX}px, ${camY}px)`;
+            document.getElementById('world').style.transform = `translate(${camX}px, ${camY}px)`;
 
             requestAnimationFrame(update);
         }
         update();
 
-        // Seleção de ferramentas
+        // Ferramentas
         document.querySelectorAll('.slot').forEach(s => {
             s.onclick = () => {
                 document.querySelectorAll('.slot').forEach(x => x.classList.remove('active'));
                 s.classList.add('active');
+                selectedTool = s.dataset.tool;
             };
         });
     </script>
