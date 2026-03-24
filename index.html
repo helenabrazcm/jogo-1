@@ -1,312 +1,48 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<title>VoxelCraft Ultimate</title>
-
-<style>
-body { margin:0; overflow:hidden; font-family:Arial; background:black; }
-
-#menu {
-  position: fixed;
-  width:100%; height:100%;
-  background:#000c;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  flex-direction:column;
-  color:white;
-}
-
-#hud {
-  position:fixed;
-  top:10px; left:10px;
-  color:white;
-  display:none;
-}
-
-#crosshair {
-  position:fixed;
-  top:50%; left:50%;
-  width:6px; height:6px;
-  background:white;
-  transform:translate(-50%,-50%);
-  display:none;
-}
-
-#hotbar {
-  position:fixed;
-  bottom:10px;
-  left:50%;
-  transform:translateX(-50%);
-  display:flex;
-  gap:8px;
-}
-
-.slot {
-  width:50px;
-  height:50px;
-  border:2px solid white;
-}
-
-.selected { border-color:yellow; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Farm Valley</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
+    <div id="game-container">
+        <div id="map"></div>
+        <div id="player"></div>
+    </div>
 
-<div id="menu">
-  <h1>VoxelCraft Ultimate</h1>
-  <button onclick="startGame()">Jogar</button>
-</div>
+    <div id="ui">
+        <p>Use <b>WASD</b> para mover | <b>Clique</b> na terra para arar</p>
+    </div>
 
-<div id="hud">
-  ❤️ <span id="hp">100</span><br>
-</div>
+    <script>
+        const player = document.getElementById('player');
+        const map = document.getElementById('map');
+        let pX = 50;
+        let pY = 50;
 
-<div id="crosshair"></div>
+        // Gerar o chão (Grid)
+        for (let i = 0; i < 100; i++) {
+            const tile = document.createElement('div');
+            tile.classList.add('tile');
+            tile.addEventListener('click', () => {
+                tile.classList.add('plowed');
+            });
+            map.appendChild(tile);
+        }
 
-<div id="hotbar"></div>
+        // Movimentação
+        window.addEventListener('keydown', (e) => {
+            const step = 10;
+            if (e.key.toLowerCase() === 'w') pY -= step;
+            if (e.key.toLowerCase() === 's') pY += step;
+            if (e.key.toLowerCase() === 'a') pX -= step;
+            if (e.key.toLowerCase() === 'd') pX += step;
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
-
-<script>
-// ===== ESTADO =====
-let started=false;
-
-// ===== INVENTÁRIO =====
-let inventory = [
-  {type:"grass", count:0},
-  {type:"stone", count:0},
-  {type:"wood", count:0},
-  {type:"grass", count:0},
-  {type:"stone", count:0}
-];
-
-let selected=0;
-
-function renderHotbar(){
-  let bar=document.getElementById("hotbar");
-  bar.innerHTML="";
-  inventory.forEach((item,i)=>{
-    let div=document.createElement("div");
-    div.className="slot"+(i===selected?" selected":"");
-    div.innerText=item.count;
-    bar.appendChild(div);
-  });
-}
-
-document.addEventListener("keydown", e=>{
-  if(["1","2","3","4","5"].includes(e.key)){
-    selected=parseInt(e.key)-1;
-    renderHotbar();
-  }
-});
-
-// ===== START =====
-function startGame(){
-  document.getElementById("menu").style.display="none";
-  document.getElementById("hud").style.display="block";
-  document.getElementById("crosshair").style.display="block";
-  document.body.requestPointerLock();
-  started=true;
-}
-
-// ===== THREE =====
-let scene=new THREE.Scene();
-scene.background=new THREE.Color(0x87CEEB);
-
-let camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
-let renderer=new THREE.WebGLRenderer();
-renderer.setSize(innerWidth,innerHeight);
-document.body.appendChild(renderer.domElement);
-
-let sun=new THREE.DirectionalLight(0xffffff,1);
-scene.add(sun);
-
-// ===== BLOCOS =====
-let blocks={};
-
-function getColor(type){
-  return type==="grass"?0x55aa55:
-         type==="stone"?0x888888:
-         0x8B4513;
-}
-
-function createBlock(x,y,z,type="grass"){
-  let key=`${x},${y},${z}`;
-  if(blocks[key]) return;
-
-  let cube=new THREE.Mesh(
-    new THREE.BoxGeometry(),
-    new THREE.MeshLambertMaterial({color:getColor(type)})
-  );
-
-  cube.userData.type=type;
-  cube.position.set(x,y,z);
-
-  scene.add(cube);
-  blocks[key]=cube;
-}
-
-// ===== MUNDO =====
-for(let x=-12;x<12;x++){
-  for(let z=-12;z<12;z++){
-    let h=Math.floor(Math.sin(x*0.2)*2 + Math.cos(z*0.2)*2 + 4);
-
-    for(let y=0;y<h;y++){
-      createBlock(x,y,z,"grass");
-    }
-
-    if(Math.random()<0.05){
-      for(let y=1;y<4;y++) createBlock(x,y,z,"wood");
-      createBlock(x,4,z,"grass");
-    }
-  }
-}
-
-// ===== PLAYER =====
-camera.position.set(0,10,10);
-
-let keys={}, velocityY=0, onGround=false;
-let hp=100;
-
-function updateHUD(){
-  document.getElementById("hp").innerText=Math.floor(hp);
-}
-
-document.addEventListener("keydown", e=>{
-  keys[e.key.toLowerCase()]=true;
-  if(e.key===" " && onGround) velocityY=0.25;
-});
-
-document.addEventListener("keyup", e=>{
-  keys[e.key.toLowerCase()]=false;
-});
-
-document.addEventListener("mousemove", e=>{
-  if(document.pointerLockElement===document.body && started){
-    camera.rotation.y-=e.movementX*0.002;
-    camera.rotation.x-=e.movementY*0.002;
-  }
-});
-
-// ===== MINERAÇÃO =====
-let raycaster=new THREE.Raycaster();
-let mouse=new THREE.Vector2(0,0);
-let mining=false, time=0, target=null;
-
-document.addEventListener("mousedown", e=>{
-  if(e.button===0) mining=true;
-});
-
-document.addEventListener("mouseup", ()=>{
-  mining=false; time=0;
-});
-
-document.addEventListener("contextmenu", e=>{
-  e.preventDefault();
-  if(target){
-    let item=inventory[selected];
-    if(item.count>0){
-      let pos=target.object.position.clone().add(target.face.normal);
-      createBlock(pos.x,pos.y,pos.z,item.type);
-      item.count--;
-      renderHotbar();
-    }
-  }
-});
-
-// ===== MOBS =====
-let mobs=[];
-
-function spawnMob(){
-  let mob=new THREE.Mesh(
-    new THREE.BoxGeometry(),
-    new THREE.MeshBasicMaterial({color:0xff0000})
-  );
-  mob.position.set(Math.random()*10,5,Math.random()*10);
-  scene.add(mob);
-  mobs.push(mob);
-}
-
-for(let i=0;i<3;i++) spawnMob();
-
-// ===== LOOP =====
-function animate(){
-  requestAnimationFrame(animate);
-
-  if(!started) return;
-
-  let speed=0.15;
-
-  let forward=new THREE.Vector3();
-  camera.getWorldDirection(forward);
-
-  let right=new THREE.Vector3();
-  right.crossVectors(camera.up,forward);
-
-  if(keys["w"]) camera.position.add(forward.clone().multiplyScalar(speed));
-  if(keys["s"]) camera.position.add(forward.clone().multiplyScalar(-speed));
-  if(keys["a"]) camera.position.add(right.clone().multiplyScalar(speed));
-  if(keys["d"]) camera.position.add(right.clone().multiplyScalar(-speed));
-
-  velocityY-=0.01;
-  camera.position.y+=velocityY;
-
-  if(camera.position.y<3){
-    camera.position.y=3;
-    velocityY=0;
-    onGround=true;
-  }
-
-  // mineração
-  raycaster.setFromCamera(mouse,camera);
-  let hits=raycaster.intersectObjects(Object.values(blocks));
-
-  if(hits.length>0){
-    target=hits[0];
-
-    if(mining){
-      time++;
-      if(time>20){
-        let obj=target.object;
-        let type=obj.userData.type;
-
-        let key=`${obj.position.x},${obj.position.y},${obj.position.z}`;
-        scene.remove(obj);
-        delete blocks[key];
-
-        inventory[selected].count++;
-        renderHotbar();
-        time=0;
-      }
-    }
-  }
-
-  // mobs
-  mobs.forEach(m=>{
-    let dir=camera.position.clone().sub(m.position).normalize();
-    m.position.add(dir.multiplyScalar(0.03));
-
-    if(m.position.distanceTo(camera.position)<1.5){
-      hp-=0.2;
-      updateHUD();
-
-      if(hp<=0){
-        alert("Você morreu!");
-        location.reload();
-      }
-    }
-  });
-
-  renderer.render(scene,camera);
-}
-
-renderHotbar();
-updateHUD();
-animate();
-</script>
-
+            player.style.top = pY + 'px';
+            player.style.left = pX + 'px';
+        });
+    </script>
 </body>
 </html>
