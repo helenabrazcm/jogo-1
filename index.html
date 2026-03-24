@@ -2,24 +2,23 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Stardew Clone - Fixed Map</title>
+    <title>Stardew Clone - Mapa Fixo</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="camera">
+    <div id="viewport">
         <div id="world">
             </div>
         <div id="player">
             <div class="p-hair"></div>
             <div class="p-body"></div>
-            <div class="p-legs"></div>
         </div>
     </div>
 
     <div id="ui">
-        <div class="stats">
+        <div class="status">
             <div id="clock">06:00 AM</div>
-            <div class="energy-container"><div id="energy-bar"></div></div>
+            <div class="energy-slot"><div id="energy-bar"></div></div>
         </div>
         <div class="hotbar">
             <div class="slot active" data-tool="hoe">⛏️</div>
@@ -33,19 +32,18 @@
         const player = document.getElementById('player');
         const energyBar = document.getElementById('energy-bar');
         
-        let pX = 500, pY = 500; // Posição inicial no centro
-        let energy = 100;
-        let selectedTool = 'hoe';
-
-        // 1. Gerar o Mapa (Grid de 20x20 para performance)
-        const size = 20;
+        // Configurações do Mundo
         const tileSize = 80;
+        const mapSize = 20; // 20x20 tiles
+        let pX = 800, pY = 800; // Começa no meio do mapa (20*80 / 2)
+        let energy = 100;
 
-        for (let i = 0; i < size * size; i++) {
+        // Gerar o Chão Corretamente
+        for (let i = 0; i < mapSize * mapSize; i++) {
             const tile = document.createElement('div');
             tile.className = 'tile';
             
-            // Adicionar obstáculos aleatórios
+            // Adicionar árvores aleatórias para teste de visão
             if (Math.random() > 0.9) {
                 const tree = document.createElement('div');
                 tree.className = 'tree';
@@ -53,56 +51,50 @@
             }
 
             tile.onclick = () => {
-                if (energy <= 0) return;
-                if (selectedTool === 'hoe') {
-                    tile.classList.add('plowed');
-                    updateEnergy(-5);
-                }
-                if (selectedTool === 'axe' && tile.querySelector('.tree')) {
+                const tool = document.querySelector('.slot.active').dataset.tool;
+                if (tool === 'hoe') tile.classList.add('plowed');
+                if (tool === 'axe' && tile.querySelector('.tree')) {
                     tile.querySelector('.tree').remove();
-                    updateEnergy(-10);
                 }
+                energy -= 5;
+                energyBar.style.width = energy + '%';
             };
             world.appendChild(tile);
         }
 
-        function updateEnergy(val) {
-            energy = Math.max(0, energy + val);
-            energyBar.style.width = energy + '%';
-        }
-
-        // 2. Movimentação e Câmera
+        // Movimentação
         const keys = {};
         window.onkeydown = (e) => keys[e.key.toLowerCase()] = true;
         window.onkeyup = (e) => keys[e.key.toLowerCase()] = false;
 
-        function gameLoop() {
-            const speed = 4;
+        function update() {
+            const speed = 5;
             if (keys['w']) pY -= speed;
             if (keys['s']) pY += speed;
             if (keys['a']) pX -= speed;
             if (keys['d']) pX += speed;
 
-            // Atualiza posição do jogador
+            // Posiciona o jogador no mundo
             player.style.left = pX + 'px';
             player.style.top = pY + 'px';
 
-            // Câmera: move o "world" no sentido oposto para manter o player no centro
-            world.parentElement.style.transform = `translate(${-pX + window.innerWidth/2}px, ${-pY + window.innerHeight/2}px)`;
+            // MOVE A CÂMERA (Viewport)
+            // Isso centraliza o jogador na tela
+            const camX = -pX + window.innerWidth / 2;
+            const camY = -pY + window.innerHeight / 2;
+            world.parentElement.style.transform = `translate(${camX}px, ${camY}px)`;
 
-            requestAnimationFrame(gameLoop);
+            requestAnimationFrame(update);
         }
+        update();
 
-        // Troca de ferramenta
+        // Seleção de ferramentas
         document.querySelectorAll('.slot').forEach(s => {
             s.onclick = () => {
                 document.querySelectorAll('.slot').forEach(x => x.classList.remove('active'));
                 s.classList.add('active');
-                selectedTool = s.dataset.tool;
             };
         });
-
-        gameLoop();
     </script>
 </body>
 </html>
