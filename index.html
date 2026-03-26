@@ -102,3 +102,76 @@
     </script>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stardew Adventure</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <div id="world">
+            <div id="ground"></div>
+            <div id="player"></div>
+        </div>
+    </div>
+
+    <div id="ui">
+        <div class="inventory">
+            <div class="slot active" data-tool="hoe">⛏️</div>
+            <div class="slot" data-tool="seed">🌱</div>
+            <div class="slot" data-tool="water">💧</div>
+        </div>
+        <div id="energy-meter"><div id="energy-fill"></div></div>
+    </div>
+
+    <script>
+        const world = document.getElementById('world');
+        const player = document.getElementById('player');
+        const energyFill = document.getElementById('energy-fill');
+        
+        let pX = 400, pY = 400;
+        let energy = 100;
+        let frame = 0;
+        let direction = 0; // 0: frente, 1: esquerda, 2: direita, 3: costas
+        let isWalking = false;
+
+        // Criar o chão
+        for (let i = 0; i < 400; i++) {
+            const tile = document.createElement('div');
+            tile.className = 'tile';
+            tile.onclick = () => {
+                if(energy > 0) {
+                    tile.classList.add('plowed');
+                    energy -= 2;
+                    energyFill.style.height = energy + "%";
+                }
+            };
+            document.getElementById('ground').appendChild(tile);
+        }
+
+        const keys = {};
+        window.onkeydown = (e) => keys[e.key.toLowerCase()] = true;
+        window.onkeyup = (e) => keys[e.key.toLowerCase()] = false;
+
+        function gameLoop() {
+            isWalking = false;
+            if (keys['w']) { pY -= 4; direction = 3; isWalking = true; }
+            if (keys['s']) { pY += 4; direction = 0; isWalking = true; }
+            if (keys['a']) { pX -= 4; direction = 1; isWalking = true; }
+            if (keys['d']) { pX += 4; direction = 2; isMoving = true; direction = 2; isWalking = true; }
+
+            if (isWalking) {
+                // Alterna entre os 4 frames da imagem original
+                frame = (Math.floor(Date.now() / 150) % 4);
+            } else {
+                frame = 0; // Frame de parado
+            }
+
+            // AJUSTE DO SPRITE: 
+            // Cada frame tem aprox. 48px na imagem original
+            let spriteW = 48; 
+            let spriteH = 48;
+            player.style.backgroundPosition = `-${frame * spriteW}px -${direction * spriteH}px`;
