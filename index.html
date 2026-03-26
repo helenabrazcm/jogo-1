@@ -2,10 +2,12 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stardew Ultra Realistic</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
     <div id="game-container">
         <div id="world">
             <div id="ground"></div>
@@ -13,13 +15,14 @@
                 <div id="player"></div>
             </div>
         </div>
-        <div id="vignette"></div> </div>
+        <div id="vignette"></div>
+    </div>
 
     <div id="ui">
         <div class="hotbar">
-            <div class="slot active" data-tool="hoe">⛏️</div>
-            <div class="slot" data-tool="seed">🌱</div>
-            <div class="slot" data-tool="water">💧</div>
+            <div class="slot active">⛏️</div>
+            <div class="slot">🌱</div>
+            <div class="slot">💧</div>
         </div>
     </div>
 
@@ -27,67 +30,67 @@
         const world = document.getElementById('world');
         const player = document.getElementById('player');
         const ground = document.getElementById('ground');
+        const entities = document.getElementById('entities');
         
         let pX = 800, pY = 800;
         let frame = 0;
-        let direction = 0; // 0: Down, 1: Left, 2: Right, 3: Up
+        let direction = 0; // 0: Down, 1: Up, 2: Left, 3: Right
         let isMoving = false;
         let lastTime = 0;
 
-        // Criar o chão detalhado
+        // Gerar o grid de terra (20x20)
         for (let i = 0; i < 400; i++) {
             const tile = document.createElement('div');
             tile.className = 'tile';
-            tile.onclick = () => {
+            tile.onclick = (e) => {
                 tile.classList.add('plowed');
-                createDust(pX, pY);
+                // Partícula de poeira na posição do clique
+                const rect = world.getBoundingClientRect();
+                createDust(e.pageX - rect.left, e.pageY - rect.top);
             };
             ground.appendChild(tile);
         }
 
         const keys = {};
-        window.onkeydown = (e) => keys[e.key.toLowerCase()] = true;
-        window.onkeyup = (e) => keys[e.key.toLowerCase()] = false;
+        window.addEventListener('keydown', (e) => keys[e.key.toLowerCase()] = true);
+        window.addEventListener('keyup', (e) => keys[e.key.toLowerCase()] = false);
 
         function createDust(x, y) {
             const dust = document.createElement('div');
             dust.className = 'dust';
-            dust.style.left = x + 'px';
-            dust.style.top = y + 'px';
-            document.getElementById('entities').appendChild(dust);
-            setTimeout(() => dust.remove(), 500);
+            dust.style.left = (x - 4) + 'px';
+            dust.style.top = (y - 4) + 'px';
+            entities.appendChild(dust);
+            setTimeout(() => dust.remove(), 600);
         }
 
         function gameLoop(timestamp) {
             isMoving = false;
-            const speed = 3.5;
+            const speed = 4;
 
-            if (keys['w']) { pY -= speed; direction = 3; isMoving = true; }
-            if (keys['s']) { pY += speed; direction = 0; isMoving = true; }
-            if (keys['a']) { pX -= speed; direction = 1; isMoving = true; }
-            if (keys['d']) { pX += speed; direction = 2; isMoving = true; }
+            if (keys['w']) { pY -= speed; direction = 1; isMoving = true; }
+            else if (keys['s']) { pY += speed; direction = 0; isMoving = true; }
+            
+            if (keys['a']) { pX -= speed; direction = 2; isMoving = true; }
+            else if (keys['d']) { pX += speed; direction = 3; isMoving = true; }
 
-            // Animação de Sprite baseada no tempo
+            // Animação de Sprite
             if (isMoving) {
-                if (timestamp - lastTime > 120) {
-                    frame = (frame + 1) % 4; // Assume 4 frames de animação por linha
+                if (timestamp - lastTime > 100) {
+                    frame = (frame + 1) % 4;
                     lastTime = timestamp;
                 }
             } else {
                 frame = 0;
             }
 
-            // Cálculo do Sprite Sheet (Ajustado para o link enviado)
-            // Cada frame tem aprox 48px a 64px na imagem original
-            const spriteW = 64; 
-            const spriteH = 64;
-            player.style.backgroundPosition = `-${frame * spriteW}px -${direction * spriteH}px`;
-            
+            const spriteSize = 64;
+            player.style.backgroundPosition = `-${frame * spriteSize}px -${direction * spriteSize}px`;
             player.style.left = pX + 'px';
             player.style.top = pY + 'px';
             player.style.zIndex = Math.floor(pY);
 
-            // Câmera Suave
+            // Câmera segue o jogador
             const camX = -pX + window.innerWidth / 2;
             const camY = -pY + window.innerHeight / 2;
             world.style.transform = `translate(${camX}px, ${camY}px)`;
