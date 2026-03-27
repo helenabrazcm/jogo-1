@@ -1,44 +1,69 @@
-body { margin: 0; overflow: hidden; background: #222; font-family: sans-serif; }
+:root {
+    --grass: #5ba339;
+    --dirt: #6d4c41;
+    --water: #3498db;
+}
+
+body { margin: 0; overflow: hidden; background: #222; font-family: 'Segoe UI', sans-serif; }
 
 #game-container { width: 100vw; height: 100vh; position: relative; }
-#world { position: absolute; width: 1600px; height: 1600px; transition: transform 0.05s linear; }
+#world { position: absolute; width: 1600px; height: 1600px; }
 
 #ground { 
     position: absolute; width: 100%; height: 100%; 
-    background: #5ba339; 
-    display: grid; grid-template: repeat(20, 80px) / repeat(20, 80px);
+    background: var(--grass);
+    background-image: radial-gradient(rgba(0,0,0,0.1) 10%, transparent 10%);
+    background-size: 40px 40px;
 }
 
-.tile { width: 80px; height: 80px; border: 1px solid rgba(0,0,0,0.05); position: relative; }
-.plowed { background: #6d4c41 !important; box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3); }
+.tile { width: 80px; height: 80px; position: absolute; border: 1px solid rgba(0,0,0,0.02); }
+.plowed { background: var(--dirt); box-shadow: inset 2px 2px 10px rgba(0,0,0,0.3); }
+.wet { background: #3e2723 !important; border: 2px solid var(--water); }
 
-/* PERSONAGEM */
-#player {
-    position: absolute;
-    width: 48px; height: 48px;
-    background-size: 192px 192px; /* Ajuste para ler 4x4 frames */
-    image-rendering: pixelated;
-    /* O 'background-image' é definido no JS */
+/* Personagem e Animais */
+.entity { position: absolute; transition: transform 0.1s; }
+#player { 
+    width: 40px; height: 50px; background: #ffccbc; 
+    border-radius: 8px; border-bottom: 8px solid #2c3e50;
+}
+
+.animal { 
+    left: 600px; top: 300px; cursor: pointer;
+    width: 60px; height: 45px; background: white;
+    border: 3px solid #333; border-radius: 10px;
+}
+.cow-body { width: 100%; height: 100%; position: relative; }
+.cow-body::before { content: "⚫"; position: absolute; top: 5px; left: 10px; font-size: 10px; }
+.bubble { 
+    position: absolute; top: -30px; left: 0; background: white; 
+    padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: bold;
+}
+
+/* Plantações */
+.crop { width: 20px; margin: 0 auto; transition: all 0.5s; }
+.stage-1 { height: 10px; background: #aed581; margin-top: 50px; }
+.stage-2 { height: 30px; background: #8bc34a; margin-top: 30px; }
+.stage-3 { 
+    height: 50px; background: #f1c40f; margin-top: 10px; 
+    border-radius: 10px 10px 0 0; border: 2px solid #e67e22; 
 }
 
 /* UI */
-#ui { position: fixed; width: 100%; height: 100%; pointer-events: none; }
+#ui { position: fixed; width: 100%; bottom: 0; pointer-events: none; }
 .stats { 
-    position: absolute; top: 20px; right: 20px; 
-    background: #fdf5e6; border: 4px solid #5d4037; padding: 10px; border-radius: 8px;
+    position: fixed; top: 20px; left: 20px; background: #fdf5e6;
+    border: 4px solid #5d4037; padding: 10px; border-radius: 10px;
+    display: flex; gap: 20px; font-weight: bold;
 }
-.bar-container { width: 100px; height: 10px; background: #ccc; border: 2px solid #5d4037; margin: 5px 0; }
-#energy-bar { height: 100%; background: #4caf50; width: 100%; transition: 0.3s; }
-
-.inventory { 
-    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); 
-    display: flex; background: #fdf5e6; padding: 5px; border: 4px solid #5d4037; pointer-events: all;
+.hotbar { 
+    display: flex; gap: 10px; background: #fdf5e6; padding: 10px; 
+    border: 4px solid #5d4037; border-radius: 15px 15px 0 0;
+    margin: 0 auto; width: fit-content; pointer-events: all;
 }
 .slot { 
-    width: 50px; height: 50px; border: 2px solid #bcaaa4; margin: 2px; 
-    display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 24px;
+    width: 60px; height: 60px; border: 2px solid #bcaaa4;
+    display: flex; flex-direction: column; align-items: center; 
+    justify-content: center; cursor: pointer; font-size: 20px;
 }
-.slot.active { border-color: #f1c40f; background: #fff; transform: scale(1.1); }
-
-.crop { width: 20px; height: 20px; background: #2ecc71; margin: 30px auto; border-radius: 50% 50% 0 0; animation: grow 5s; }
-@keyframes grow { from { transform: scale(0); } to { transform: scale(1); } }
+.slot.active { background: white; border-color: #f1c40f; transform: translateY(-5px); }
+#msg { position: fixed; bottom: 100px; width: 100%; text-align: center; color: white; text-shadow: 2px 2px #000; }
