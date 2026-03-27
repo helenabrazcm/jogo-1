@@ -1,131 +1,44 @@
-:root {
-    --green: #4caf50;
-    --dark-green: #388e3c;
-    --brown: #5d4037;
-    --tile-size: 80px;
-    --sprite-size: 64px;
+body { margin: 0; overflow: hidden; background: #222; font-family: sans-serif; }
+
+#game-container { width: 100vw; height: 100vh; position: relative; }
+#world { position: absolute; width: 1600px; height: 1600px; transition: transform 0.05s linear; }
+
+#ground { 
+    position: absolute; width: 100%; height: 100%; 
+    background: #5ba339; 
+    display: grid; grid-template: repeat(20, 80px) / repeat(20, 80px);
 }
 
-body {
-    margin: 0;
-    overflow: hidden;
-    background: #1a1a1a;
-}
+.tile { width: 80px; height: 80px; border: 1px solid rgba(0,0,0,0.05); position: relative; }
+.plowed { background: #6d4c41 !important; box-shadow: inset 2px 2px 5px rgba(0,0,0,0.3); }
 
-#game-container {
-    width: 100vw;
-    height: 100vh;
-    position: relative;
-    overflow: hidden;
-}
-
-#world {
-    position: absolute;
-    width: 1600px;
-    height: 1600px;
-    /* Transição suave para evitar "stuttering" da câmera */
-    transition: transform 0.1s linear;
-}
-
-#ground {
-    display: grid;
-    grid-template-columns: repeat(20, var(--tile-size));
-    grid-template-rows: repeat(20, var(--tile-size));
-    background: var(--green);
-    background-image: 
-        radial-gradient(circle at 10% 20%, var(--dark-green) 1px, transparent 1px),
-        radial-gradient(circle at 50% 50%, var(--dark-green) 1px, transparent 1px);
-    background-size: 30px 30px;
-}
-
-.tile {
-    width: var(--tile-size);
-    height: var(--tile-size);
-    border: 1px solid rgba(0,0,0,0.03);
-    box-sizing: border-box;
-    transition: background 0.3s;
-}
-
-.plowed {
-    background: var(--brown) !important;
-    box-shadow: inset 0 0 15px rgba(0,0,0,0.4);
-}
-
-/* PERSONAGEM NINJA */
+/* PERSONAGEM */
 #player {
     position: absolute;
-    width: var(--sprite-size);
-    height: var(--sprite-size);
-    background-image: url('https://raw.githubusercontent.com/flower-f/Pixel-Art-Assets/master/Character_Sprites/Ninja/Ninja_Sheet.png');
-    background-repeat: no-repeat;
-    background-size: calc(var(--sprite-size) * 4); 
+    width: 48px; height: 48px;
+    background-size: 192px 192px; /* Ajuste para ler 4x4 frames */
     image-rendering: pixelated;
-    /* Centraliza o pé do boneco no ponto de colisão */
-    transform: translate(-32px, -48px);
-    pointer-events: none;
+    /* O 'background-image' é definido no JS */
 }
 
-/* Sombra circular sob o personagem */
-#player::after {
-    content: "";
-    position: absolute;
-    bottom: 4px;
-    left: 16px;
-    width: 32px;
-    height: 12px;
-    background: rgba(0,0,0,0.3);
-    border-radius: 50%;
-    z-index: -1;
+/* UI */
+#ui { position: fixed; width: 100%; height: 100%; pointer-events: none; }
+.stats { 
+    position: absolute; top: 20px; right: 20px; 
+    background: #fdf5e6; border: 4px solid #5d4037; padding: 10px; border-radius: 8px;
 }
+.bar-container { width: 100px; height: 10px; background: #ccc; border: 2px solid #5d4037; margin: 5px 0; }
+#energy-bar { height: 100%; background: #4caf50; width: 100%; transition: 0.3s; }
 
-#vignette {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: radial-gradient(circle, transparent 30%, rgba(0,0,0,0.5) 100%);
-    pointer-events: none;
+.inventory { 
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); 
+    display: flex; background: #fdf5e6; padding: 5px; border: 4px solid #5d4037; pointer-events: all;
 }
+.slot { 
+    width: 50px; height: 50px; border: 2px solid #bcaaa4; margin: 2px; 
+    display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 24px;
+}
+.slot.active { border-color: #f1c40f; background: #fff; transform: scale(1.1); }
 
-/* INTERFACE (UI) */
-.hotbar {
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 12px;
-    background: #fdf5e6;
-    padding: 10px;
-    border: 4px solid var(--brown);
-    border-radius: 12px;
-    box-shadow: 0 6px 0 #3e2723;
-}
-
-.slot {
-    width: 55px; height: 55px;
-    background: #fff;
-    border: 2px solid #bcaaa4;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 26px; cursor: pointer; border-radius: 8px;
-}
-
-.slot.active {
-    border-color: #f1c40f;
-    transform: scale(1.1) translateY(-5px);
-    background: #fffde7;
-    box-shadow: 0 4px 0 #f1c40f;
-}
-
-/* PARTÍCULAS DE POEIRA */
-.dust {
-    position: absolute;
-    width: 8px; height: 8px;
-    background: #8d6e63;
-    border-radius: 50%;
-    animation: puff 0.6s ease-out forwards;
-    pointer-events: none;
-}
-
-@keyframes puff {
-    0% { transform: scale(1); opacity: 0.8; }
-    100% { transform: translateY(-30px) scale(3); opacity: 0; }
-}
+.crop { width: 20px; height: 20px; background: #2ecc71; margin: 30px auto; border-radius: 50% 50% 0 0; animation: grow 5s; }
+@keyframes grow { from { transform: scale(0); } to { transform: scale(1); } }
