@@ -2,130 +2,108 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Pixel Farm: Harvest & Animals</title>
+    <title>Mini Farm: Deluxe Edition</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="game-container">
+    <div id="game-viewport">
         <div id="world">
             <div id="ground"></div>
             <div id="entities">
-                <div id="player" class="entity">
-                    <div class="p-sprite"></div>
+                <div id="player">
+                    <div class="p-hair"></div>
+                    <div class="p-face"><div class="eye l"></div><div class="eye r"></div></div>
+                    <div class="p-body"></div>
                 </div>
-                <div id="cow" class="entity animal" onclick="interactAnimal()">
-                    <div class="cow-body"></div>
-                    <span class="bubble">🐮 Moo!</span>
+                <div id="cow" onclick="collectMilk()">
+                    <div class="cow-head"></div>
+                    <div class="cow-spots"></div>
+                    <div class="cow-ears"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <div id="ui">
-        <div class="stats">
-            <div class="stat-item">💰 <span id="money">0</span></div>
-            <div class="stat-item">🥛 <span id="milk">0</span></div>
-            <div class="stat-item">🌽 <span id="crops">0</span></div>
+        <div class="inventory">
+            <div class="slot active" data-tool="hoe">⛏️</div>
+            <div class="slot" data-tool="seed">🌱</div>
+            <div class="slot" data-tool="water">💧</div>
+            <div class="slot" data-tool="hand">✋</div>
         </div>
-        <div class="hotbar">
-            <div class="slot active" data-tool="hoe">⛏️<small>Enxada</small></div>
-            <div class="slot" data-tool="seed">🌱<small>Semente</small></div>
-            <div class="slot" data-tool="water">💧<small>Regar</small></div>
-            <div class="slot" data-tool="hand">✋<small>Colher</small></div>
+        <div class="counters">
+            <span>🥛 <b id="c-milk">0</b></span>
+            <span>🌽 <b id="c-crops">0</b></span>
         </div>
-        <div id="msg">Use WASD para andar e clique para interagir!</div>
     </div>
 
     <script>
         const world = document.getElementById('world');
-        const player = document.getElementById('player');
         const ground = document.getElementById('ground');
+        const player = document.getElementById('player');
         
         let pX = 400, pY = 400;
-        let resources = { money: 0, milk: 0, crops: 0 };
         let selectedTool = 'hoe';
+        let milk = 0, crops = 0;
 
-        // 1. Gerar o Mapa Detalhado
+        // Gerar o chão com detalhes
         for (let i = 0; i < 400; i++) {
-            const x = (i % 20) * 80;
-            const y = Math.floor(i / 20) * 80;
             const tile = document.createElement('div');
             tile.className = 'tile';
-            tile.style.left = x + 'px';
-            tile.style.top = y + 'px';
-            tile.dataset.state = 'grass'; // grass, plowed, watered, seeded, ready
-            
-            tile.onclick = () => handleTileClick(tile);
+            tile.style.left = (i % 20) * 80 + 'px';
+            tile.style.top = Math.floor(i / 20) * 80 + 'px';
+            tile.dataset.state = 'grass';
+            tile.onclick = () => interactTile(tile);
             ground.appendChild(tile);
         }
 
-        function handleTileClick(tile) {
-            const state = tile.dataset.state;
-
-            if (selectedTool === 'hoe' && state === 'grass') {
+        function interactTile(tile) {
+            if (selectedTool === 'hoe' && tile.dataset.state === 'grass') {
                 tile.dataset.state = 'plowed';
-                tile.className = 'tile plowed';
-            } 
-            else if (selectedTool === 'seed' && state === 'plowed') {
+                tile.classList.add('plowed');
+            } else if (selectedTool === 'seed' && tile.dataset.state === 'plowed') {
                 tile.dataset.state = 'seeded';
-                tile.innerHTML = '<div class="crop stage-1"></div>';
-                startGrowth(tile);
-            } 
-            else if (selectedTool === 'water' && (state === 'plowed' || state === 'seeded')) {
+                tile.innerHTML = '<div class="plant stage1"></div>';
+            } else if (selectedTool === 'water' && tile.dataset.state === 'seeded') {
                 tile.classList.add('wet');
-            } 
-            else if (selectedTool === 'hand' && state === 'ready') {
-                resources.crops++;
-                updateUI();
+                setTimeout(() => grow(tile), 3000);
+            } else if (selectedTool === 'hand' && tile.dataset.state === 'ready') {
+                crops++;
+                document.getElementById('c-crops').innerText = crops;
                 tile.dataset.state = 'plowed';
-                tile.className = 'tile plowed';
                 tile.innerHTML = '';
             }
         }
 
-        function startGrowth(tile) {
-            setTimeout(() => {
-                if(tile.classList.contains('wet')) {
-                    const crop = tile.querySelector('.crop');
-                    crop.className = 'crop stage-2';
-                    tile.classList.remove('wet');
-                    setTimeout(() => {
-                        crop.className = 'crop stage-3';
-                        tile.dataset.state = 'ready';
-                    }, 5000);
-                }
-            }, 5000);
+        function grow(tile) {
+            const p = tile.querySelector('.plant');
+            if (p) {
+                p.className = 'plant stage2';
+                setTimeout(() => { 
+                    p.className = 'plant stage3'; 
+                    tile.dataset.state = 'ready';
+                }, 3000);
+            }
         }
 
-        function interactAnimal() {
-            resources.milk++;
-            updateUI();
-            const bubble = document.querySelector('.bubble');
-            bubble.innerText = "❤️ +1 Leite!";
-            setTimeout(() => bubble.innerText = "🐮 Moo!", 2000);
+        function collectMilk() {
+            milk++;
+            document.getElementById('c-milk').innerText = milk;
+            const cow = document.getElementById('cow');
+            cow.style.transform = "scale(1.1)";
+            setTimeout(() => cow.style.transform = "scale(1)", 200);
         }
 
-        function updateUI() {
-            document.getElementById('money').innerText = resources.money;
-            document.getElementById('milk').innerText = resources.milk;
-            document.getElementById('crops').innerText = resources.crops;
-        }
-
-        // 2. Movimentação e Câmera
+        // Movimentação
         const keys = {};
-        window.onkeydown = (e) => keys[e.key.toLowerCase()] = true;
-        window.onkeyup = (e) => keys[e.key.toLowerCase()] = false;
+        window.onkeydown = e => keys[e.key.toLowerCase()] = true;
+        window.onkeyup = e => keys[e.key.toLowerCase()] = false;
 
         function loop() {
-            if (keys['w']) pY -= 4;
-            if (keys['s']) pY += 4;
-            if (keys['a']) pX -= 4;
-            if (keys['d']) pX += 4;
-
+            if (keys['w']) pY -= 5; if (keys['s']) pY += 5;
+            if (keys['a']) pX -= 5; if (keys['d']) pX += 5;
             player.style.left = pX + 'px';
             player.style.top = pY + 'px';
-            player.style.zIndex = Math.floor(pY);
-
             world.style.transform = `translate(${-pX + window.innerWidth/2}px, ${-pY + window.innerHeight/2}px)`;
             requestAnimationFrame(loop);
         }
