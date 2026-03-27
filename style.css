@@ -1,268 +1,61 @@
 :root {
-    --grass: #78ab46;
-    --dirt: #6d4c41;
-    --ui-bg: #fdf5e6;
-    --brown: #5d4037;
-    --gold: #f1c40f;
+    --ui-panel: #fdf5e6;
+    --border: #5d4037;
 }
 
-body { 
-    margin: 0; 
-    overflow: hidden; 
-    background: #222; 
-    font-family: 'Verdana', sans-serif; 
-}
+body { margin: 0; overflow: hidden; background: #222; font-family: 'Courier New', Courier, monospace; }
 
-#viewport { 
-    width: 100vw; 
-    height: 100vh; 
-    position: relative; 
-}
-
-#world { 
-    position: absolute; 
-    width: 2000px; 
-    height: 2000px; 
-    background: var(--grass);
-    background-image: radial-gradient(rgba(0,0,0,0.05) 10%, transparent 10%);
-    background-size: 40px 40px;
-}
-
-/* PERSONAGEM */
-#player { 
-    position: absolute; 
-    width: 40px; 
-    height: 45px; 
-    z-index: 100; 
-}
-
-.p-skin { 
-    width: 34px; 
-    height: 30px; 
-    background: #ffdbac; 
-    border-radius: 10px; 
-    position: absolute; 
-    top: -15px; 
-    left: 3px; 
-    border: 2px solid var(--brown); 
-}
-
-.p-shirt { 
-    width: 100%; 
-    height: 100%; 
-    background: #3498db; 
-    border-radius: 8px; 
-    border-bottom: 6px solid #2c3e50; 
-}
-
-.eye { 
-    width: 4px; 
-    height: 4px; 
-    background: #333; 
-    position: absolute; 
-    top: 12px; 
-    border-radius: 50%; 
-}
-
-/* ANIMAIS */
-.animal { 
-    position: absolute; 
-    cursor: pointer; 
-    transition: 0.3s; 
-    z-index: 50; 
-}
-
-.cow { 
-    width: 70px; 
-    height: 50px; 
-    background: white; 
-    border-radius: 15px; 
-    border: 3px solid #ddd;
-    background-image: radial-gradient(#333 20%, transparent 21%); 
-    background-size: 30px 30px; 
-}
-
-.chicken { 
-    width: 30px; 
-    height: 30px; 
-    background: #fff; 
-    border-radius: 50% 50% 10px 10px; 
-    border: 2px solid #e67e22; 
-}
-
-.chicken::before { 
-    content: "▼"; 
-    color: orange; 
-    position: absolute; 
-    left: 25px; 
-    top: 10px; 
-    font-size: 10px; 
-}
-
-/* CAIXA DE VENDA */
-#shipping-bin {
-    position: absolute; 
-    left: 800px; 
-    top: 600px; 
-    width: 120px; 
-    height: 80px;
-    background: #8b4513; 
-    border: 4px solid #5d4037; 
-    border-radius: 5px;
-    box-shadow: 0 10px 0 #3e2723; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center;
-    color: white; 
-    font-size: 12px;
-    text-align: center;
-    font-weight: bold; 
-    cursor: pointer; 
-    z-index: 60;
-}
-
-/* TILES E PLANTAS */
-.tile { 
-    position: absolute; 
-    width: 80px; 
-    height: 80px; 
-}
-
-.plowed { 
-    background: var(--dirt) !important; 
-    border-radius: 5px; 
-    box-shadow: inset 0 0 10px #000; 
-}
-
-.wet { 
-    background: #3e2723 !important; 
-    border: 2px solid #3498db; 
-}
-
-.plant { 
-    width: 30px; 
-    margin: 0 auto; 
-    position: relative; 
-    top: 15px; 
-}
-
-.stage3 { 
-    height: 50px; 
-    background: #f1c40f; 
-    border: 3px solid #e67e22; 
-    border-radius: 15px 15px 0 0; 
-    box-shadow: 0 0 15px var(--gold); 
-}
-
-/* UI */
-#hud { 
-    position: fixed; 
-    top: 20px; 
-    left: 20px; 
-    background: var(--ui-bg); 
-    border: 4px solid var(--brown); 
-    padding: 15px; 
-    border-radius: 10px; 
-    z-index: 1000; 
-}
-
-#ui { 
-    position: fixed; 
-    bottom: 20px; 
-    width: 100%; 
-    display: flex; 
-    justify-content: center; 
-    z-index: 1000; 
-}
-
-.hotbar { 
-    display: flex; 
-    background: var(--ui-bg); 
-    padding: 10px; 
-    border: 4px solid var(--brown); 
-    border-radius: 15px; 
-    pointer-events: all; 
-    gap: 10px; 
-}
-
-.slot { 
-    width: 60px; 
-    height: 60px; 
-    background: white; 
-    border: 2px solid #bcaaa4; 
-    border-radius: 10px; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    font-size: 25px; 
-    cursor: pointer; 
-    position: relative; 
-}
-
-.slot.active { 
-    border: 4px solid var(--gold); 
-    transform: translateY(-10px); 
-    background: #fffde7; 
-}
-
-:root {
-    --grass: #78ab46;
-    --dirt: #6d4c41;
-    --ui: #fdf5e6;
-    --brown: #5d4037;
-}
-
-body { margin: 0; overflow: hidden; background: #111; font-family: sans-serif; }
-
-/* Filtro Dia/Noite */
+/* Filtro de Tempo */
 #day-night-filter {
     position: fixed; width: 100vw; height: 100vh;
-    pointer-events: none; z-index: 200; transition: background 3s;
+    pointer-events: none; z-index: 500; transition: background 5s;
 }
 
-#world { position: absolute; width: 1600px; height: 1600px; background: var(--grass); }
+/* Ranking */
+#leaderboard {
+    position: fixed; top: 20px; right: 20px;
+    background: var(--ui-panel); border: 4px solid var(--border);
+    padding: 10px; z-index: 600; border-radius: 8px; width: 180px;
+}
 
-/* NPC */
+/* Mundo e Chão */
+#world { position: absolute; width: 2000px; height: 2000px; background-color: #78ab46; }
+
+.tile { position: absolute; width: 80px; height: 80px; background-size: cover; }
+.plowed { background-color: #6d4c41; border-radius: 4px; box-shadow: inset 0 0 10px #000; }
+.wet { border: 3px solid #3498db; box-sizing: border-box; }
+
+/* PERSONAGEM (Troque a URL pela sua imagem) */
+#player {
+    position: absolute; width: 48px; height: 48px;
+    background-image: url('https://vignette.wikia.nocookie.net/stardewvalley/images/a/ac/Farmer.png');
+    background-size: contain; background-repeat: no-repeat;
+    z-index: 100; transition: transform 0.1s;
+}
+
 .npc {
-    position: absolute; left: 1000px; top: 500px;
-    width: 40px; height: 45px; background: #e67e22;
-    border-radius: 8px; cursor: pointer; z-index: 50;
-}
-.npc-hat { width: 44px; height: 10px; background: #333; position: absolute; top: -5px; left: -2px; }
-
-/* Cerca */
-.fence-obj {
-    width: 100%; height: 20px; background: #8b4513;
-    border: 2px solid #5d4037; margin-top: 30px;
+    position: absolute; left: 1000px; top: 800px; width: 48px; height: 48px;
+    background-image: url('https://stardewvalleywiki.com/mediawiki/images/0/07/Pierre.png');
+    background-size: contain; cursor: pointer;
 }
 
-/* Inventário */
-#inventory-screen {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.8); z-index: 2000;
+/* INVENTÁRIO (Abaixo de tudo, mas centralizado na tela) */
+#inventory-overlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.7); z-index: 2000;
     display: flex; justify-content: center; align-items: center;
 }
-.inv-content {
-    background: var(--ui); padding: 30px; border: 5px solid var(--brown);
-    border-radius: 15px; text-align: center; min-width: 300px;
+.inventory-window {
+    background: var(--ui-panel); border: 6px solid var(--border);
+    padding: 20px; border-radius: 15px; width: 400px; text-align: center;
 }
 .hidden { display: none !important; }
 
-/* Estágios de Planta */
-.plant { width: 20px; margin: 0 auto; position: relative; top: 15px; border-radius: 5px; }
-.stage1 { height: 10px; background: #aed581; }
-.stage3 { height: 45px; background: #f1c40f; border: 2px solid #e67e22; border-radius: 10px 10px 0 0; }
+/* UI */
+#hud { position: fixed; top: 20px; left: 20px; z-index: 600; }
+.stats-box { background: var(--ui-panel); border: 4px solid var(--border); padding: 10px; border-radius: 8px; font-weight: bold; }
 
-/* HUD e Hotbar */
-#hud { position: fixed; top: 20px; left: 20px; background: var(--ui); border: 4px solid var(--brown); padding: 10px; border-radius: 10px; z-index: 500; }
-#ui { position: fixed; bottom: 10px; width: 100%; text-align: center; z-index: 500; }
-.hotbar { display: inline-flex; background: var(--ui); padding: 10px; border: 4px solid var(--brown); border-radius: 15px; gap: 8px; pointer-events: all; }
-.slot { width: 50px; height: 50px; background: white; border: 2px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; }
-.slot.active { border-color: #f1c40f; transform: translateY(-5px); background: #fffde7; }
-
-/* Player */
-#player { position: absolute; width: 36px; height: 42px; z-index: 100; }
-.p-shirt { width: 100%; height: 100%; background: #3498db; border-radius: 6px; }
-.p-skin { width: 30px; height: 28px; background: #ffdbac; border-radius: 8px; position: absolute; top: -15px; left: 3px; border: 2px solid var(--brown); }
-.eye { width: 4px; height: 4px; background: #333; position: absolute; top: 10px; border-radius: 50%; }
-.eye.l { left: 6px; } .eye.r { right: 6px; }
+#ui-container { position: fixed; bottom: 20px; width: 100%; display: flex; justify-content: center; z-index: 600; }
+.hotbar { display: flex; background: var(--ui-panel); border: 4px solid var(--border); padding: 10px; border-radius: 12px; gap: 8px; pointer-events: all; }
+.slot { width: 60px; height: 60px; background: white; border: 2px solid #ccc; display: flex; align-items: center; justify-content: center; font-size: 30px; cursor: pointer; border-radius: 8px; }
+.slot.active { border: 4px solid #f1c40f; transform: translateY(-10px); background: #fffde7; }

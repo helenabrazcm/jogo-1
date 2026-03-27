@@ -1,1 +1,91 @@
 
+const world = document.getElementById('world');
+const player = document.getElementById('player');
+const filter = document.getElementById('day-night-filter');
+
+let pX = 800, pY = 800;
+let tool = 'hoe';
+let stats = { gold: 100, xp: 0, lvl: 1, corn: 0, milk: 0, eggs: 0 };
+let hour = 6;
+const keys = {};
+
+// Gerar Mapa
+for (let i = 0; i < 400; i++) {
+    const tile = document.createElement('div');
+    tile.className = 'tile';
+    tile.style.left = (i % 20) * 80 + 'px';
+    tile.style.top = Math.floor(i / 20) * 80 + 'px';
+    
+    tile.onclick = () => {
+        if (tool === 'hoe' && !tile.dataset.state) {
+            tile.dataset.state = 'plowed';
+            tile.classList.add('plowed');
+        } else if (tool === 'seed' && tile.dataset.state === 'plowed') {
+            tile.dataset.state = 'seeded';
+            tile.innerHTML = '🌱';
+            tile.style.display = 'flex';
+            tile.style.justifyContent = 'center';
+            tile.style.alignItems = 'center';
+        } else if (tool === 'water' && tile.dataset.state === 'seeded') {
+            tile.classList.add('wet');
+            setTimeout(() => {
+                tile.innerHTML = '🌽';
+                tile.dataset.state = 'ready';
+                tile.classList.remove('wet');
+            }, 4000);
+        } else if (tool === 'hand' && tile.dataset.state === 'ready') {
+            stats.corn++;
+            stats.gold += 20;
+            tile.innerHTML = '';
+            tile.dataset.state = 'plowed';
+            updateUI();
+        }
+    };
+    document.getElementById('grid').appendChild(tile);
+}
+
+function updateUI() {
+    document.getElementById('m-gold').innerText = stats.gold;
+    document.getElementById('m-lvl').innerText = stats.lvl;
+    document.getElementById('inv-corn').innerText = stats.corn;
+    document.getElementById('rank-gold').innerText = stats.gold;
+}
+
+function toggleInventory() {
+    document.getElementById('inventory-overlay').classList.toggle('hidden');
+}
+
+function talk(msg) { alert(msg); }
+
+function setTool(t, el) {
+    tool = t;
+    document.querySelectorAll('.slot').forEach(s => s.classList.remove('active'));
+    el.classList.add('active');
+}
+
+// Ciclo Dia/Noite
+setInterval(() => {
+    hour++;
+    if (hour > 24) hour = 0;
+    document.getElementById('clock').innerText = `${hour.toString().padStart(2, '0')}:00 ${hour < 12 ? 'AM' : 'PM'}`;
+    filter.style.background = (hour >= 19 || hour <= 5) ? "rgba(0, 0, 50, 0.4)" : "transparent";
+}, 10000);
+
+// Movimentação
+window.onkeydown = e => {
+    keys[e.key.toLowerCase()] = true;
+    if (e.key.toLowerCase() === 'e') toggleInventory();
+};
+window.onkeyup = e => keys[e.key.toLowerCase()] = false;
+
+function loop() {
+    if (keys['w']) pY -= 5; if (keys['s']) pY += 5;
+    if (keys['a']) { pX -= 5; player.style.transform = 'scaleX(-1)'; }
+    if (keys['d']) { pX += 5; player.style.transform = 'scaleX(1)'; }
+
+    player.style.left = pX + 'px';
+    player.style.top = pY + 'px';
+    world.style.transform = `translate(${-pX + window.innerWidth/2}px, ${-pY + window.innerHeight/2}px)`;
+    requestAnimationFrame(loop);
+}
+loop();
