@@ -2,35 +2,43 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stardew JS: Expanded Farm</title>
+    <title>Stardew JS: Pro Edition</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+<div id="day-night-filter"></div>
+
 <div id="hud">
-    💰 Ouro: <span id="m-gold">100</span> | 
-    📦 Cesta: <span id="m-basket">0</span> itens
+    <div>💰 <span id="m-gold">100</span> | ⭐ Nível: <span id="m-lvl">1</span></div>
+    <div id="clock">06:00 AM</div>
 </div>
 
 <div id="viewport">
     <div id="world">
         <div id="grid"></div>
+        <div id="shipping-bin">VENDA</div>
         
-        <div id="shipping-bin">VENDER (Clique)</div>
-        
+        <div id="npc-joao" class="npc" onclick="talk('João: Bom dia, fazendeiro! Precisa de sementes?')">
+            <div class="npc-hat"></div>
+        </div>
+
         <div id="player">
-            <div class="p-skin">
-                <div class="eye" style="left:5px"></div>
-                <div class="eye" style="left:18px"></div>
-            </div>
+            <div class="p-skin"><div class="eye l"></div><div class="eye r"></div></div>
             <div class="p-shirt"></div>
         </div>
-        
-        <div class="animal cow" style="left:600px; top:400px" onclick="collect(this)"></div>
-        <div class="animal cow" style="left:750px; top:350px" onclick="collect(this)"></div>
-        <div class="animal chicken" style="left:500px; top:600px" onclick="collect(this)"></div>
-        <div class="animal chicken" style="left:550px; top:650px" onclick="collect(this)"></div>
+    </div>
+</div>
+
+<div id="inventory-screen" class="hidden">
+    <div class="inv-content">
+        <h2>🎒 Seu Inventário</h2>
+        <div id="inv-items">
+            <p>Milho: <span id="inv-corn">0</span></p>
+            <p>Leite: <span id="inv-milk">0</span></p>
+            <p>Ovos: <span id="inv-eggs">0</span></p>
+        </div>
+        <button onclick="toggleInventory()">Fechar</button>
     </div>
 </div>
 
@@ -39,70 +47,87 @@
         <div class="slot active" data-tool="hoe" onclick="setTool('hoe', this)">⛏️</div>
         <div class="slot" data-tool="seed" onclick="setTool('seed', this)">🌱</div>
         <div class="slot" data-tool="water" onclick="setTool('water', this)">💧</div>
+        <div class="slot" data-tool="fence" onclick="setTool('fence', this)">🚧</div>
         <div class="slot" data-tool="hand" onclick="setTool('hand', this)">✋</div>
     </div>
+    <p style="color: white; font-size: 10px;">Pressione [E] para Inventário</p>
 </div>
 
 <script>
     const world = document.getElementById('world');
     const player = document.getElementById('player');
-    const grid = document.getElementById('grid');
+    const filter = document.getElementById('day-night-filter');
     
-    let pX = 850, pY = 650;
+    let pX = 800, pY = 600;
     let tool = 'hoe';
-    let gold = 100;
-    let basket = 0;
+    let stats = { gold: 100, xp: 0, lvl: 1, corn: 0, milk: 0, eggs: 0 };
+    let hour = 6;
 
-    // Gerar Chão (Grid de 20x20)
+    // 1. Ciclo Dia/Noite
+    setInterval(() => {
+        hour++;
+        if (hour > 24) hour = 0;
+        document.getElementById('clock').innerText = `${hour.toString().padStart(2, '0')}:00`;
+        
+        // Escurecer entre 19h e 05h
+        if (hour >= 19 || hour <= 5) filter.style.background = "rgba(0, 0, 50, 0.4)";
+        else filter.style.background = "transparent";
+    }, 10000); // Cada 10s passa 1h no jogo
+
+    // 2. Gerar Mundo e Cercas
     for (let i = 0; i < 400; i++) {
         const tile = document.createElement('div');
         tile.className = 'tile';
         tile.style.left = (i % 20) * 80 + 'px';
         tile.style.top = Math.floor(i / 20) * 80 + 'px';
-        tile.dataset.state = 'grass';
         
         tile.onclick = () => {
-            if (tool === 'hoe' && tile.dataset.state === 'grass') {
+            if (tool === 'fence') {
+                tile.innerHTML = '<div class="fence-obj"></div>';
+            } else if (tool === 'hoe' && !tile.dataset.state) {
                 tile.dataset.state = 'plowed';
                 tile.classList.add('plowed');
+                addXP(5);
             } else if (tool === 'seed' && tile.dataset.state === 'plowed') {
                 tile.dataset.state = 'seeded';
-                tile.innerHTML = '<div class="plant" style="height:10px; background:#aed581; border-radius:5px;"></div>';
+                tile.innerHTML = '<div class="plant stage1"></div>';
             } else if (tool === 'water' && tile.dataset.state === 'seeded') {
                 tile.classList.add('wet');
                 setTimeout(() => {
-                    tile.innerHTML = '<div class="plant stage3"></div>';
+                    tile.querySelector('.plant').className = 'plant stage3';
                     tile.dataset.state = 'ready';
-                    tile.classList.remove('wet');
                 }, 3000);
             } else if (tool === 'hand' && tile.dataset.state === 'ready') {
-                basket++;
+                stats.corn++;
                 tile.innerHTML = '';
                 tile.dataset.state = 'plowed';
+                addXP(15);
                 updateUI();
             }
         };
-        grid.appendChild(tile);
+        document.getElementById('grid').appendChild(tile);
     }
 
-    // Lógica da Caixa de Venda
-    document.getElementById('shipping-bin').onclick = () => {
-        if (basket > 0) {
-            gold += basket * 50;
-            alert(`Venda realizada! +${basket * 50} ouros 💰`);
-            basket = 0;
-            updateUI();
-        } else {
-            alert("Sua cesta está vazia!");
+    function addXP(amt) {
+        stats.xp += amt;
+        if (stats.xp >= stats.lvl * 100) {
+            stats.lvl++;
+            alert("✨ Nível Subiu!");
         }
-    };
-
-    function collect(el) {
-        el.style.transform = "scale(1.3)";
-        setTimeout(() => el.style.transform = "scale(1)", 200);
-        basket++;
         updateUI();
     }
+
+    function updateUI() {
+        document.getElementById('m-gold').innerText = stats.gold;
+        document.getElementById('m-lvl').innerText = stats.lvl;
+        document.getElementById('inv-corn').innerText = stats.corn;
+    }
+
+    function toggleInventory() {
+        document.getElementById('inventory-screen').classList.toggle('hidden');
+    }
+
+    function talk(msg) { alert(msg); }
 
     function setTool(t, el) {
         tool = t;
@@ -110,24 +135,19 @@
         el.classList.add('active');
     }
 
-    function updateUI() {
-        document.getElementById('m-gold').innerText = gold;
-        document.getElementById('m-basket').innerText = basket;
-    }
-
-    // Controles de Movimento
+    // Tecla E para inventário
+    window.onkeydown = e => {
+        if (e.key.toLowerCase() === 'e') toggleInventory();
+        keys[e.key.toLowerCase()] = true;
+    };
     const keys = {};
-    window.onkeydown = e => keys[e.key.toLowerCase()] = true;
     window.onkeyup = e => keys[e.key.toLowerCase()] = false;
 
     function loop() {
         if (keys['w']) pY -= 5; if (keys['s']) pY += 5;
         if (keys['a']) pX -= 5; if (keys['d']) pX += 5;
-        
         player.style.left = pX + 'px';
         player.style.top = pY + 'px';
-        
-        // Câmera dinâmica
         world.style.transform = `translate(${-pX + window.innerWidth/2}px, ${-pY + window.innerHeight/2}px)`;
         requestAnimationFrame(loop);
     }
