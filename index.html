@@ -2,116 +2,100 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Pixel Farm Adventure</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Stardew 3D Test</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+        #loading-screen {
+            position: absolute; top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: #222; color: white;
+            display: flex; justify-content: center; align-items: center;
+            font-family: sans-serif; font-size: 2em;
+            z-index: 100;
+        }
+    </style>
 </head>
 <body>
-    <div id="game-container">
-        <div id="world">
-            <div id="ground"></div>
-            <div id="entities"></div>
-        </div>
-    </div>
-
-    <div id="ui">
-        <div class="stats">
-            <div id="clock">06:00 AM</div>
-            <div class="bar-container"><div id="energy-bar"></div></div>
-            <div id="money">G$ 100</div>
-        </div>
-        <div class="inventory">
-            <div class="slot active" data-tool="hoe" title="Enxada">⛏️</div>
-            <div class="slot" data-tool="seed" title="Sementes">🌱</div>
-            <div class="slot" data-tool="water" title="Regador">💧</div>
-            <div class="slot" data-tool="axe" title="Machado">🪓</div>
-        </div>
-    </div>
-
+    <div id="loading-screen">Carregando Jogo 3D...</div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.158.0/three.min.js"></script>
     <script>
-        const world = document.getElementById('world');
-        const entities = document.getElementById('entities');
-        const energyBar = document.getElementById('energy-bar');
-        
-        let pX = 400, pY = 400;
-        let energy = 100;
-        let money = 100;
-        let selectedTool = 'hoe';
-        let frame = 0;
-        let direction = 0; // 0: Down, 1: Up, 2: Left, 3: Right
-        let isMoving = false;
-
-        // Criar Personagem
-        const player = document.createElement('div');
-        player.id = 'player';
-        // Link da imagem que você enviou (com correção de exibição)
-        player.style.backgroundImage = "url('https://i.pinimg.com/1200x/7b/bf/ee/7bbfee1f9ef36762eb90e7805077060c.jpg')";
-        entities.appendChild(player);
-
-        // Gerar Mapa
-        for (let i = 0; i < 400; i++) {
-            const tile = document.createElement('div');
-            tile.className = 'tile';
-            tile.style.left = (i % 20) * 80 + 'px';
-            tile.style.top = Math.floor(i / 20) * 80 + 'px';
-            
-            tile.onclick = () => {
-                if(energy <= 0) return;
-                if(selectedTool === 'hoe') {
-                    tile.classList.add('plowed');
-                    updateEnergy(-5);
-                } else if(selectedTool === 'seed' && tile.classList.contains('plowed')) {
-                    tile.innerHTML = '<div class="crop"></div>';
-                    updateEnergy(-2);
-                }
-            };
-            document.getElementById('ground').appendChild(tile);
-        }
-
-        function updateEnergy(v) {
-            energy = Math.max(0, energy + v);
-            energyBar.style.width = energy + "%";
-        }
-
-        // Movimentação e Animação
+        const loadingScreen = document.getElementById('loading-screen');
+        let scene, camera, renderer, player;
         const keys = {};
-        window.onkeydown = (e) => keys[e.key.toLowerCase()] = true;
-        window.onkeyup = (e) => keys[e.key.toLowerCase()] = false;
+        const playerSpeed = 0.1;
 
-        function gameLoop() {
-            isMoving = false;
-            if (keys['w']) { pY -= 4; direction = 1; isMoving = true; }
-            if (keys['s']) { pY += 4; direction = 0; isMoving = true; }
-            if (keys['a']) { pX -= 4; direction = 2; isMoving = true; }
-            if (keys['d']) { pX += 4; direction = 3; isMoving = true; }
+        // 1. Configurar Cena 3D
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB); // Céu azul claro
 
-            if (isMoving) {
-                frame = (Math.floor(Date.now() / 150) % 4);
-            } else {
-                frame = 0;
-            }
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true }); // Antialias para suavizar bordas
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
 
-            // Ajuste do Sprite Sheet (32x32 ou 48x48 dependendo da imagem)
-            // Esses valores cortam o fundo e mostram apenas o boneco
-            const spriteSize = 48; 
-            player.style.backgroundPosition = `-${frame * spriteSize}px -${direction * spriteSize}px`;
-            
-            player.style.left = pX + 'px';
-            player.style.top = pY + 'px';
-            player.style.zIndex = Math.floor(pY);
+            // Luz Ambiente
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+            scene.add(ambientLight);
 
-            world.style.transform = `translate(${-pX + window.innerWidth/2}px, ${-pY + window.innerHeight/2}px)`;
-            requestAnimationFrame(gameLoop);
+            // Luz Direcional (Simula o Sol)
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+            directionalLight.position.set(5, 10, 5);
+            scene.add(directionalLight);
+
+            // Chão (Plano Verde)
+            const groundGeometry = new THREE.PlaneGeometry(100, 100);
+            const groundMaterial = new THREE.MeshLambertMaterial({ color: 0x6B8E23 }); // Verde grama
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2; // Gira para ficar plano no chão
+            scene.add(ground);
+
+            // Nosso "boneco" (um cubo por enquanto)
+            const playerGeometry = new THREE.BoxGeometry(0.5, 1, 0.5); // Proporção de um boneco
+            const playerMaterial = new THREE.MeshLambertMaterial({ color: 0xDC143C }); // Vermelho
+            player = new THREE.Mesh(playerGeometry, playerMaterial);
+            player.position.y = 0.5; // Para o cubo ficar em cima do chão
+            scene.add(player);
+
+            camera.position.set(0, 2, 5); // Posição inicial da câmera
+            camera.lookAt(player.position); // Câmera olhando para o jogador
+
+            loadingScreen.style.display = 'none'; // Esconde a tela de carregamento
+            animate();
         }
 
-        document.querySelectorAll('.slot').forEach(s => {
-            s.onclick = () => {
-                document.querySelectorAll('.slot').forEach(x => x.classList.remove('active'));
-                s.classList.add('active');
-                selectedTool = s.dataset.tool;
-            };
+        // 2. Animação e Loop Principal
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Movimentação do Jogador
+            if (keys['w']) player.position.z -= playerSpeed;
+            if (keys['s']) player.position.z += playerSpeed;
+            if (keys['a']) player.position.x -= playerSpeed;
+            if (keys['d']) player.position.x += playerSpeed;
+
+            // Câmera segue o jogador (com um pequeno offset para ver de cima/trás)
+            camera.position.x = player.position.x;
+            camera.position.z = player.position.z + 5;
+            camera.position.y = player.position.y + 2; // Levemente acima
+            camera.lookAt(player.position);
+
+            renderer.render(scene, camera);
+        }
+
+        // Eventos de Teclado
+        window.addEventListener('keydown', (e) => keys[e.key.toLowerCase()] = true);
+        window.addEventListener('keyup', (e) => keys[e.key.toLowerCase()] = false);
+
+        // Redimensionar Câmera ao mudar o tamanho da janela
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        gameLoop();
+        init(); // Iniciar o jogo
     </script>
 </body>
 </html>
