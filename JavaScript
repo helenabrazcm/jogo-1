@@ -1,9 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // ESTADO INICIAL
+    // 1. ESTADO DO JOGO
     let state = {
         name: "Fazendeiro",
         skin: "🧑‍🌾",
-        gold: 20,
+        gold: 50,
         xp: 0,
         pos: { x: 500, y: 500 },
         wheatCount: 0,
@@ -12,41 +12,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const WORLD_SIZE = 3000;
 
-    // ELEMENTOS DOM
+    // 2. ELEMENTOS DOM
     const startScreen = document.getElementById('start-screen');
     const customScreen = document.getElementById('custom-screen');
     const gameContainer = document.getElementById('game-container');
     const playerEl = document.getElementById('player');
     const worldEl = document.getElementById('world');
 
-    // --- SISTEMA DE BOTÕES (EVENT LISTENERS) ---
+    // --- FUNÇÕES DE NAVEGAÇÃO (CORRIGIDAS) ---
 
-    // 1. Iniciar Novo Jogo
+    // Botão NOVO JOGO
     document.getElementById('btn-new-game').addEventListener('click', () => {
-        startScreen.style.display = 'none';
-        customScreen.style.display = 'flex';
+        console.log("Botão Novo Jogo clicado");
+        startScreen.style.setProperty('display', 'none', 'important');
+        customScreen.style.setProperty('display', 'flex', 'important');
     });
 
-    // 2. Selecionar Skin
+    // Seleção de Personagem (Emojis)
     document.querySelectorAll('.skin-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             state.skin = btn.getAttribute('data-skin');
             document.getElementById('preview-emoji').innerText = state.skin;
+            console.log("Skin selecionada:", state.skin);
         });
     });
 
-    // 3. Começar Aventura Real
+    // Botão COMEÇAR AVENTURA
     document.getElementById('btn-start-adventure').addEventListener('click', () => {
         const inputName = document.getElementById('char-name').value;
-        if (!inputName) return alert("Por favor, digite um nome!");
+        if (!inputName || inputName.trim() === "") {
+            alert("Por favor, digite um nome para seu fazendeiro!");
+            return;
+        }
         
         state.name = inputName;
-        customScreen.style.display = 'none';
+        customScreen.style.setProperty('display', 'none', 'important');
         gameContainer.style.display = 'block';
         initGame();
     });
 
-    // 4. Carregar Jogo
+    // Botão CARREGAR JOGO
     document.getElementById('btn-load-game').addEventListener('click', () => {
         const saved = localStorage.getItem('fazenda_save_v2');
         if (saved) {
@@ -55,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
             gameContainer.style.display = 'block';
             initGame();
         } else {
-            alert("Nenhum progresso encontrado!");
+            alert("Nenhum save encontrado! Inicie um Novo Jogo.");
         }
     });
 
@@ -67,9 +72,9 @@ document.addEventListener('DOMContentLoaded', () => {
         updateUI();
         updateCamera();
         
-        // Iniciar Lógica de Agricultura
+        // Agricultura
         document.querySelectorAll('.plot').forEach(plot => {
-            plot.addEventListener('click', () => {
+            plot.onclick = () => { // Usando onclick direto para evitar múltiplos listeners
                 if (plot.innerText === '🟫') {
                     plot.innerText = '🌱';
                     setTimeout(() => plot.innerText = '🌾', 5000);
@@ -81,18 +86,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     checkQuests();
                     updateUI();
                 }
-            });
+            };
         });
 
-        // Iniciar Relógio
-        setInterval(tickTime, 10000); // Cada 10s passa 1h
-    }
-
-    function tickTime() {
-        state.time = (state.time + 1) % 24;
-        document.getElementById('clock').innerText = `${state.time.toString().padStart(2, '0')}:00`;
-        const night = document.getElementById('night-overlay');
-        night.style.background = (state.time >= 19 || state.time <= 5) ? "rgba(0,0,50,0.5)" : "transparent";
+        // Relógio
+        setInterval(() => {
+            state.time = (state.time + 1) % 24;
+            document.getElementById('clock').innerText = `${state.time.toString().padStart(2, '0')}:00`;
+            const night = document.getElementById('night-overlay');
+            if(night) night.style.background = (state.time >= 19 || state.time <= 5) ? "rgba(0,0,50,0.5)" : "transparent";
+        }, 10000);
     }
 
     function checkQuests() {
@@ -110,8 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('fazenda_save_v2', JSON.stringify(state));
     }
 
-    // --- MOVIMENTAÇÃO E CÂMERA ---
-
+    // MOVIMENTAÇÃO
     window.addEventListener('keydown', (e) => {
         if (gameContainer.style.display === 'none') return;
 
@@ -127,23 +129,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function updateCamera() {
-        // Limites do Mundo
         state.pos.x = Math.max(0, Math.min(state.pos.x, WORLD_SIZE - 40));
         state.pos.y = Math.max(0, Math.min(state.pos.y, WORLD_SIZE - 40));
 
-        // Atualiza posição do Boneco
         playerEl.style.left = state.pos.x + 'px';
         playerEl.style.top = state.pos.y + 'px';
 
-        // Efeito de Câmera: Move o mundo para manter o player no centro
         const camX = (window.innerWidth / 2) - state.pos.x;
         const camY = (window.innerHeight / 2) - state.pos.y;
+        
         worldEl.style.left = camX + 'px';
         worldEl.style.top = camY + 'px';
 
-        // Atualiza Mini-mapa
         const mPlayer = document.getElementById('minimap-player');
-        mPlayer.style.left = (state.pos.x / WORLD_SIZE) * 150 + 'px';
-        mPlayer.style.top = (state.pos.y / WORLD_SIZE) * 150 + 'px';
+        if(mPlayer) {
+            mPlayer.style.left = (state.pos.x / WORLD_SIZE) * 150 + 'px';
+            mPlayer.style.top = (state.pos.y / WORLD_SIZE) * 150 + 'px';
+        }
     }
 });
