@@ -1,150 +1,111 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. ESTADO DO JOGO
     let state = {
         name: "Fazendeiro",
         skin: "🧑‍🌾",
-        gold: 50,
+        gold: 0,
         xp: 0,
-        pos: { x: 500, y: 500 },
-        wheatCount: 0,
-        time: 8
+        wheatCollected: 0,
+        pos: { x: 500, y: 500 }
     };
 
     const WORLD_SIZE = 3000;
 
-    // 2. ELEMENTOS DOM
-    const startScreen = document.getElementById('start-screen');
-    const customScreen = document.getElementById('custom-screen');
-    const gameContainer = document.getElementById('game-container');
-    const playerEl = document.getElementById('player');
-    const worldEl = document.getElementById('world');
+    // --- NAVEGAÇÃO DE TELAS ---
 
-    // --- FUNÇÕES DE NAVEGAÇÃO (CORRIGIDAS) ---
-
-    // Botão NOVO JOGO
-    document.getElementById('btn-new-game').addEventListener('click', () => {
-        console.log("Botão Novo Jogo clicado");
-        startScreen.style.setProperty('display', 'none', 'important');
-        customScreen.style.setProperty('display', 'flex', 'important');
+    // 1. Clicou em JOGAR -> Soma Tela Inicial, Mostra Customização
+    document.getElementById('btn-go-to-custom').addEventListener('click', () => {
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('custom-screen').style.display = 'flex';
     });
 
-    // Seleção de Personagem (Emojis)
-    document.querySelectorAll('.skin-btn').forEach(btn => {
+    // Seleção de Skin
+    document.querySelectorAll('.skin-option').forEach(btn => {
         btn.addEventListener('click', () => {
             state.skin = btn.getAttribute('data-skin');
             document.getElementById('preview-emoji').innerText = state.skin;
-            console.log("Skin selecionada:", state.skin);
         });
     });
 
-    // Botão COMEÇAR AVENTURA
-    document.getElementById('btn-start-adventure').addEventListener('click', () => {
-        const inputName = document.getElementById('char-name').value;
-        if (!inputName || inputName.trim() === "") {
-            alert("Por favor, digite um nome para seu fazendeiro!");
-            return;
-        }
+    // 2. Clicou em COMEÇAR -> Soma Customização, Mostra o Jogo
+    document.getElementById('btn-start-game').addEventListener('click', () => {
+        const nameInput = document.getElementById('char-name').value;
+        if (!nameInput) return alert("Digite seu nome!");
         
-        state.name = inputName;
-        customScreen.style.setProperty('display', 'none', 'important');
-        gameContainer.style.display = 'block';
+        state.name = nameInput;
+        document.getElementById('custom-screen').style.display = 'none';
+        document.getElementById('game-container').style.display = 'block';
         initGame();
     });
 
-    // Botão CARREGAR JOGO
-    document.getElementById('btn-load-game').addEventListener('click', () => {
-        const saved = localStorage.getItem('fazenda_save_v2');
+    // Botão Carregar
+    document.getElementById('btn-load').addEventListener('click', () => {
+        const saved = localStorage.getItem('rpg_save');
         if (saved) {
             state = JSON.parse(saved);
-            startScreen.style.display = 'none';
-            gameContainer.style.display = 'block';
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('game-container').style.display = 'block';
             initGame();
-        } else {
-            alert("Nenhum save encontrado! Inicie um Novo Jogo.");
-        }
+        } else { alert("Nenhum save!"); }
     });
 
-    // --- LÓGICA DO MUNDO ---
+    // --- LÓGICA DO JOGO ---
 
     function initGame() {
-        playerEl.innerText = state.skin;
+        document.getElementById('player').innerText = state.skin;
         document.getElementById('display-name').innerText = state.name;
         updateUI();
         updateCamera();
-        
+
         // Agricultura
         document.querySelectorAll('.plot').forEach(plot => {
-            plot.onclick = () => { // Usando onclick direto para evitar múltiplos listeners
+            plot.addEventListener('click', () => {
                 if (plot.innerText === '🟫') {
                     plot.innerText = '🌱';
-                    setTimeout(() => plot.innerText = '🌾', 5000);
+                    setTimeout(() => plot.innerText = '🌾', 4000);
                 } else if (plot.innerText === '🌾') {
                     plot.innerText = '🟫';
                     state.gold += 15;
-                    state.xp += 10;
-                    state.wheatCount++;
-                    checkQuests();
+                    state.wheatCollected++;
                     updateUI();
                 }
-            };
+            });
         });
-
-        // Relógio
-        setInterval(() => {
-            state.time = (state.time + 1) % 24;
-            document.getElementById('clock').innerText = `${state.time.toString().padStart(2, '0')}:00`;
-            const night = document.getElementById('night-overlay');
-            if(night) night.style.background = (state.time >= 19 || state.time <= 5) ? "rgba(0,0,50,0.5)" : "transparent";
-        }, 10000);
-    }
-
-    function checkQuests() {
-        const questText = document.getElementById('quest-text');
-        if (state.wheatCount >= 3) {
-            questText.innerHTML = "✅ Missão: Colha 3 trigos (Concluído!)";
-        } else {
-            questText.innerText = `Missão: Colha 3 trigos (${state.wheatCount}/3)`;
-        }
     }
 
     function updateUI() {
         document.getElementById('gold-val').innerText = state.gold;
-        document.getElementById('xp-val').innerText = state.xp;
-        localStorage.setItem('fazenda_save_v2', JSON.stringify(state));
+        document.getElementById('quest-count').innerText = state.wheatCollected;
+        localStorage.setItem('rpg_save', JSON.stringify(state));
     }
 
-    // MOVIMENTAÇÃO
+    // Movimentação
     window.addEventListener('keydown', (e) => {
-        if (gameContainer.style.display === 'none') return;
-
+        if (document.getElementById('game-container').style.display === 'none') return;
         const step = 25;
-        const key = e.key.toLowerCase();
-
-        if (key === 'w') state.pos.y -= step;
-        if (key === 's') state.pos.y += step;
-        if (key === 'a') { state.pos.x -= step; playerEl.style.transform = 'scaleX(-1)'; }
-        if (key === 'd') { state.pos.x += step; playerEl.style.transform = 'scaleX(1)'; }
-
+        if (e.key === 'w') state.pos.y -= step;
+        if (e.key === 's') state.pos.y += step;
+        if (e.key === 'a') { state.pos.x -= step; document.getElementById('player').style.transform = 'scaleX(-1)'; }
+        if (e.key === 'd') { state.pos.x += step; document.getElementById('player').style.transform = 'scaleX(1)'; }
         updateCamera();
     });
 
     function updateCamera() {
-        state.pos.x = Math.max(0, Math.min(state.pos.x, WORLD_SIZE - 40));
-        state.pos.y = Math.max(0, Math.min(state.pos.y, WORLD_SIZE - 40));
+        const player = document.getElementById('player');
+        const world = document.getElementById('world');
+        const mPlayer = document.getElementById('minimap-player');
 
-        playerEl.style.left = state.pos.x + 'px';
-        playerEl.style.top = state.pos.y + 'px';
+        state.pos.x = Math.max(0, Math.min(state.pos.x, WORLD_SIZE));
+        state.pos.y = Math.max(0, Math.min(state.pos.y, WORLD_SIZE));
+
+        player.style.left = state.pos.x + 'px';
+        player.style.top = state.pos.y + 'px';
 
         const camX = (window.innerWidth / 2) - state.pos.x;
         const camY = (window.innerHeight / 2) - state.pos.y;
-        
-        worldEl.style.left = camX + 'px';
-        worldEl.style.top = camY + 'px';
+        world.style.left = camX + 'px';
+        world.style.top = camY + 'px';
 
-        const mPlayer = document.getElementById('minimap-player');
-        if(mPlayer) {
-            mPlayer.style.left = (state.pos.x / WORLD_SIZE) * 150 + 'px';
-            mPlayer.style.top = (state.pos.y / WORLD_SIZE) * 150 + 'px';
-        }
+        mPlayer.style.left = (state.pos.x / WORLD_SIZE) * 100 + 'px';
+        mPlayer.style.top = (state.pos.y / WORLD_SIZE) * 100 + 'px';
     }
 });
