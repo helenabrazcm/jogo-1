@@ -1,157 +1,149 @@
-let state = {
-    name: "Fazendeiro",
-    skin: "🧑‍🌾",
-    gold: 20,
-    xp: 0,
-    pos: { x: 400, y: 400 },
-    inventory: { seeds: 2, wheat: 0 },
-    quest: { current: 0, goal: 3 },
-    time: 8,
-    isMenuOpen: false
-};
+document.addEventListener('DOMContentLoaded', () => {
+    // ESTADO INICIAL
+    let state = {
+        name: "Fazendeiro",
+        skin: "🧑‍🌾",
+        gold: 20,
+        xp: 0,
+        pos: { x: 500, y: 500 },
+        wheatCount: 0,
+        time: 8
+    };
 
-const WORLD_SIZE = 3000;
+    const WORLD_SIZE = 3000;
 
-// --- NAVEGAÇÃO DE TELAS ---
-function showCustomization() {
-    document.getElementById('start-screen').style.display = 'none';
-    document.getElementById('custom-screen').style.display = 'flex';
-}
-
-function setSkin(emoji) {
-    state.skin = emoji;
-    document.getElementById('preview-emoji').innerText = emoji;
-}
-
-function startGame() {
-    const inputName = document.getElementById('char-name').value;
-    if (!inputName) return alert("Por favor, digite um nome!");
-    
-    state.name = inputName;
-    document.getElementById('custom-screen').style.display = 'none';
-    document.getElementById('game-container').style.display = 'block';
-    
-    initGame();
-}
-
-function initGame() {
-    document.getElementById('player').innerText = state.skin;
-    document.getElementById('display-name').innerText = state.name;
-    updateUI();
-    updateCamera();
-    saveGame();
-}
-
-// --- SISTEMA DE MOVIMENTO E CÂMERA ---
-window.addEventListener('keydown', (e) => {
-    if (document.getElementById('game-container').style.display === 'none' || state.isMenuOpen) return;
-
-    const step = 25;
-    const key = e.key.toLowerCase();
-
-    if (key === 'w') state.pos.y -= step;
-    if (key === 's') state.pos.y += step;
-    if (key === 'a') { state.pos.x -= step; document.getElementById('player').style.transform = 'scaleX(-1)'; }
-    if (key === 'd') { state.pos.x += step; document.getElementById('player').style.transform = 'scaleX(1)'; }
-    if (key === 'e') toggleInventory();
-
-    // Limites do Mundo
-    state.pos.x = Math.max(0, Math.min(state.pos.x, WORLD_SIZE - 40));
-    state.pos.y = Math.max(0, Math.min(state.pos.y, WORLD_SIZE - 40));
-
-    updateCamera();
-});
-
-function updateCamera() {
+    // ELEMENTOS DOM
+    const startScreen = document.getElementById('start-screen');
+    const customScreen = document.getElementById('custom-screen');
+    const gameContainer = document.getElementById('game-container');
     const playerEl = document.getElementById('player');
     const worldEl = document.getElementById('world');
-    const mPlayer = document.getElementById('minimap-player');
 
-    // Move personagem
-    playerEl.style.left = state.pos.x + 'px';
-    playerEl.style.top = state.pos.y + 'px';
+    // --- SISTEMA DE BOTÕES (EVENT LISTENERS) ---
 
-    // Câmera segue (suave)
-    const camX = window.innerWidth / 2 - state.pos.x;
-    const camY = window.innerHeight / 2 - state.pos.y;
-    worldEl.style.left = camX + 'px';
-    worldEl.style.top = camY + 'px';
+    // 1. Iniciar Novo Jogo
+    document.getElementById('btn-new-game').addEventListener('click', () => {
+        startScreen.style.display = 'none';
+        customScreen.style.display = 'flex';
+    });
 
-    // Mini-mapa
-    mPlayer.style.left = (state.pos.x / WORLD_SIZE) * 150 + 'px';
-    mPlayer.style.top = (state.pos.y / WORLD_SIZE) * 150 + 'px';
-}
+    // 2. Selecionar Skin
+    document.querySelectorAll('.skin-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            state.skin = btn.getAttribute('data-skin');
+            document.getElementById('preview-emoji').innerText = state.skin;
+        });
+    });
 
-// --- AGRICULTURA E LOJA ---
-function interactPlot(plot) {
-    if (plot.innerText === '🟫' && state.inventory.seeds > 0) {
-        state.inventory.seeds--;
-        plot.innerText = '🌱';
-        setTimeout(() => { if(plot.innerText === '🌱') plot.innerText = '🌾'; }, 5000);
-    } else if (plot.innerText === '🌾') {
-        plot.innerText = '🟫';
-        state.inventory.wheat++;
-        state.xp += 15;
-        checkQuests();
-    }
-    updateUI();
-}
-
-function buySeed() {
-    if (state.gold >= 10) {
-        state.gold -= 10;
-        state.inventory.seeds++;
-        updateUI();
-    } else { alert("Ouro insuficiente!"); }
-}
-
-function sellAll() {
-    let profit = state.inventory.wheat * 25;
-    state.gold += profit;
-    state.inventory.wheat = 0;
-    updateUI();
-    alert(`Vendeu tudo por ${profit} de ouro!`);
-}
-
-// --- UTILITÁRIOS ---
-function updateUI() {
-    document.getElementById('gold-val').innerText = state.gold;
-    document.getElementById('xp-val').innerText = state.xp;
-    document.getElementById('inv-items').innerHTML = `Sementes: ${state.inventory.seeds} | Trigo: ${state.inventory.wheat}`;
-    saveGame();
-}
-
-function checkQuests() {
-    if (state.inventory.wheat >= state.quest.goal) {
-        document.getElementById('quest-text').innerText = "✅ Missão: Colha 3 trigos (Concluído!)";
-    } else {
-        document.getElementById('quest-text').innerText = `Missão: Colha 3 trigos (${state.inventory.wheat}/3)`;
-    }
-}
-
-function toggleInventory() {
-    state.isMenuOpen = !state.isMenuOpen;
-    document.getElementById('inventory-modal').style.display = state.isMenuOpen ? 'flex' : 'none';
-}
-
-function saveGame() {
-    localStorage.setItem('fazenda_save', JSON.stringify(state));
-}
-
-function loadGame() {
-    const data = localStorage.getItem('fazenda_save');
-    if (data) {
-        state = JSON.parse(data);
-        document.getElementById('start-screen').style.display = 'none';
-        document.getElementById('game-container').style.display = 'block';
+    // 3. Começar Aventura Real
+    document.getElementById('btn-start-adventure').addEventListener('click', () => {
+        const inputName = document.getElementById('char-name').value;
+        if (!inputName) return alert("Por favor, digite um nome!");
+        
+        state.name = inputName;
+        customScreen.style.display = 'none';
+        gameContainer.style.display = 'block';
         initGame();
-    } else { alert("Nenhum save encontrado!"); }
-}
+    });
 
-// Ciclo Dia/Noite (1 minuto real = 1 hora no jogo)
-setInterval(() => {
-    state.time = (state.time + 1) % 24;
-    document.getElementById('clock').innerText = `${state.time.toString().padStart(2, '0')}:00`;
-    const night = document.getElementById('night-overlay');
-    night.style.background = (state.time >= 19 || state.time <= 5) ? "rgba(0,0,50,0.5)" : "transparent";
-}, 5000); // 5 segundos para teste rápido
+    // 4. Carregar Jogo
+    document.getElementById('btn-load-game').addEventListener('click', () => {
+        const saved = localStorage.getItem('fazenda_save_v2');
+        if (saved) {
+            state = JSON.parse(saved);
+            startScreen.style.display = 'none';
+            gameContainer.style.display = 'block';
+            initGame();
+        } else {
+            alert("Nenhum progresso encontrado!");
+        }
+    });
+
+    // --- LÓGICA DO MUNDO ---
+
+    function initGame() {
+        playerEl.innerText = state.skin;
+        document.getElementById('display-name').innerText = state.name;
+        updateUI();
+        updateCamera();
+        
+        // Iniciar Lógica de Agricultura
+        document.querySelectorAll('.plot').forEach(plot => {
+            plot.addEventListener('click', () => {
+                if (plot.innerText === '🟫') {
+                    plot.innerText = '🌱';
+                    setTimeout(() => plot.innerText = '🌾', 5000);
+                } else if (plot.innerText === '🌾') {
+                    plot.innerText = '🟫';
+                    state.gold += 15;
+                    state.xp += 10;
+                    state.wheatCount++;
+                    checkQuests();
+                    updateUI();
+                }
+            });
+        });
+
+        // Iniciar Relógio
+        setInterval(tickTime, 10000); // Cada 10s passa 1h
+    }
+
+    function tickTime() {
+        state.time = (state.time + 1) % 24;
+        document.getElementById('clock').innerText = `${state.time.toString().padStart(2, '0')}:00`;
+        const night = document.getElementById('night-overlay');
+        night.style.background = (state.time >= 19 || state.time <= 5) ? "rgba(0,0,50,0.5)" : "transparent";
+    }
+
+    function checkQuests() {
+        const questText = document.getElementById('quest-text');
+        if (state.wheatCount >= 3) {
+            questText.innerHTML = "✅ Missão: Colha 3 trigos (Concluído!)";
+        } else {
+            questText.innerText = `Missão: Colha 3 trigos (${state.wheatCount}/3)`;
+        }
+    }
+
+    function updateUI() {
+        document.getElementById('gold-val').innerText = state.gold;
+        document.getElementById('xp-val').innerText = state.xp;
+        localStorage.setItem('fazenda_save_v2', JSON.stringify(state));
+    }
+
+    // --- MOVIMENTAÇÃO E CÂMERA ---
+
+    window.addEventListener('keydown', (e) => {
+        if (gameContainer.style.display === 'none') return;
+
+        const step = 25;
+        const key = e.key.toLowerCase();
+
+        if (key === 'w') state.pos.y -= step;
+        if (key === 's') state.pos.y += step;
+        if (key === 'a') { state.pos.x -= step; playerEl.style.transform = 'scaleX(-1)'; }
+        if (key === 'd') { state.pos.x += step; playerEl.style.transform = 'scaleX(1)'; }
+
+        updateCamera();
+    });
+
+    function updateCamera() {
+        // Limites do Mundo
+        state.pos.x = Math.max(0, Math.min(state.pos.x, WORLD_SIZE - 40));
+        state.pos.y = Math.max(0, Math.min(state.pos.y, WORLD_SIZE - 40));
+
+        // Atualiza posição do Boneco
+        playerEl.style.left = state.pos.x + 'px';
+        playerEl.style.top = state.pos.y + 'px';
+
+        // Efeito de Câmera: Move o mundo para manter o player no centro
+        const camX = (window.innerWidth / 2) - state.pos.x;
+        const camY = (window.innerHeight / 2) - state.pos.y;
+        worldEl.style.left = camX + 'px';
+        worldEl.style.top = camY + 'px';
+
+        // Atualiza Mini-mapa
+        const mPlayer = document.getElementById('minimap-player');
+        mPlayer.style.left = (state.pos.x / WORLD_SIZE) * 150 + 'px';
+        mPlayer.style.top = (state.pos.y / WORLD_SIZE) * 150 + 'px';
+    }
+});

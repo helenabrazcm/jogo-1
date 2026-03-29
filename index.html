@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sertão RPG - Farm Simulator</title>
+    <title>Sertão RPG - Fazenda Expandida</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,10 +11,10 @@
     <div id="start-screen" class="overlay-screen">
         <div class="menu-card">
             <h1>🌾 SERTÃO RPG</h1>
-            <p>Sua jornada na fazenda começa aqui</p>
+            <p>O simulador de fazenda definitivo</p>
             <div class="menu-buttons">
-                <button class="btn-main" onclick="showCustomization()">NOVO JOGO</button>
-                <button class="btn-secondary" onclick="loadGame()">CARREGAR JOGO</button>
+                <button id="btn-new-game" class="btn-main">NOVO JOGO</button>
+                <button id="btn-load-game" class="btn-secondary">CARREGAR JOGO</button>
             </div>
         </div>
     </div>
@@ -22,20 +22,19 @@
     <div id="custom-screen" class="overlay-screen" style="display:none;">
         <div class="menu-card">
             <h2>Crie seu Fazendeiro</h2>
-            <input type="text" id="char-name" placeholder="Nome do Personagem..." maxlength="12">
+            <input type="text" id="char-name" placeholder="Nome do Personagem" maxlength="12">
             
             <div class="char-selection">
-                <button onclick="setSkin('🧑‍🌾')">Visual A</button>
-                <button onclick="setSkin('👩‍🌾')">Visual B</button>
-                <button onclick="setSkin('👨‍🌾')">Visual C</button>
+                <button class="skin-btn" data-skin="🧑‍🌾">Visual A</button>
+                <button class="skin-btn" data-skin="👩‍🌾">Visual B</button>
+                <button class="skin-btn" data-skin="👨‍🌾">Visual C</button>
             </div>
             
             <div id="preview-box">
                 <span id="preview-emoji">🧑‍🌾</span>
             </div>
 
-            <button class="btn-main" onclick="startGame()">COMEÇAR AVENTURA</button>
-            <button class="btn-back" onclick="location.reload()">VOLTAR</button>
+            <button id="btn-start-adventure" class="btn-main">COMEÇAR AVENTURA</button>
         </div>
     </div>
 
@@ -45,49 +44,36 @@
         <div id="minimap-container">
             <div id="minimap">
                 <div id="minimap-player"></div>
-                <div class="map-dot" style="top:10%; left:10%; background: #8b4513;"></div> <div class="map-dot" style="top:85%; left:85%; background: #ffeb3b;"></div> </div>
+                <div class="map-dot" style="top:15%; left:15%; background: #8b4513;"></div>
+                <div class="map-dot" style="top:80%; left:80%; background: #ffeb3b;"></div>
+            </div>
         </div>
 
         <div id="world">
-            <div class="zone-label" style="top: 250px; left: 250px;">MINHA FAZENDA</div>
-            <div class="plot" style="top: 300px; left: 300px;" onclick="interactPlot(this)">🟫</div>
-            <div class="plot" style="top: 300px; left: 360px;" onclick="interactPlot(this)">🟫</div>
-            <div class="animal" style="top: 450px; left: 400px;" onclick="collectAnimal('🐄')">🐄</div>
+            <div class="plot" style="top: 400px; left: 400px;">🟫</div>
+            <div class="plot" style="top: 400px; left: 460px;">🟫</div>
+            <div class="plot" style="top: 460px; left: 400px;">🟫</div>
+            <div class="plot" style="top: 460px; left: 460px;">🟫</div>
 
-            <div id="shop-npc" class="npc-house" style="top: 2500px; left: 2500px;" onclick="toggleInventory()">
-                <span>🏪 MERCADO DO ZÉ</span>
-                <small>(Clique para abrir Loja/Inventário)</small>
+            <div class="npc-shop" style="top: 2400px; left: 2400px;">
+                <span>🏪 MERCADO</span><br>
+                <small>Clique para abrir Loja</small>
             </div>
 
             <div id="player">🧑‍🌾</div>
         </div>
 
-        <div id="top-ui">
-            <div class="stat-box">
-                <b id="display-name">---</b><br>
+        <div id="ui-top">
+            <div class="stat-card">
+                <b id="display-name">Nome</b><br>
                 💰 <span id="gold-val">0</span> | ⭐ <span id="xp-val">0</span>
             </div>
             <div id="clock">08:00</div>
         </div>
 
-        <div id="quest-ui">
-            <b>📜 MISSÕES</b>
+        <div id="quest-log">
+            <b>📜 MISSÃO ATUAL</b>
             <div id="quest-text">Colha 3 trigos (0/3)</div>
-        </div>
-    </div>
-
-    <div id="inventory-modal" class="modal">
-        <div class="modal-content">
-            <h2>🎒 MOCHILA & LOJA</h2>
-            <div id="inv-items">
-                <p>Sementes: 0 | Trigo: 0</p>
-            </div>
-            <hr>
-            <h3>🛒 COMPRAR</h3>
-            <button onclick="buySeed()">Semente de Trigo (10 Ouro)</button>
-            <br><br>
-            <button class="btn-sell" onclick="sellAll()">VENDER TUDO</button>
-            <button class="btn-close" onclick="toggleInventory()">FECHAR (E)</button>
         </div>
     </div>
 
