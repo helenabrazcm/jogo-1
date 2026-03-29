@@ -2,59 +2,60 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Pixel Farm Online</title>
+    <title>Sertão RPG - Farm Simulator</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="day-night-filter"></div>
+    <div id="start-screen" class="overlay-screen">
+        <h1>SERTÃO RPG</h1>
+        <button onclick="showCustomization()">NOVO JOGO</button>
+        <button onclick="loadGame()">CARREGAR JOGO</button>
+    </div>
 
-    <div id="hud">
-        <div class="stats-box">
-            💰 <span id="m-gold">100</span> | ⭐ Nível <span id="m-lvl">1</span>
-            <div id="clock">06:00 AM</div>
+    <div id="custom-screen" class="overlay-screen" style="display:none;">
+        <h2>Crie seu Fazendeiro</h2>
+        <input type="text" id="char-name" placeholder="Nome do Personagem">
+        <div class="char-options">
+            <button onclick="setSkin('🧑‍🌾')">Visual A</button>
+            <button onclick="setSkin('👩‍🌾')">Visual B</button>
+            <button onclick="setSkin('👨‍🌾')">Visual C</button>
         </div>
+        <div id="preview">🧑‍🌾</div>
+        <button onclick="startGame()">COMEÇAR AVENTURA</button>
     </div>
 
-    <div id="leaderboard">
-        <h3>🏆 Top Fazendeiros</h3>
-        <ol id="rank-list">
-            <li>👑 Você: <span id="rank-gold">100</span></li>
-            <li>Player2: 2500</li>
-            <li>Player3: 1800</li>
-        </ol>
-    </div>
-
-    <div id="viewport">
-        <div id="world">
-            <div id="grid"></div>
-            
-            <div class="npc" id="npc-shop" onclick="talk('João: Quer comprar sementes?')"></div>
-
-            <div id="player"></div>
-        </div>
-    </div>
-
-    <div id="inventory-overlay" class="hidden">
-        <div class="inventory-window">
-            <h2>🎒 Mochila de Itens</h2>
-            <div class="inv-grid">
-                <div class="inv-slot">🌽 Milho: <span id="inv-corn">0</span></div>
-                <div class="inv-slot">🥛 Leite: <span id="inv-milk">0</span></div>
-                <div class="inv-slot">🥚 Ovos: <span id="inv-eggs">0</span></div>
+    <div id="game-container" style="display:none;">
+        <div id="night-overlay"></div>
+        <div id="player"></div>
+        
+        <div class="plot" style="top: 200px; left: 200px;" onclick="interactPlot(this)">🟫</div>
+        <div class="plot" style="top: 200px; left: 260px;" onclick="interactPlot(this)">🟫</div>
+        <div class="animal" style="top: 400px; left: 600px;" onclick="collectAnimal('🐄')">🐄</div>
+        
+        <div id="ui-layer">
+            <div id="stats">
+                <span id="display-name">Nome</span> | 💰 <span id="gold-val">0</span> | ⭐ XP: <span id="xp-val">0</span>
             </div>
-            <p><small>Pressione [E] para sair</small></p>
+            <div id="clock">08:00</div>
+        </div>
+
+        <div id="quest-log">
+            <b>📜 Missões</b>
+            <div id="quest-list">Colha 1 Trigo</div>
         </div>
     </div>
 
-    <div id="ui-container">
-        <div class="hotbar">
-            <div class="slot active" data-tool="hoe" onclick="setTool('hoe', this)">⛏️</div>
-            <div class="slot" data-tool="seed" onclick="setTool('seed', this)">🌱</div>
-            <div class="slot" data-tool="water" onclick="setTool('water', this)">💧</div>
-            <div class="slot" data-tool="fence" onclick="setTool('fence', this)">🚧</div>
-            <div class="slot" data-tool="hand" onclick="setTool('hand', this)">✋</div>
+    <div id="inventory-menu" class="modal">
+        <h3>🎒 Inventário & Loja</h3>
+        <div class="tabs">
+            <div id="inv-content"></div>
+            <hr>
+            <h4>🛒 Comprar Sementes (10 Gold)</h4>
+            <button onclick="buySeed()">Comprar Semente de Trigo</button>
         </div>
+        <button onclick="sellAll()" style="background:gold">VENDER PRODUTOS</button>
+        <p><small>Pressione 'E' para fechar</small></p>
     </div>
 
     <script src="script.js"></script>

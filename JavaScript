@@ -1,91 +1,137 @@
+// Estado Inicial
+let gameState = {
+    name: "Fazendeiro",
+    skin: "🧑‍🌾",
+    gold: 50,
+    xp: 0,
+    pos: { x: 400, y: 300 },
+    inventory: { seeds: 5, wheat: 0, milk: 0 },
+    quests: { wheatHarvested: 0, goal: 3 },
+    time: 8
+};
 
-const world = document.getElementById('world');
-const player = document.getElementById('player');
-const filter = document.getElementById('day-night-filter');
+// --- TELAS E INICIALIZAÇÃO ---
+function showCustomization() {
+    document.getElementById('start-screen').style.display = 'none';
+    document.getElementById('custom-screen').style.display = 'flex';
+}
 
-let pX = 800, pY = 800;
-let tool = 'hoe';
-let stats = { gold: 100, xp: 0, lvl: 1, corn: 0, milk: 0, eggs: 0 };
-let hour = 6;
-const keys = {};
+function setSkin(emoji) {
+    gameState.skin = emoji;
+    document.getElementById('preview').innerText = emoji;
+}
 
-// Gerar Mapa
-for (let i = 0; i < 400; i++) {
-    const tile = document.createElement('div');
-    tile.className = 'tile';
-    tile.style.left = (i % 20) * 80 + 'px';
-    tile.style.top = Math.floor(i / 20) * 80 + 'px';
+function startGame() {
+    gameState.name = document.getElementById('char-name').value || "Fazendeiro";
+    document.getElementById('custom-screen').style.display = 'none';
+    document.getElementById('game-container').style.display = 'block';
+    initGame();
+}
+
+function initGame() {
+    document.getElementById('player').innerText = gameState.skin;
+    document.getElementById('display-name').innerText = gameState.name;
+    updateUI();
+    saveGame();
+}
+
+// --- SISTEMA DE SALVAMENTO ---
+function saveGame() {
+    localStorage.setItem('sertao_rpg_save', JSON.stringify(gameState));
+}
+
+function loadGame() {
+    const saved = localStorage.getItem('sertao_rpg_save');
+    if (saved) {
+        gameState = JSON.parse(saved);
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('game-container').style.display = 'block';
+        initGame();
+        updatePlayerPos();
+    } else {
+        alert("Nenhum save encontrado!");
+    }
+}
+
+// --- MOVIMENTAÇÃO E INPUT ---
+window.addEventListener('keydown', (e) => {
+    if (document.getElementById('game-container').style.display === 'none') return;
     
-    tile.onclick = () => {
-        if (tool === 'hoe' && !tile.dataset.state) {
-            tile.dataset.state = 'plowed';
-            tile.classList.add('plowed');
-        } else if (tool === 'seed' && tile.dataset.state === 'plowed') {
-            tile.dataset.state = 'seeded';
-            tile.innerHTML = '🌱';
-            tile.style.display = 'flex';
-            tile.style.justifyContent = 'center';
-            tile.style.alignItems = 'center';
-        } else if (tool === 'water' && tile.dataset.state === 'seeded') {
-            tile.classList.add('wet');
-            setTimeout(() => {
-                tile.innerHTML = '🌽';
-                tile.dataset.state = 'ready';
-                tile.classList.remove('wet');
-            }, 4000);
-        } else if (tool === 'hand' && tile.dataset.state === 'ready') {
-            stats.corn++;
-            stats.gold += 20;
-            tile.innerHTML = '';
-            tile.dataset.state = 'plowed';
-            updateUI();
-        }
-    };
-    document.getElementById('grid').appendChild(tile);
+    const step = 20;
+    if (e.key.toLowerCase() === 'e') toggleInventory();
+
+    if (e.key === 'w') gameState.pos.y -= step;
+    if (e.key === 's') gameState.pos.y += step;
+    if (e.key === 'a') { gameState.pos.x -= step; document.getElementById('player').style.transform = 'scaleX(-1)'; }
+    if (e.key === 'd') { gameState.pos.x += step; document.getElementById('player').style.transform = 'scaleX(1)'; }
+    
+    updatePlayerPos();
+});
+
+function updatePlayerPos() {
+    const p = document.getElementById('player');
+    p.style.top = gameState.pos.y + 'px';
+    p.style.left = gameState.pos.x + 'px';
+}
+
+// --- MECÂNICAS ---
+function interactPlot(plot) {
+    if (plot.innerText === '🟫' && gameState.inventory.seeds > 0) {
+        gameState.inventory.seeds--;
+        plot.innerText = '🌱';
+        setTimeout(() => plot.innerText = '🌾', 5000);
+        updateUI();
+    } else if (plot.innerText === '🌾') {
+        plot.innerText = '🟫';
+        gameState.inventory.wheat++;
+        gameState.xp += 10;
+        checkQuests();
+        updateUI();
+    }
+}
+
+function buySeed() {
+    if (gameState.gold >= 10) {
+        gameState.gold -= 10;
+        gameState.inventory.seeds++;
+        updateUI();
+    }
+}
+
+function sellAll() {
+    let profit = gameState.inventory.wheat * 20 + gameState.inventory.milk * 30;
+    gameState.gold += profit;
+    gameState.inventory.wheat = 0;
+    gameState.inventory.milk = 0;
+    updateUI();
+    saveGame();
+}
+
+function checkQuests() {
+    if (gameState.inventory.wheat >= gameState.quests.goal) {
+        document.getElementById('quest-list').innerHTML = "✅ Missão Concluída!";
+    } else {
+        document.getElementById('quest-list').innerHTML = `Colha ${gameState.quests.goal} Trigos (${gameState.inventory.wheat}/${gameState.quests.goal})`;
+    }
 }
 
 function updateUI() {
-    document.getElementById('m-gold').innerText = stats.gold;
-    document.getElementById('m-lvl').innerText = stats.lvl;
-    document.getElementById('inv-corn').innerText = stats.corn;
-    document.getElementById('rank-gold').innerText = stats.gold;
+    document.getElementById('gold-val').innerText = gameState.gold;
+    document.getElementById('xp-val').innerText = gameState.xp;
+    document.getElementById('inv-content').innerHTML = `
+        Sementes: ${gameState.inventory.seeds} | Trigo: ${gameState.inventory.wheat}
+    `;
+    saveGame();
 }
 
 function toggleInventory() {
-    document.getElementById('inventory-overlay').classList.toggle('hidden');
+    const inv = document.getElementById('inventory-menu');
+    inv.style.display = inv.style.display === 'block' ? 'none' : 'block';
 }
 
-function talk(msg) { alert(msg); }
-
-function setTool(t, el) {
-    tool = t;
-    document.querySelectorAll('.slot').forEach(s => s.classList.remove('active'));
-    el.classList.add('active');
-}
-
-// Ciclo Dia/Noite
+// Ciclo dia/noite simples
 setInterval(() => {
-    hour++;
-    if (hour > 24) hour = 0;
-    document.getElementById('clock').innerText = `${hour.toString().padStart(2, '0')}:00 ${hour < 12 ? 'AM' : 'PM'}`;
-    filter.style.background = (hour >= 19 || hour <= 5) ? "rgba(0, 0, 50, 0.4)" : "transparent";
+    gameState.time = (gameState.time + 1) % 24;
+    document.getElementById('clock').innerText = `${gameState.time.toString().padStart(2, '0')}:00`;
+    document.getElementById('night-overlay').style.background = (gameState.time > 18 || gameState.time < 6) ? "rgba(0,0,50,0.4)" : "transparent";
 }, 10000);
-
-// Movimentação
-window.onkeydown = e => {
-    keys[e.key.toLowerCase()] = true;
-    if (e.key.toLowerCase() === 'e') toggleInventory();
-};
-window.onkeyup = e => keys[e.key.toLowerCase()] = false;
-
-function loop() {
-    if (keys['w']) pY -= 5; if (keys['s']) pY += 5;
-    if (keys['a']) { pX -= 5; player.style.transform = 'scaleX(-1)'; }
-    if (keys['d']) { pX += 5; player.style.transform = 'scaleX(1)'; }
-
-    player.style.left = pX + 'px';
-    player.style.top = pY + 'px';
-    world.style.transform = `translate(${-pX + window.innerWidth/2}px, ${-pY + window.innerHeight/2}px)`;
-    requestAnimationFrame(loop);
-}
-loop();
