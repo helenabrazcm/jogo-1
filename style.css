@@ -40,3 +40,51 @@ body { margin: 0; background: #222; font-family: 'Segoe UI', sans-serif; overflo
 }
 
 .plot { width: 50px; height: 50px; background: #8b4513; position: absolute; cursor: pointer; }
+
+/* Mundo Expandido (3000px x 3000px) */
+#world {
+    position: absolute;
+    width: 3000px;
+    height: 3000px;
+    background-color: var(--grass);
+    background-image: radial-gradient(#6a993e 1px, transparent 1px);
+    background-size: 50px 50px;
+    transition: transform 0.1s ease-out;
+}
+
+/* Mini-mapa */
+#minimap {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 150px;
+    height: 150px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 3px solid #fff;
+    z-index: 100;
+    border-radius: 10px;
+}
+
+#minimap-player {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: red;
+    border-radius: 50%;
+}
+
+.minimap-dot {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 2px;
+}
+
+.npc {
+    position: absolute;
+    padding: 10px;
+    background: #5d4037;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+}

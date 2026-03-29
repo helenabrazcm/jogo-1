@@ -28,6 +28,15 @@
     <div id="game-container" style="display:none;">
         <div id="night-overlay"></div>
         <div id="player"></div>
+
+        <div id="minimap">
+         <div id="minimap-player"></div>
+         <div class="minimap-dot" style="top:20%; left:20%; background: #8b4513;"></div> <div class="minimap-dot" style="top:70%; left:80%; background: #ffeb3b;"></div> </div>
+
+         <div id="world">
+         <div id="farm-area" class="zone">FAZENDA</div>
+         <div id="shop-npc" class="npc" style="top: 1200px; left: 1500px;" onclick="toggleInventory()">🏪 LOJA (Clique)</div>
+        </div>
         
         <div class="plot" style="top: 200px; left: 200px;" onclick="interactPlot(this)">🟫</div>
         <div class="plot" style="top: 200px; left: 260px;" onclick="interactPlot(this)">🟫</div>

@@ -135,3 +135,43 @@ setInterval(() => {
     document.getElementById('clock').innerText = `${gameState.time.toString().padStart(2, '0')}:00`;
     document.getElementById('night-overlay').style.background = (gameState.time > 18 || gameState.time < 6) ? "rgba(0,0,50,0.4)" : "transparent";
 }, 10000);
+
+// Atualize o gameState para suportar um mundo maior
+gameState.worldSize = 3000;
+
+function updatePlayerPos() {
+    const p = document.getElementById('player');
+    const world = document.getElementById('world');
+    const mPlayer = document.getElementById('minimap-player');
+
+    // 1. Limitar o jogador dentro do mapa
+    gameState.pos.x = Math.max(0, Math.min(gameState.pos.x, gameState.worldSize - 40));
+    gameState.pos.y = Math.max(0, Math.min(gameState.pos.y, gameState.worldSize - 40));
+
+    // 2. Mover o personagem no mundo
+    p.style.top = gameState.pos.y + 'px';
+    p.style.left = gameState.pos.x + 'px';
+
+    // 3. Sistema de Câmera (Centraliza o jogador)
+    const camX = window.innerWidth / 2 - gameState.pos.x;
+    const camY = window.innerHeight / 2 - gameState.pos.y;
+    world.style.transform = `translate(${camX}px, ${camY}px)`;
+
+    // 4. Atualizar Mini-mapa (Proporcional)
+    // Cálculo: (posição_atual / tamanho_total) * tamanho_minimapa
+    const miniX = (gameState.pos.x / gameState.worldSize) * 150;
+    const miniY = (gameState.pos.y / gameState.worldSize) * 150;
+    mPlayer.style.left = miniX + 'px';
+    mPlayer.style.top = miniY + 'px';
+}
+
+// Chame updatePlayerPos no startGame para inicializar a câmera
+function startGame() {
+    gameState.name = document.getElementById('char-name').value || "Fazendeiro";
+    document.getElementById('custom-screen').style.display = 'none';
+    document.getElementById('game-container').style.display = 'block';
+    
+    // Organizar elementos iniciais no mundo expandido
+    initGame();
+    updatePlayerPos(); 
+}
