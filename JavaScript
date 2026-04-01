@@ -3,60 +3,59 @@ document.addEventListener('DOMContentLoaded', () => {
         name: "Fazendeiro",
         skin: "🧑‍🌾",
         gold: 0,
-        xp: 0,
-        wheatCollected: 0,
+        wheat: 0,
         pos: { x: 500, y: 500 }
     };
 
     const WORLD_SIZE = 3000;
 
-    // --- NAVEGAÇÃO DE TELAS ---
-
-    // 1. Clicou em JOGAR -> Soma Tela Inicial, Mostra Customização
-    document.getElementById('btn-go-to-custom').addEventListener('click', () => {
+    // BOTÃO JOGAR (Troca para customização)
+    document.getElementById('btn-play').addEventListener('click', () => {
         document.getElementById('start-screen').style.display = 'none';
         document.getElementById('custom-screen').style.display = 'flex';
     });
 
-    // Seleção de Skin
-    document.querySelectorAll('.skin-option').forEach(btn => {
+    // SELECIONAR SKIN
+    document.querySelectorAll('.skin-opt').forEach(btn => {
         btn.addEventListener('click', () => {
             state.skin = btn.getAttribute('data-skin');
-            document.getElementById('preview-emoji').innerText = state.skin;
+            document.getElementById('preview-box').innerText = state.skin;
         });
     });
 
-    // 2. Clicou em COMEÇAR -> Soma Customização, Mostra o Jogo
-    document.getElementById('btn-start-game').addEventListener('click', () => {
+    // BOTÃO COMEÇAR (Troca para o jogo)
+    document.getElementById('btn-confirm-start').addEventListener('click', () => {
         const nameInput = document.getElementById('char-name').value;
-        if (!nameInput) return alert("Digite seu nome!");
-        
+        if (!nameInput) return alert("Por favor, escolha um nome!");
+
         state.name = nameInput;
         document.getElementById('custom-screen').style.display = 'none';
         document.getElementById('game-container').style.display = 'block';
         initGame();
     });
 
-    // Botão Carregar
+    // BOTÃO CARREGAR
     document.getElementById('btn-load').addEventListener('click', () => {
-        const saved = localStorage.getItem('rpg_save');
+        const saved = localStorage.getItem('farm_rpg_save');
         if (saved) {
             state = JSON.parse(saved);
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('game-container').style.display = 'block';
             initGame();
-        } else { alert("Nenhum save!"); }
+        } else {
+            alert("Nenhum progresso salvo encontrado!");
+        }
     });
 
-    // --- LÓGICA DO JOGO ---
-
     function initGame() {
-        document.getElementById('player').innerText = state.skin;
-        document.getElementById('display-name').innerText = state.name;
+        const player = document.getElementById('player');
+        player.innerText = state.skin;
+        document.getElementById('ui-name').innerText = state.name;
+        
         updateUI();
         updateCamera();
 
-        // Agricultura
+        // Plantações
         document.querySelectorAll('.plot').forEach(plot => {
             plot.addEventListener('click', () => {
                 if (plot.innerText === '🟫') {
@@ -64,8 +63,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     setTimeout(() => plot.innerText = '🌾', 4000);
                 } else if (plot.innerText === '🌾') {
                     plot.innerText = '🟫';
-                    state.gold += 15;
-                    state.wheatCollected++;
+                    state.gold += 10;
+                    state.wheat++;
                     updateUI();
                 }
             });
@@ -73,19 +72,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateUI() {
-        document.getElementById('gold-val').innerText = state.gold;
-        document.getElementById('quest-count').innerText = state.wheatCollected;
-        localStorage.setItem('rpg_save', JSON.stringify(state));
+        document.getElementById('ui-gold').innerText = state.gold;
+        document.getElementById('q-count').innerText = state.wheat;
+        localStorage.setItem('farm_rpg_save', JSON.stringify(state));
     }
 
     // Movimentação
     window.addEventListener('keydown', (e) => {
         if (document.getElementById('game-container').style.display === 'none') return;
+        
         const step = 25;
-        if (e.key === 'w') state.pos.y -= step;
-        if (e.key === 's') state.pos.y += step;
-        if (e.key === 'a') { state.pos.x -= step; document.getElementById('player').style.transform = 'scaleX(-1)'; }
-        if (e.key === 'd') { state.pos.x += step; document.getElementById('player').style.transform = 'scaleX(1)'; }
+        const key = e.key.toLowerCase();
+
+        if (key === 'w') state.pos.y -= step;
+        if (key === 's') state.pos.y += step;
+        if (key === 'a') { state.pos.x -= step; document.getElementById('player').style.transform = 'scaleX(-1)'; }
+        if (key === 'd') { state.pos.x += step; document.getElementById('player').style.transform = 'scaleX(1)'; }
+
         updateCamera();
     });
 
@@ -94,17 +97,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const world = document.getElementById('world');
         const mPlayer = document.getElementById('minimap-player');
 
+        // Limites
         state.pos.x = Math.max(0, Math.min(state.pos.x, WORLD_SIZE));
         state.pos.y = Math.max(0, Math.min(state.pos.y, WORLD_SIZE));
 
         player.style.left = state.pos.x + 'px';
         player.style.top = state.pos.y + 'px';
 
+        // Câmera Centralizada
         const camX = (window.innerWidth / 2) - state.pos.x;
         const camY = (window.innerHeight / 2) - state.pos.y;
         world.style.left = camX + 'px';
         world.style.top = camY + 'px';
 
+        // Minimapa
         mPlayer.style.left = (state.pos.x / WORLD_SIZE) * 100 + 'px';
         mPlayer.style.top = (state.pos.y / WORLD_SIZE) * 100 + 'px';
     }
