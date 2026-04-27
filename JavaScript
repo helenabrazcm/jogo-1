@@ -1,77 +1,90 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const state = {
-        gold: 50,
-        inventory: 0,
-        pos: { x: 500, y: 500 },
-        worldSize: 5000
+const world = document.getElementById('world');
+const player = document.getElementById('player');
+const filter = document.getElementById('day-night-filter');
+
+let pX = 800, pY = 800;
+let tool = 'hoe';
+let stats = { gold: 100, xp: 0, lvl: 1, corn: 0, milk: 0, eggs: 0 };
+let hour = 6;
+const keys = {};
+
+// Gerar Mapa
+for (let i = 0; i < 400; i++) {
+    const tile = document.createElement('div');
+    tile.className = 'tile';
+    tile.style.left = (i % 20) * 80 + 'px';
+    tile.style.top = Math.floor(i / 20) * 80 + 'px';
+    
+    tile.onclick = () => {
+        if (tool === 'hoe' && !tile.dataset.state) {
+            tile.dataset.state = 'plowed';
+            tile.classList.add('plowed');
+        } else if (tool === 'seed' && tile.dataset.state === 'plowed') {
+            tile.dataset.state = 'seeded';
+            tile.innerHTML = '🌱';
+            tile.style.display = 'flex';
+            tile.style.justifyContent = 'center';
+            tile.style.alignItems = 'center';
+        } else if (tool === 'water' && tile.dataset.state === 'seeded') {
+            tile.classList.add('wet');
+            setTimeout(() => {
+                tile.innerHTML = '🌽';
+                tile.dataset.state = 'ready';
+                tile.classList.remove('wet');
+            }, 4000);
+        } else if (tool === 'hand' && tile.dataset.state === 'ready') {
+            stats.corn++;
+            stats.gold += 20;
+            tile.innerHTML = '';
+            tile.dataset.state = 'plowed';
+            updateUI();
+        }
     };
+    document.getElementById('grid').appendChild(tile);
+}
 
-    const player = document.getElementById('player');
-    const world = document.getElementById('world');
-    const mPlayer = document.getElementById('minimap-player');
+function updateUI() {
+    document.getElementById('m-gold').innerText = stats.gold;
+    document.getElementById('m-lvl').innerText = stats.lvl;
+    document.getElementById('inv-corn').innerText = stats.corn;
+    document.getElementById('rank-gold').innerText = stats.gold;
+}
 
-    // Forçar foco na janela para o teclado funcionar imediatamente
-    window.focus();
+function toggleInventory() {
+    document.getElementById('inventory-overlay').classList.toggle('hidden');
+}
 
-    function updateCamera() {
-        // 1. Limitar movimento dentro do mapa
-        state.pos.x = Math.max(0, Math.min(state.pos.x, state.worldSize));
-        state.pos.y = Math.max(0, Math.min(state.pos.y, state.worldSize));
+function talk(msg) { alert(msg); }
 
-        // 2. Mover o personagem no mapa
-        player.style.left = state.pos.x + 'px';
-        player.style.top = state.pos.y + 'px';
+function setTool(t, el) {
+    tool = t;
+    document.querySelectorAll('.slot').forEach(s => s.classList.remove('active'));
+    el.classList.add('active');
+}
 
-        // 3. Mover o mapa (Câmera) para centralizar no player
-        const camX = (window.innerWidth / 2) - state.pos.x;
-        const camY = (window.innerHeight / 2) - state.pos.y;
-        
-        world.style.left = camX + 'px';
-        world.style.top = camY + 'px';
+// Ciclo Dia/Noite
+setInterval(() => {
+    hour++;
+    if (hour > 24) hour = 0;
+    document.getElementById('clock').innerText = `${hour.toString().padStart(2, '0')}:00 ${hour < 12 ? 'AM' : 'PM'}`;
+    filter.style.background = (hour >= 19 || hour <= 5) ? "rgba(0, 0, 50, 0.4)" : "transparent";
+}, 10000);
 
-        // 4. Atualizar Minimapa
-        mPlayer.style.left = (state.pos.x / state.worldSize) * 150 + 'px';
-        mPlayer.style.top = (state.pos.y / state.worldSize) * 150 + 'px';
-    }
+// Movimentação
+window.onkeydown = e => {
+    keys[e.key.toLowerCase()] = true;
+    if (e.key.toLowerCase() === 'e') toggleInventory();
+};
+window.onkeyup = e => keys[e.key.toLowerCase()] = false;
 
-    // LISTENER DE TECLADO REFORÇADO
-    window.addEventListener('keydown', (e) => {
-        const step = 30; // Velocidade do passo
-        const key = e.key.toLowerCase();
+function loop() {
+    if (keys['w']) pY -= 5; if (keys['s']) pY += 5;
+    if (keys['a']) { pX -= 5; player.style.transform = 'scaleX(-1)'; }
+    if (keys['d']) { pX += 5; player.style.transform = 'scaleX(1)'; }
 
-        // Impede que a página suba/desça com as setas
-        if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight", " "].includes(e.key)) {
-            e.preventDefault();
-        }
-
-        if (key === 'w' || key === 'arrowup') state.pos.y -= step;
-        if (key === 's' || key === 'arrowdown') state.pos.y += step;
-        if (key === 'a' || key === 'arrowleft') {
-            state.pos.x -= step;
-            player.style.transform = 'scaleX(-1)'; // Vira para a esquerda
-        }
-        if (key === 'd' || key === 'arrowright') {
-            state.pos.x += step;
-            player.style.transform = 'scaleX(1)'; // Vira para a direita
-        }
-
-        updateCamera();
-    });
-
-    // Plantação simples
-    document.querySelectorAll('.plot').forEach(plot => {
-        plot.addEventListener('click', () => {
-            if (plot.innerText === '🟫') {
-                plot.innerText = '🌱';
-                setTimeout(() => plot.innerText = '🌾', 3000);
-            } else if (plot.innerText === '🌾') {
-                plot.innerText = '🟫';
-                state.gold += 10;
-                document.getElementById('ui-gold').innerText = state.gold;
-            }
-        });
-    });
-
-    // Iniciar posição
-    updateCamera();
-});
+    player.style.left = pX + 'px';
+    player.style.top = pY + 'px';
+    world.style.transform = `translate(${-pX + window.innerWidth/2}px, ${-pY + window.innerHeight/2}px)`;
+    requestAnimationFrame(loop);
+}
+loop();

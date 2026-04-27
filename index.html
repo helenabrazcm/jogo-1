@@ -2,39 +2,58 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sertão RPG Pro</title>
+    <title>Pixel Farm Online</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="game-container">
-        <div id="hud-top">
-            <div class="stat">💰 <span id="ui-gold">50</span></div>
-            <div class="stat">🎒 <span id="ui-inv">Vazio</span></div>
+    <div id="day-night-filter"></div>
+
+    <div id="hud">
+        <div class="stats-box">
+            💰 <span id="m-gold">100</span> | ⭐ Nível <span id="m-lvl">1</span>
+            <div id="clock">06:00 AM</div>
         </div>
+    </div>
 
-        <div id="quest-log">
-            <b>📜 Missão:</b>
-            <p id="quest-text">Use WASD para andar!</p>
+    <div id="leaderboard">
+        <h3>🏆 Top Fazendeiros</h3>
+        <ol id="rank-list">
+            <li>👑 Você: <span id="rank-gold">100</span></li>
+            <li>Player2: 2500</li>
+            <li>Player3: 1800</li>
+        </ol>
+    </div>
+
+    <div id="viewport">
+        <div id="world">
+            <div id="grid"></div>
+            
+            <div class="npc" id="npc-shop" onclick="talk('João: Quer comprar sementes?')"></div>
+
+            <div id="player"></div>
         </div>
+    </div>
 
-        <div id="world-container">
-            <div id="world">
-                <div class="plot" style="top: 500px; left: 500px;">🟫</div>
-                <div class="plot" style="top: 500px; left: 560px;">🟫</div>
-                
-                <div id="npc-ze" class="npc" style="top: 1000px; left: 1000px;">
-                    <div class="speech-bubble">Chega mais!</div>
-                    👨‍🌾 <span>Zé</span>
-                </div>
-
-                <div id="player">🧑‍🌾</div>
+    <div id="inventory-overlay" class="hidden">
+        <div class="inventory-window">
+            <h2>🎒 Mochila de Itens</h2>
+            <div class="inv-grid">
+                <div class="inv-slot">🌽 Milho: <span id="inv-corn">0</span></div>
+                <div class="inv-slot">🥛 Leite: <span id="inv-milk">0</span></div>
+                <div class="inv-slot">🥚 Ovos: <span id="inv-eggs">0</span></div>
             </div>
+            <p><small>Pressione [E] para sair</small></p>
         </div>
+    </div>
 
-        <div id="minimap-container">
-            <div id="minimap"><div id="minimap-player"></div></div>
+    <div id="ui-container">
+        <div class="hotbar">
+            <div class="slot active" data-tool="hoe" onclick="setTool('hoe', this)">⛏️</div>
+            <div class="slot" data-tool="seed" onclick="setTool('seed', this)">🌱</div>
+            <div class="slot" data-tool="water" onclick="setTool('water', this)">💧</div>
+            <div class="slot" data-tool="fence" onclick="setTool('fence', this)">🚧</div>
+            <div class="slot" data-tool="hand" onclick="setTool('hand', this)">✋</div>
         </div>
     </div>
 
