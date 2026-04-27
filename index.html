@@ -12,41 +12,29 @@
         <div id="hud-top">
             <div class="stat">💰 <span id="ui-gold">50</span></div>
             <div class="stat">🎒 <span id="ui-inv">Vazio</span></div>
-            <div id="clock">08:00</div>
         </div>
 
         <div id="quest-log">
             <b>📜 Missão:</b>
-            <p id="quest-text">Fale com o Zé no Mercado</p>
+            <p id="quest-text">Use WASD para andar!</p>
         </div>
 
-        <div id="world">
-            <div class="plot" style="top: 500px; left: 500px;" data-id="1">🟫</div>
-            <div class="plot" style="top: 500px; left: 560px;" data-id="2">🟫</div>
-            <div class="plot" style="top: 560px; left: 500px;" data-id="3">🟫</div>
-            <div class="plot" style="top: 560px; left: 560px;" data-id="4">🟫</div>
+        <div id="world-container">
+            <div id="world">
+                <div class="plot" style="top: 500px; left: 500px;">🟫</div>
+                <div class="plot" style="top: 500px; left: 560px;">🟫</div>
+                
+                <div id="npc-ze" class="npc" style="top: 1000px; left: 1000px;">
+                    <div class="speech-bubble">Chega mais!</div>
+                    👨‍🌾 <span>Zé</span>
+                </div>
 
-            <div class="animal cow" style="top: 700px; left: 800px;">🐄</div>
-            <div class="animal chicken" style="top: 400px; left: 1200px;">🐔</div>
-
-            <div id="npc-ze" class="npc" style="top: 1500px; left: 1500px;">
-                <div class="speech-bubble">Olá! Quer negociar?</div>
-                👨‍🌾 <span>Zé do Mercado</span>
+                <div id="player">🧑‍🌾</div>
             </div>
-
-            <div id="player">🧑‍🌾</div>
         </div>
 
         <div id="minimap-container">
             <div id="minimap"><div id="minimap-player"></div></div>
-        </div>
-
-        <div id="shop-menu" style="display:none;">
-            <h3>Loja do Zé</h3>
-            <button onclick="buySeed('trigo')">Comprar Trigo (10g)</button>
-            <button onclick="buySeed('milho')">Comprar Milho (20g)</button>
-            <button onclick="sellHarvest()">Vender Colheita</button>
-            <button onclick="closeShop()">Sair</button>
         </div>
     </div>
 
