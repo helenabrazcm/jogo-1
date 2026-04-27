@@ -1,106 +1,35 @@
-:root { 
-    --grass: #7cb342; 
-    --brown: #5d4037; 
+:root { --grass: #7cb342; }
+body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #000; }
+
+.screen {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: #2e7d32; display: flex; align-items: center; justify-content: center;
+    z-index: 1000;
 }
 
-body { 
-    margin: 0; 
-    overflow: hidden; 
-    font-family: 'Segoe UI', sans-serif; 
-    background: #000; 
+.menu-card {
+    background: white; padding: 30px; border-radius: 15px;
+    text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 300px;
 }
+
+.skin-selector { display: flex; gap: 10px; justify-content: center; margin: 15px 0; }
+button { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: #43a047; color: white; width: 100%; }
+.skin-opt { width: 50px; }
+
+#preview-box { font-size: 60px; margin: 15px; }
 
 /* JOGO */
-#game-container { 
-    position: relative; 
-    width: 100vw; 
-    height: 100vh; 
-    display: block; 
-}
+#game-container { position: relative; width: 100vw; height: 100vh; }
+#world { position: absolute; width: 3000px; height: 3000px; background: var(--grass); }
+#player { position: absolute; font-size: 45px; z-index: 50; pointer-events: none; }
 
-#world { 
-    position: absolute; 
-    width: 3000px; 
-    height: 3000px; 
-    background: var(--grass); 
-}
+#minimap-container { position: fixed; top: 10px; right: 10px; background: white; padding: 3px; border: 2px solid #000; z-index: 200; }
+#minimap { width: 100px; height: 100px; background: #9ccc65; position: relative; }
+#minimap-player { position: absolute; width: 6px; height: 6px; background: red; border-radius: 50%; }
 
-#player { 
-    position: absolute; 
-    font-size: 40px; 
-    z-index: 50; 
-    transition: transform 0.1s; 
-    pointer-events: none; 
-}
+#hud { position: fixed; top: 10px; left: 10px; z-index: 200; color: white; }
+.info { background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; margin-bottom: 5px; }
+#quest { background: white; color: #000; padding: 10px; border-radius: 5px; border-left: 5px solid green; }
 
-/* Minimapa */
-#minimap-container { 
-    position: fixed; 
-    top: 10px; 
-    right: 10px; 
-    background: white; 
-    padding: 3px; 
-    border: 2px solid #000; 
-    z-index: 200; 
-}
-
-#minimap { 
-    width: 100px; 
-    height: 100px; 
-    background: #9ccc65; 
-    position: relative; 
-}
-
-#minimap-player { 
-    position: absolute; 
-    width: 5px; 
-    height: 5px; 
-    background: red; 
-    border-radius: 50%; 
-}
-
-/* HUD */
-#hud { 
-    position: fixed; 
-    top: 10px; 
-    left: 10px; 
-    z-index: 200; 
-    color: white; 
-}
-
-.info { 
-    background: rgba(0,0,0,0.7); 
-    padding: 10px; 
-    border-radius: 5px; 
-    margin-bottom: 5px; 
-}
-
-#quest { 
-    background: white; 
-    color: #000; 
-    padding: 10px; 
-    border-radius: 5px; 
-    font-size: 0.9em; 
-    border-left: 5px solid green; 
-}
-
-/* Elementos do Cenário */
-.plot { 
-    position: absolute; 
-    width: 50px; 
-    height: 50px; 
-    background: #8d6e63; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    cursor: pointer; 
-}
-
-#night-overlay { 
-    position: fixed; 
-    width: 100%; 
-    height: 100%; 
-    pointer-events: none; 
-    z-index: 150; 
-    transition: 2s; 
-}
+.plot { position: absolute; width: 50px; height: 50px; background: #8d6e63; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+#night-overlay { position: fixed; width: 100%; height: 100%; pointer-events: none; z-index: 150; transition: 2s; }

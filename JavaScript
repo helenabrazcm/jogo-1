@@ -9,20 +9,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const WORLD_SIZE = 3000;
 
-    // Inicialização Automática
+    // SELECIONAR SKIN
+    document.querySelectorAll('.skin-opt').forEach(btn => {
+        btn.addEventListener('click', () => {
+            state.skin = btn.getAttribute('data-skin');
+            document.getElementById('preview-box').innerText = state.skin;
+        });
+    });
+
+    // BOTÃO COMEÇAR (Inicia o jogo)
+    document.getElementById('btn-confirm-start').addEventListener('click', () => {
+        const nameInput = document.getElementById('char-name').value;
+        if (!nameInput) return alert("Por favor, escolha um nome!");
+
+        state.name = nameInput;
+        document.getElementById('custom-screen').style.display = 'none';
+        document.getElementById('game-container').style.display = 'block';
+        initGame();
+    });
+
+    // BOTÃO CARREGAR
+    document.getElementById('btn-load').addEventListener('click', () => {
+        const saved = localStorage.getItem('farm_rpg_save');
+        if (saved) {
+            state = JSON.parse(saved);
+            document.getElementById('custom-screen').style.display = 'none';
+            document.getElementById('game-container').style.display = 'block';
+            initGame();
+        } else {
+            alert("Nenhum progresso salvo!");
+        }
+    });
+
     function initGame() {
         const player = document.getElementById('player');
         player.innerText = state.skin;
+        document.getElementById('ui-name').innerText = state.name;
         
         updateUI();
         updateCamera();
-        setupPlots();
-    }
 
-    // Configura os cliques nas terras
-    function setupPlots() {
+        // Plantações
         document.querySelectorAll('.plot').forEach(plot => {
-            plot.addEventListener('click', () => {
+            plot.onclick = () => {
                 if (plot.innerText === '🟫') {
                     plot.innerText = '🌱';
                     setTimeout(() => plot.innerText = '🌾', 4000);
@@ -32,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     state.wheat++;
                     updateUI();
                 }
-            });
+            };
         });
     }
 
@@ -44,19 +73,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Movimentação
     window.addEventListener('keydown', (e) => {
-        const step = 25;
+        if (document.getElementById('game-container').style.display === 'none') return;
+        
+        const step = 30;
         const key = e.key.toLowerCase();
 
         if (key === 'w') state.pos.y -= step;
         if (key === 's') state.pos.y += step;
-        if (key === 'a') { 
-            state.pos.x -= step; 
-            document.getElementById('player').style.transform = 'scaleX(-1)'; 
-        }
-        if (key === 'd') { 
-            state.pos.x += step; 
-            document.getElementById('player').style.transform = 'scaleX(1)'; 
-        }
+        if (key === 'a') { state.pos.x -= step; document.getElementById('player').style.transform = 'scaleX(-1)'; }
+        if (key === 'd') { state.pos.x += step; document.getElementById('player').style.transform = 'scaleX(1)'; }
 
         updateCamera();
     });
@@ -66,24 +91,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const world = document.getElementById('world');
         const mPlayer = document.getElementById('minimap-player');
 
-        // Limites do Mundo
         state.pos.x = Math.max(0, Math.min(state.pos.x, WORLD_SIZE));
         state.pos.y = Math.max(0, Math.min(state.pos.y, WORLD_SIZE));
 
         player.style.left = state.pos.x + 'px';
         player.style.top = state.pos.y + 'px';
 
-        // Câmera Centralizada no Personagem
         const camX = (window.innerWidth / 2) - state.pos.x;
         const camY = (window.innerHeight / 2) - state.pos.y;
         world.style.left = camX + 'px';
         world.style.top = camY + 'px';
 
-        // Atualização do Minimapa
         mPlayer.style.left = (state.pos.x / WORLD_SIZE) * 100 + 'px';
         mPlayer.style.top = (state.pos.y / WORLD_SIZE) * 100 + 'px';
     }
-
-    // Inicia o jogo direto
-    initGame();
 });

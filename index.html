@@ -8,26 +8,35 @@
 </head>
 <body>
 
-    <div id="game-container">
-        <div id="night-overlay"></div>
-        
-        <div id="minimap-container">
-            <div id="minimap">
-                <div id="minimap-player"></div>
+    <div id="custom-screen" class="screen">
+        <div class="menu-card">
+            <h1>🌾 SERTÃO RPG</h1>
+            <h2>Crie seu Fazendeiro</h2>
+            <input type="text" id="char-name" placeholder="Nome do Personagem" maxlength="12">
+            <div class="skin-selector">
+                <button class="skin-opt" data-skin="🧑‍🌾">A</button>
+                <button class="skin-opt" data-skin="👩‍🌾">B</button>
+                <button class="skin-opt" data-skin="👨‍🌾">C</button>
             </div>
+            <div id="preview-box">🧑‍🌾</div>
+            <button id="btn-confirm-start">COMEÇAR AVENTURA</button>
+            <button id="btn-load" style="margin-top: 10px; background: #795548;">CARREGAR SALVE</button>
         </div>
+    </div>
 
+    <div id="game-container" style="display:none;">
+        <div id="night-overlay"></div>
+        <div id="minimap-container"><div id="minimap"><div id="minimap-player"></div></div></div>
+        
         <div id="world">
             <div class="plot" style="top: 400px; left: 400px;">🟫</div>
             <div class="plot" style="top: 400px; left: 460px;">🟫</div>
-            <div class="plot" style="top: 460px; left: 400px;">🟫</div>
-            <div class="plot" style="top: 460px; left: 460px;">🟫</div>
             <div id="player">🧑‍🌾</div>
         </div>
 
         <div id="hud">
-            <div class="info">💰 Ouro: <span id="ui-gold">0</span></div>
-            <div id="quest">Colha trigos (<span id="q-count">0</span>/3)</div>
+            <div class="info"><b>Fazendeiro:</b> <span id="ui-name">---</span> | 💰 <span id="ui-gold">0</span></div>
+            <div id="quest">Missão: Colha 3 trigos (<span id="q-count">0</span>/3)</div>
         </div>
     </div>
 
