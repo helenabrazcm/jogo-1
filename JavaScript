@@ -1,75 +1,122 @@
+const state = {
+    gold: 50,
+    inventory: { trigo_seeds: 2, milho_seeds: 0, harvest: 0 },
+    pos: { x: 500, y: 500 },
+    questStep: 0,
+    activeSeed: 'trigo'
+};
+
+const WORLD_SIZE = 5000;
+
 document.addEventListener('DOMContentLoaded', () => {
-    let state = {
-        gold: 0,
-        wheatCount: 0,
-        pos: { x: 550, y: 550 } // Posição inicial perto das plantas
-    };
+    updateUI();
 
-    const WORLD_SIZE = 3000;
-
-    // INICIALIZAÇÃO IMEDIATA
-    function initGame() {
-        updateUI();
-        updateCamera();
-
-        // Sistema de Plantação
-        document.querySelectorAll('.plot').forEach(plot => {
-            plot.addEventListener('click', () => {
-                if (plot.innerText === '🟫') {
-                    plot.innerText = '🌱';
-                    setTimeout(() => plot.innerText = '🌾', 4000);
-                } else if (plot.innerText === '🌾') {
-                    plot.innerText = '🟫';
-                    state.gold += 15;
-                    state.wheatCount++;
-                    updateUI();
-                }
-            });
-        });
-    }
-
-    function updateUI() {
-        document.getElementById('ui-gold').innerText = state.gold;
-        document.getElementById('ui-quest-count').innerText = state.wheatCount;
-    }
-
-    // MOVIMENTAÇÃO
+    // Movimentação WASD e Setas
     window.addEventListener('keydown', (e) => {
-        const step = 30;
         const key = e.key.toLowerCase();
+        const step = 25;
 
-        if (key === 'w') state.pos.y -= step;
-        if (key === 's') state.pos.y += step;
-        if (key === 'a') { state.pos.x -= step; document.getElementById('player').style.transform = 'scaleX(-1)'; }
-        if (key === 'd') { state.pos.x += step; document.getElementById('player').style.transform = 'scaleX(1)'; }
+        if (key === 'w' || key === 'arrowup') state.pos.y -= step;
+        if (key === 's' || key === 'arrowdown') state.pos.y += step;
+        if (key === 'a' || key === 'arrowleft') {
+            state.pos.x -= step;
+            document.getElementById('player').style.transform = 'scaleX(-1)';
+        }
+        if (key === 'd' || key === 'arrowright') {
+            state.pos.x += step;
+            document.getElementById('player').style.transform = 'scaleX(1)';
+        }
 
         updateCamera();
+        checkProximity();
     });
 
-    function updateCamera() {
-        const world = document.getElementById('world');
-        const player = document.getElementById('player');
-        const mPlayer = document.getElementById('minimap-player');
+    // Plantação
+    document.querySelectorAll('.plot').forEach(plot => {
+        plot.addEventListener('click', () => {
+            if (plot.innerText === '🟫') {
+                if (state.inventory.trigo_seeds > 0) {
+                    state.inventory.trigo_seeds--;
+                    plot.innerText = '🌱';
+                    setTimeout(() => plot.innerText = '🌾', 5000);
+                } else {
+                    alert("Você não tem sementes!");
+                }
+            } else if (plot.innerText === '🌾') {
+                plot.innerText = '🟫';
+                state.inventory.harvest++;
+                checkQuests();
+                updateUI();
+            }
+        });
+    });
 
-        // Limites do mapa
-        state.pos.x = Math.max(0, Math.min(state.pos.x, WORLD_SIZE));
-        state.pos.y = Math.max(0, Math.min(state.pos.y, WORLD_SIZE));
-
-        // Atualiza boneco
-        player.style.left = state.pos.x + 'px';
-        player.style.top = state.pos.y + 'px';
-
-        // Movimenta o mundo (Câmera)
-        const camX = (window.innerWidth / 2) - state.pos.x;
-        const camY = (window.innerHeight / 2) - state.pos.y;
-        world.style.left = camX + 'px';
-        world.style.top = camY + 'px';
-
-        // Atualiza Mini-mapa
-        mPlayer.style.left = (state.pos.x / WORLD_SIZE) * 120 + 'px';
-        mPlayer.style.top = (state.pos.y / WORLD_SIZE) * 120 + 'px';
-    }
-
-    // Roda o jogo na hora
-    initGame();
+    // Interação com NPC
+    document.getElementById('npc-ze').onclick = () => {
+        document.getElementById('shop-menu').style.display = 'block';
+    };
 });
+
+function updateCamera() {
+    const world = document.getElementById('world');
+    const player = document.getElementById('player');
+    const mPlayer = document.getElementById('minimap-player');
+
+    state.pos.x = Math.max(0, Math.min(state.pos.x, WORLD_SIZE));
+    state.pos.y = Math.max(0, Math.min(state.pos.y, WORLD_SIZE));
+
+    player.style.left = state.pos.x + 'px';
+    player.style.top = state.pos.y + 'px';
+
+    const camX = (window.innerWidth / 2) - state.pos.x;
+    const camY = (window.innerHeight / 2) - state.pos.y;
+    world.style.left = camX + 'px';
+    world.style.top = camY + 'px';
+
+    mPlayer.style.left = (state.pos.x / WORLD_SIZE) * 150 + 'px';
+    mPlayer.style.top = (state.pos.y / WORLD_SIZE) * 150 + 'px';
+}
+
+function updateUI() {
+    document.getElementById('ui-gold').innerText = state.gold;
+    document.getElementById('ui-inv').innerText = `Seeds: ${state.inventory.trigo_seeds} | Colheita: ${state.inventory.harvest}`;
+}
+
+function buySeed(tipo) {
+    let custo = tipo === 'trigo' ? 10 : 20;
+    if (state.gold >= custo) {
+        state.gold -= custo;
+        state.inventory.trigo_seeds++; // Simplificado para o exemplo
+        updateUI();
+    }
+}
+
+function sellHarvest() {
+    if (state.inventory.harvest > 0) {
+        state.gold += state.inventory.harvest * 15;
+        state.inventory.harvest = 0;
+        updateUI();
+        alert("Colheita vendida!");
+    }
+}
+
+function closeShop() {
+    document.getElementById('shop-menu').style.display = 'none';
+    if(state.questStep === 0) {
+        state.questStep = 1;
+        document.getElementById('quest-text').innerText = "Plante e colha 3 trigos";
+    }
+}
+
+function checkQuests() {
+    if (state.questStep === 1 && state.inventory.harvest >= 3) {
+        state.questStep = 2;
+        document.getElementById('quest-text').innerText = "Missão Completa! Ganhou 50g";
+        state.gold += 50;
+        updateUI();
+    }
+}
+
+function checkProximity() {
+    // Aqui você poderia adicionar lógica para o NPC falar sozinho quando você chega perto
+}

@@ -1,33 +1,27 @@
-:root {
-    --grass: #7cb342;
-    --ui-bg: rgba(0, 0, 0, 0.7);
-}
+:root { --grass: #7cb342; --dirt: #8d6e63; }
+body { margin: 0; overflow: hidden; font-family: 'Courier New', Courier, monospace; background: #222; }
 
-body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #222; }
+#game-container { position: relative; width: 100vw; height: 100vh; }
+#world { position: absolute; width: 5000px; height: 5000px; background: var(--grass); transition: 0.1s linear; }
 
-#game-container { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+/* Jogador e Animais */
+#player { position: absolute; font-size: 50px; z-index: 100; pointer-events: none; }
+.animal { position: absolute; font-size: 40px; cursor: help; transition: 0.5s; }
 
-#world { position: absolute; width: 3000px; height: 3000px; background: var(--grass); }
+/* NPC e Balão */
+.npc { position: absolute; font-size: 45px; cursor: pointer; text-align: center; }
+.npc span { display: block; font-size: 14px; background: white; border-radius: 5px; padding: 2px; }
+.speech-bubble { position: absolute; top: -40px; left: 0; background: white; padding: 5px; border-radius: 10px; font-size: 12px; width: 100px; border: 2px solid #000; }
 
-#player {
-    position: absolute; width: 45px; height: 45px; font-size: 45px;
-    display: flex; align-items: center; justify-content: center;
-    z-index: 100; pointer-events: none;
-}
+/* Interface */
+#hud-top { position: fixed; top: 10px; left: 10px; display: flex; gap: 20px; z-index: 500; }
+.stat { background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 20px; border: 2px solid #ffd700; }
+#quest-log { position: fixed; top: 70px; left: 10px; background: #fffde7; padding: 10px; border-radius: 5px; border-left: 10px solid #fbc02d; z-index: 500; width: 180px; }
 
-/* MINI-MAPA */
-#minimap-container {
-    position: fixed; top: 20px; right: 20px; background: white; 
-    padding: 3px; border: 2px solid #333; z-index: 500;
-}
-#minimap { width: 120px; height: 120px; background: #9ccc65; position: relative; }
+#shop-menu { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border: 4px solid var(--dirt); z-index: 1000; text-align: center; }
+
+/* Elementos do Mapa */
+.plot { position: absolute; width: 60px; height: 60px; background: var(--dirt); border: 2px solid #5d4037; display: flex; align-items: center; justify-content: center; font-size: 30px; cursor: pointer; }
+#minimap-container { position: fixed; bottom: 20px; right: 20px; border: 3px solid white; z-index: 500; }
+#minimap { width: 150px; height: 150px; background: rgba(124, 179, 66, 0.7); position: relative; }
 #minimap-player { position: absolute; width: 6px; height: 6px; background: red; border-radius: 50%; }
-
-/* UI */
-#hud { position: fixed; top: 20px; left: 20px; z-index: 500; color: white; }
-.stat-box { background: var(--ui-bg); padding: 10px; border-radius: 8px; margin-bottom: 10px; font-weight: bold; }
-#mission-box { background: white; color: black; padding: 10px; border-radius: 8px; border-left: 5px solid green; }
-
-.plot { position: absolute; width: 50px; height: 50px; background: #8d6e63; cursor: pointer; border-radius: 5px; display: flex; align-items: center; justify-content: center; }
-.npc-store { position: absolute; background: #5d4037; color: white; padding: 20px; border: 2px solid #fff; border-radius: 10px; }
-#night-overlay { position: fixed; width: 100%; height: 100%; pointer-events: none; z-index: 400; transition: 2s; }
