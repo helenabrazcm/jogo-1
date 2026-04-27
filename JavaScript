@@ -23,15 +23,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // BOTÃO COMEÇAR (Troca para o jogo)
+    // BOTÃO COMEÇAR
     document.getElementById('btn-confirm-start').addEventListener('click', () => {
         const nameInput = document.getElementById('char-name').value;
         if (!nameInput) return alert("Por favor, escolha um nome!");
 
         state.name = nameInput;
-        document.getElementById('custom-screen').style.display = 'none';
-        document.getElementById('game-container').style.display = 'block';
-        initGame();
+        startGame();
     });
 
     // BOTÃO CARREGAR
@@ -39,25 +37,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const saved = localStorage.getItem('farm_rpg_save');
         if (saved) {
             state = JSON.parse(saved);
-            document.getElementById('start-screen').style.display = 'none';
-            document.getElementById('game-container').style.display = 'block';
-            initGame();
+            startGame();
         } else {
             alert("Nenhum progresso salvo encontrado!");
         }
     });
 
-    function initGame() {
+    function startGame() {
+        document.getElementById('custom-screen').style.display = 'none';
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('game-container').style.display = 'block';
+        
+        // Inicializa visualmente o personagem
         const player = document.getElementById('player');
         player.innerText = state.skin;
         document.getElementById('ui-name').innerText = state.name;
-        
+
+        initPlots(); // Ativa os cliques na terra
         updateUI();
         updateCamera();
+    }
 
-        // Plantações
+    function initPlots() {
+        // Usamos uma abordagem que evita múltiplos listeners se o jogo for reiniciado
         document.querySelectorAll('.plot').forEach(plot => {
-            plot.addEventListener('click', () => {
+            plot.onclick = () => {
                 if (plot.innerText === '🟫') {
                     plot.innerText = '🌱';
                     setTimeout(() => plot.innerText = '🌾', 4000);
@@ -67,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     state.wheat++;
                     updateUI();
                 }
-            });
+            };
         });
     }
 
@@ -79,15 +83,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Movimentação
     window.addEventListener('keydown', (e) => {
+        // Só move se o jogo estiver visível
         if (document.getElementById('game-container').style.display === 'none') return;
         
         const step = 25;
         const key = e.key.toLowerCase();
 
-        if (key === 'w') state.pos.y -= step;
-        if (key === 's') state.pos.y += step;
-        if (key === 'a') { state.pos.x -= step; document.getElementById('player').style.transform = 'scaleX(-1)'; }
-        if (key === 'd') { state.pos.x += step; document.getElementById('player').style.transform = 'scaleX(1)'; }
+        if (key === 'w' || key === 'arrowup') state.pos.y -= step;
+        if (key === 's' || key === 'arrowdown') state.pos.y += step;
+        if (key === 'a' || key === 'arrowleft') { 
+            state.pos.x -= step; 
+            document.getElementById('player').style.transform = 'scaleX(-1)'; 
+        }
+        if (key === 'd' || key === 'arrowright') { 
+            state.pos.x += step; 
+            document.getElementById('player').style.transform = 'scaleX(1)'; 
+        }
 
         updateCamera();
     });
@@ -97,18 +108,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const world = document.getElementById('world');
         const mPlayer = document.getElementById('minimap-player');
 
-        // Limites
+        // Limites do mapa
         state.pos.x = Math.max(0, Math.min(state.pos.x, WORLD_SIZE));
         state.pos.y = Math.max(0, Math.min(state.pos.y, WORLD_SIZE));
 
+        // Posiciona o jogador no mundo
         player.style.left = state.pos.x + 'px';
         player.style.top = state.pos.y + 'px';
 
-        // Câmera Centralizada
+        // Move o "mundo" (Câmera)
         const camX = (window.innerWidth / 2) - state.pos.x;
         const camY = (window.innerHeight / 2) - state.pos.y;
-        world.style.left = camX + 'px';
-        world.style.top = camY + 'px';
+        world.style.transform = `translate(${camX}px, ${camY}px)`;
 
         // Minimapa
         mPlayer.style.left = (state.pos.x / WORLD_SIZE) * 100 + 'px';
