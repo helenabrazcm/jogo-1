@@ -1,117 +1,27 @@
-document.addEventListener('DOMContentLoaded', () => {
-    let state = {
-        name: "Fazendeiro",
-        skin: "🧑‍🌾",
-        gold: 0,
-        wheat: 0,
-        pos: { x: 500, y: 500 }
-    };
+const player = document.getElementById('player');
+let posX = 100;
+let posY = 100;
+const speed = 15;
 
-    const WORLD_SIZE = 3000;
+document.addEventListener('keydown', (event) => {
+    const key = event.key.toLowerCase();
 
-    // BOTÃO JOGAR (Troca para customização)
-    document.getElementById('btn-play').addEventListener('click', () => {
-        document.getElementById('start-screen').style.display = 'none';
-        document.getElementById('custom-screen').style.display = 'flex';
-    });
+    if (key === 'w') posY -= speed;
+    if (key === 's') posY += speed;
+    if (key === 'a') posX -= speed;
+    if (key === 'd') posX += speed;
 
-    // SELECIONAR SKIN
-    document.querySelectorAll('.skin-opt').forEach(btn => {
-        btn.addEventListener('click', () => {
-            state.skin = btn.getAttribute('data-skin');
-            document.getElementById('preview-box').innerText = state.skin;
-        });
-    });
-
-    // BOTÃO COMEÇAR (Troca para o jogo)
-    document.getElementById('btn-confirm-start').addEventListener('click', () => {
-        const nameInput = document.getElementById('char-name').value;
-        if (!nameInput) return alert("Por favor, escolha um nome!");
-
-        state.name = nameInput;
-        document.getElementById('custom-screen').style.display = 'none';
-        document.getElementById('game-container').style.display = 'block';
-        initGame();
-    });
-
-    // BOTÃO CARREGAR
-    document.getElementById('btn-load').addEventListener('click', () => {
-        const saved = localStorage.getItem('farm_rpg_save');
-        if (saved) {
-            state = JSON.parse(saved);
-            document.getElementById('start-screen').style.display = 'none';
-            document.getElementById('game-container').style.display = 'block';
-            initGame();
-        } else {
-            alert("Nenhum progresso salvo encontrado!");
-        }
-    });
-
-    function initGame() {
-        const player = document.getElementById('player');
-        player.innerText = state.skin;
-        document.getElementById('ui-name').innerText = state.name;
-        
-        updateUI();
-        updateCamera();
-
-        // Plantações
-        document.querySelectorAll('.plot').forEach(plot => {
-            plot.addEventListener('click', () => {
-                if (plot.innerText === '🟫') {
-                    plot.innerText = '🌱';
-                    setTimeout(() => plot.innerText = '🌾', 4000);
-                } else if (plot.innerText === '🌾') {
-                    plot.innerText = '🟫';
-                    state.gold += 10;
-                    state.wheat++;
-                    updateUI();
-                }
-            });
-        });
-    }
-
-    function updateUI() {
-        document.getElementById('ui-gold').innerText = state.gold;
-        document.getElementById('q-count').innerText = state.wheat;
-        localStorage.setItem('farm_rpg_save', JSON.stringify(state));
-    }
-
-    // Movimentação
-    window.addEventListener('keydown', (e) => {
-        if (document.getElementById('game-container').style.display === 'none') return;
-        
-        const step = 25;
-        const key = e.key.toLowerCase();
-
-        if (key === 'w') state.pos.y -= step;
-        if (key === 's') state.pos.y += step;
-        if (key === 'a') { state.pos.x -= step; document.getElementById('player').style.transform = 'scaleX(-1)'; }
-        if (key === 'd') { state.pos.x += step; document.getElementById('player').style.transform = 'scaleX(1)'; }
-
-        updateCamera();
-    });
-
-    function updateCamera() {
-        const player = document.getElementById('player');
-        const world = document.getElementById('world');
-        const mPlayer = document.getElementById('minimap-player');
-
-        // Limites
-        state.pos.x = Math.max(0, Math.min(state.pos.x, WORLD_SIZE));
-        state.pos.y = Math.max(0, Math.min(state.pos.y, WORLD_SIZE));
-
-        player.style.left = state.pos.x + 'px';
-        player.style.top = state.pos.y + 'px';
-
-        // Câmera Centralizada
-        const camX = (window.innerWidth / 2) - state.pos.x;
-        const camY = (window.innerHeight / 2) - state.pos.y;
-        world.style.left = camX + 'px';
-        world.style.top = camY + 'px';
-
-        // Minimapa
-        mPlayer.style.left = (state.pos.x / WORLD_SIZE) * 100 + 'px';
-        mPlayer.style.top = (state.pos.y / WORLD_SIZE) * 100 + 'px';
-    }
+    updatePosition();
 });
+
+function updatePosition() {
+    player.style.top = posY + 'px';
+    player.style.left = posX + 'px';
+    
+    // Faz a câmera seguir o jogador
+    window.scrollTo({
+        top: posY - window.innerHeight / 2,
+        left: posX - window.innerWidth / 2,
+        behavior: 'smooth'
+    });
+}

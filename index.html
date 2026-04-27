@@ -2,50 +2,20 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sertão RPG</title>
+    <title>Farm RPG Adventure</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="start-screen" class="screen">
-        <div class="menu-card">
-            <h1>🌾 SERTÃO RPG</h1>
-            <div class="menu-buttons">
-                <button id="btn-play">JOGAR</button>
-                <button id="btn-load">CARREGAR</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="custom-screen" class="screen" style="display:none;">
-        <div class="menu-card">
-            <h2>Novo Fazendeiro</h2>
-            <input type="text" id="char-name" placeholder="Nome do Personagem" maxlength="12">
-            <div class="skin-selector">
-                <button class="skin-opt" data-skin="🧑‍🌾">A</button>
-                <button class="skin-opt" data-skin="👩‍🌾">B</button>
-                <button class="skin-opt" data-skin="👨‍🌾">C</button>
-            </div>
-            <div id="preview-box">🧑‍🌾</div>
-            <button id="btn-confirm-start">COMEÇAR AVENTURA</button>
-        </div>
-    </div>
-
-    <div id="game-container" style="display:none;">
-        <div id="night-overlay"></div>
-        <div id="minimap-container"><div id="minimap"><div id="minimap-player"></div></div></div>
+    <div id="game-world">
+        <div class="tree" style="top: 100px; left: 200px;"></div>
+        <div class="crop-field" style="top: 300px; left: 400px;"></div>
         
-        <div id="world">
-            <div class="plot" style="top: 400px; left: 400px;">🟫</div>
-            <div class="plot" style="top: 400px; left: 460px;">🟫</div>
-            <div id="player">🧑‍🌾</div>
-        </div>
+        <div id="player"></div>
+    </div>
 
-        <div id="hud">
-            <div class="info"><b>Nome:</b> <span id="ui-name">---</span> | 💰 <span id="ui-gold">0</span></div>
-            <div id="quest">Colha 3 trigos (<span id="q-count">0</span>/3)</div>
-        </div>
+    <div class="ui-overlay">
+        <p>Use WASD para mover | Energia: 100%</p>
     </div>
 
     <script src="script.js"></script>
