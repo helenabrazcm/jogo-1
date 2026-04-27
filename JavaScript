@@ -1,79 +1,89 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const state = {
+    let state = {
+        name: "Fazendeiro",
+        skin: "🧑‍🌾",
         gold: 0,
         wheat: 0,
         pos: { x: 500, y: 500 }
     };
 
     const WORLD_SIZE = 3000;
-    const playerEl = document.getElementById('player');
-    const worldEl = document.getElementById('world');
 
-    // Inicializa o jogo direto
-    function init() {
+    // Inicialização Automática
+    function initGame() {
+        const player = document.getElementById('player');
+        player.innerText = state.skin;
+        
         updateUI();
-        initPlots();
         updateCamera();
+        setupPlots();
     }
 
-    function initPlots() {
+    // Configura os cliques nas terras
+    function setupPlots() {
         document.querySelectorAll('.plot').forEach(plot => {
-            plot.onclick = () => {
+            plot.addEventListener('click', () => {
                 if (plot.innerText === '🟫') {
                     plot.innerText = '🌱';
-                    setTimeout(() => { plot.innerText = '🌾'; }, 3000);
+                    setTimeout(() => plot.innerText = '🌾', 4000);
                 } else if (plot.innerText === '🌾') {
                     plot.innerText = '🟫';
                     state.gold += 10;
-                    state.wheat += 1;
+                    state.wheat++;
                     updateUI();
                 }
-            };
+            });
         });
     }
 
     function updateUI() {
         document.getElementById('ui-gold').innerText = state.gold;
-        document.getElementById('ui-wheat').innerText = state.wheat;
+        document.getElementById('q-count').innerText = state.wheat;
+        localStorage.setItem('farm_rpg_save', JSON.stringify(state));
     }
 
+    // Movimentação
     window.addEventListener('keydown', (e) => {
-        const step = 30;
+        const step = 25;
         const key = e.key.toLowerCase();
 
-        if (key === 'w' || key === 'arrowup') state.pos.y -= step;
-        if (key === 's' || key === 'arrowdown') state.pos.y += step;
-        if (key === 'a' || key === 'arrowleft') {
-            state.pos.x -= step;
-            playerEl.style.transform = 'scaleX(-1)';
+        if (key === 'w') state.pos.y -= step;
+        if (key === 's') state.pos.y += step;
+        if (key === 'a') { 
+            state.pos.x -= step; 
+            document.getElementById('player').style.transform = 'scaleX(-1)'; 
         }
-        if (key === 'd' || key === 'arrowright') {
-            state.pos.x += step;
-            playerEl.style.transform = 'scaleX(1)';
+        if (key === 'd') { 
+            state.pos.x += step; 
+            document.getElementById('player').style.transform = 'scaleX(1)'; 
         }
 
         updateCamera();
     });
 
     function updateCamera() {
-        // Limites
+        const player = document.getElementById('player');
+        const world = document.getElementById('world');
+        const mPlayer = document.getElementById('minimap-player');
+
+        // Limites do Mundo
         state.pos.x = Math.max(0, Math.min(state.pos.x, WORLD_SIZE));
         state.pos.y = Math.max(0, Math.min(state.pos.y, WORLD_SIZE));
 
-        // Personagem
-        playerEl.style.left = state.pos.x + 'px';
-        playerEl.style.top = state.pos.y + 'px';
+        player.style.left = state.pos.x + 'px';
+        player.style.top = state.pos.y + 'px';
 
-        // Câmera (Mundo)
+        // Câmera Centralizada no Personagem
         const camX = (window.innerWidth / 2) - state.pos.x;
         const camY = (window.innerHeight / 2) - state.pos.y;
-        worldEl.style.transform = `translate(${camX}px, ${camY}px)`;
+        world.style.left = camX + 'px';
+        world.style.top = camY + 'px';
 
-        // Minimapa
-        const mPlayer = document.getElementById('minimap-player');
+        // Atualização do Minimapa
         mPlayer.style.left = (state.pos.x / WORLD_SIZE) * 100 + 'px';
         mPlayer.style.top = (state.pos.y / WORLD_SIZE) * 100 + 'px';
     }
 
-    init();
+    // Inicia o jogo direto
+    initGame();
 });

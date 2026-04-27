@@ -9,28 +9,25 @@
 <body>
 
     <div id="game-container">
-        <div id="hud">
-            <div class="info">
-                💰 R$ <span id="ui-gold">0</span> | 
-                🌾 <span id="ui-wheat">0</span>
-            </div>
-        </div>
-
+        <div id="night-overlay"></div>
+        
         <div id="minimap-container">
             <div id="minimap">
                 <div id="minimap-player"></div>
             </div>
         </div>
 
-        <div id="world-container">
-            <div id="world">
-                <div class="plot" style="top: 400px; left: 400px;">🟫</div>
-                <div class="plot" style="top: 400px; left: 500px;">🟫</div>
-                <div class="plot" style="top: 500px; left: 400px;">🟫</div>
-                <div class="plot" style="top: 500px; left: 500px;">🟫</div>
-                
-                <div id="player">🧑‍🌾</div>
-            </div>
+        <div id="world">
+            <div class="plot" style="top: 400px; left: 400px;">🟫</div>
+            <div class="plot" style="top: 400px; left: 460px;">🟫</div>
+            <div class="plot" style="top: 460px; left: 400px;">🟫</div>
+            <div class="plot" style="top: 460px; left: 460px;">🟫</div>
+            <div id="player">🧑‍🌾</div>
+        </div>
+
+        <div id="hud">
+            <div class="info">💰 Ouro: <span id="ui-gold">0</span></div>
+            <div id="quest">Colha trigos (<span id="q-count">0</span>/3)</div>
         </div>
     </div>
 
