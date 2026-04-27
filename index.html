@@ -3,34 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sertão RPG - Farm Simulator</title>
+    <title>Sertão RPG - Instant Start</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="custom-screen" class="overlay-screen">
-        <div class="menu-card">
-            <h1>🌾 SERTÃO RPG</h1>
-            <h2>Crie seu Fazendeiro</h2>
-            
-            <input type="text" id="char-name" placeholder="Nome do Personagem" maxlength="12">
-            
-            <div class="skin-selector">
-                <button class="skin-opt" data-skin="🧑‍🌾">A</button>
-                <button class="skin-opt" data-skin="👩‍🌾">B</button>
-                <button class="skin-opt" data-skin="👨‍🌾">C</button>
-            </div>
-            
-            <div id="preview-box">
-                <span id="preview-emoji">🧑‍🌾</span>
-            </div>
-
-            <button id="btn-start-game" class="btn-main">COMEÇAR AVENTURA</button>
-            <button id="btn-load-game" class="btn-secondary">CARREGAR SALVE</button>
-        </div>
-    </div>
-
-    <div id="game-container" style="display:none;">
+    <div id="game-container">
         <div id="night-overlay"></div>
         
         <div id="minimap-container">
@@ -42,6 +20,8 @@
         <div id="world">
             <div class="plot" style="top: 500px; left: 500px;">🟫</div>
             <div class="plot" style="top: 500px; left: 560px;">🟫</div>
+            <div class="plot" style="top: 560px; left: 500px;">🟫</div>
+            <div class="plot" style="top: 560px; left: 560px;">🟫</div>
             
             <div class="npc-store" style="top: 2000px; left: 2000px;">🏪 MERCADO</div>
 
@@ -50,11 +30,9 @@
 
         <div id="hud">
             <div class="stat-box">
-                <b id="ui-display-name">---</b><br>
                 💰 Ouro: <span id="ui-gold">0</span>
             </div>
             <div id="mission-box">
-                <b>📜 MISSÃO:</b><br>
                 Colha 3 trigos (<span id="ui-quest-count">0</span>/3)
             </div>
         </div>

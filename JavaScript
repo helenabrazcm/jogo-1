@@ -1,55 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
     let state = {
-        name: "Fazendeiro",
-        skin: "🧑‍🌾",
         gold: 0,
         wheatCount: 0,
-        pos: { x: 550, y: 550 }
+        pos: { x: 550, y: 550 } // Posição inicial perto das plantas
     };
 
     const WORLD_SIZE = 3000;
 
-    // --- SELEÇÃO DE PERSONAGEM ---
-    document.querySelectorAll('.skin-opt').forEach(btn => {
-        btn.addEventListener('click', () => {
-            state.skin = btn.getAttribute('data-skin');
-            document.getElementById('preview-emoji').innerText = state.skin;
-        });
-    });
-
-    // --- BOTÃO COMEÇAR (A LÓGICA QUE VOCÊ PEDIU) ---
-    document.getElementById('btn-start-game').addEventListener('click', () => {
-        const nameInput = document.getElementById('char-name').value;
-        if (!nameInput) return alert("Por favor, escolha um nome!");
-
-        state.name = nameInput;
-        
-        // Esconde a tela de criação e mostra o jogo
-        document.getElementById('custom-screen').style.display = 'none';
-        document.getElementById('game-container').style.display = 'block';
-        
-        initGame();
-    });
-
-    // CARREGAR SALVE
-    document.getElementById('btn-load-game').addEventListener('click', () => {
-        const saved = localStorage.getItem('sertao_rpg_save');
-        if (saved) {
-            state = JSON.parse(saved);
-            document.getElementById('custom-screen').style.display = 'none';
-            document.getElementById('game-container').style.display = 'block';
-            initGame();
-        } else {
-            alert("Nenhum progresso salvo encontrado!");
-        }
-    });
-
-    // --- LÓGICA DO JOGO ---
+    // INICIALIZAÇÃO IMEDIATA
     function initGame() {
-        const playerEl = document.getElementById('player');
-        playerEl.innerText = state.skin;
-        document.getElementById('ui-display-name').innerText = state.name;
-
         updateUI();
         updateCamera();
 
@@ -72,14 +31,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateUI() {
         document.getElementById('ui-gold').innerText = state.gold;
         document.getElementById('ui-quest-count').innerText = state.wheatCount;
-        localStorage.setItem('sertao_rpg_save', JSON.stringify(state));
     }
 
-    // --- MOVIMENTAÇÃO E CÂMERA ---
+    // MOVIMENTAÇÃO
     window.addEventListener('keydown', (e) => {
-        if (document.getElementById('game-container').style.display === 'none') return;
-
-        const step = 25;
+        const step = 30;
         const key = e.key.toLowerCase();
 
         if (key === 'w') state.pos.y -= step;
@@ -113,4 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mPlayer.style.left = (state.pos.x / WORLD_SIZE) * 120 + 'px';
         mPlayer.style.top = (state.pos.y / WORLD_SIZE) * 120 + 'px';
     }
+
+    // Roda o jogo na hora
+    initGame();
 });
