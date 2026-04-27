@@ -1,47 +1,89 @@
-body {
-    margin: 0;
-    overflow: hidden;
-    background-color: #2d5a27; /* Cor de grama base */
+:root { 
+    --grass: #7cb342; 
+    --brown: #5d4037; 
 }
 
-#game-world {
-    width: 2000px; /* Mapa maior que a tela */
-    height: 2000px;
-    background-image: url('https://img.freepik.com/free-vector/seamless-grass-pattern-background_1308-54019.jpg'); 
-    background-size: 500px;
-    position: relative;
-    transition: transform 0.1s linear;
+body { 
+    margin: 0; 
+    overflow: hidden; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    background: #1a1a1a; 
 }
 
-/* Personagem Estilo Sprite */
-#player {
-    width: 64px;
-    height: 64px;
-    background: url('https://i.pinimg.com/originals/e8/61/52/e8615234551276063497d54b83494793.png') no-repeat;
-    background-size: contain;
-    position: absolute;
-    z-index: 10;
-    transition: 0.1s linear;
+.screen {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: #2e7d32; display: flex; align-items: center; justify-content: center;
+    z-index: 1000;
 }
 
-/* Árvores com profundidade */
-.tree {
-    width: 120px;
-    height: 160px;
-    background: url('https://cdn-icons-png.flaticon.com/512/489/489969.png') no-repeat;
-    background-size: contain;
-    position: absolute;
-    filter: drop-shadow(10px 10px 5px rgba(0,0,0,0.3));
+.menu-card {
+    background: white; padding: 30px; border-radius: 20px;
+    text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    min-width: 300px;
 }
-zz
-/* Interface */
-.ui-overlay {
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
-    padding: 15px;
-    border-radius: 10px;
-    font-family: 'Arial', sans-serif;
+
+.menu-buttons, .skin-selector { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+.skin-selector { flex-direction: row; justify-content: center; }
+
+button { 
+    padding: 15px; border: none; border-radius: 10px; 
+    cursor: pointer; font-weight: bold; background: #43a047; 
+    color: white; transition: 0.2s; 
+}
+
+button:hover { background: #1b5e20; transform: scale(1.05); }
+
+#char-name {
+    padding: 10px; width: 80%; border-radius: 8px; border: 2px solid #ccc; margin-bottom: 10px;
+}
+
+#preview-box { font-size: 60px; margin: 20px 0; }
+
+/* JOGO */
+#game-container { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+
+#world-container {
+    width: 100%; height: 100%;
+    background: var(--grass);
+}
+
+#world { 
+    position: absolute; 
+    width: 3000px; height: 3000px; 
+    background-image: radial-gradient(#8bc34a 1px, transparent 1px);
+    background-size: 40px 40px; /* Efeito de grade no gramado */
+    transition: transform 0.1s ease-out; /* Movimento suave da câmera */
+}
+
+#player { 
+    position: absolute; 
+    font-size: 50px; 
+    z-index: 500; 
+    transition: transform 0.1s; 
+    pointer-events: none; 
+    margin-top: -25px; margin-left: -25px; /* Centraliza o emoji no ponto */
+}
+
+.plot { 
+    position: absolute; width: 60px; height: 60px; 
+    background: #8d6e63; border: 3px solid #5d4037;
+    display: flex; align-items: center; justify-content: center; 
+    cursor: pointer; font-size: 30px; border-radius: 8px;
+    z-index: 100;
+}
+
+#hud { position: fixed; top: 20px; left: 20px; z-index: 2000; color: white; pointer-events: none; }
+.info { background: rgba(0,0,0,0.8); padding: 15px; border-radius: 10px; margin-bottom: 10px; }
+#quest { background: #fff; color: #333; padding: 12px; border-radius: 10px; border-left: 8px solid #2e7d32; font-weight: bold; }
+
+#minimap-container { 
+    position: fixed; bottom: 20px; right: 20px; 
+    background: white; padding: 5px; border: 3px solid #333; z-index: 2000; 
+}
+#minimap { width: 120px; height: 120px; background: #9ccc65; position: relative; }
+#minimap-player { position: absolute; width: 8px; height: 8px; background: red; border-radius: 50%; }
+
+#night-overlay { 
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+    pointer-events: none; z-index: 1500; background: rgba(0,0,255, 0.1); 
 }
