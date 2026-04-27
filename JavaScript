@@ -1,8 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Estado inicial
-    let state = {
-        name: "Fazendeiro",
-        skin: "🧑‍🌾",
+    const state = {
         gold: 0,
         wheat: 0,
         pos: { x: 500, y: 500 }
@@ -12,47 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const playerEl = document.getElementById('player');
     const worldEl = document.getElementById('world');
 
-    // --- NAVEGAÇÃO DE MENUS ---
-
-    document.getElementById('btn-play').addEventListener('click', () => {
-        document.getElementById('start-screen').style.display = 'none';
-        document.getElementById('custom-screen').style.display = 'flex';
-    });
-
-    document.querySelectorAll('.skin-opt').forEach(btn => {
-        btn.addEventListener('click', () => {
-            state.skin = btn.getAttribute('data-skin');
-            document.getElementById('preview-box').innerText = state.skin;
-        });
-    });
-
-    document.getElementById('btn-confirm-start').addEventListener('click', () => {
-        const nameInput = document.getElementById('char-name').value;
-        if (!nameInput) return alert("Digite seu nome, sô!");
-        state.name = nameInput;
-        startGame();
-    });
-
-    document.getElementById('btn-load').addEventListener('click', () => {
-        const saved = localStorage.getItem('farm_rpg_save');
-        if (saved) {
-            state = JSON.parse(saved);
-            startGame();
-        } else {
-            alert("Nenhum progresso encontrado!");
-        }
-    });
-
-    // --- LÓGICA DO JOGO ---
-
-    function startGame() {
-        document.getElementById('start-screen').style.display = 'none';
-        document.getElementById('custom-screen').style.display = 'none';
-        document.getElementById('game-container').style.display = 'block';
-
-        playerEl.innerText = state.skin;
-        document.getElementById('ui-name').innerText = state.name;
-
+    // Inicializa o jogo direto
+    function init() {
         updateUI();
         initPlots();
         updateCamera();
@@ -62,22 +20,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.plot').forEach(plot => {
             plot.onclick = () => {
                 if (plot.innerText === '🟫') {
-                    // Plantar
                     plot.innerText = '🌱';
-                    plot.style.background = "#6d4c41";
-                    
-                    // Crescer após 4 segundos
-                    setTimeout(() => {
-                        plot.innerText = '🌾';
-                        plot.style.background = "#a1887f";
-                    }, 4000);
-
+                    setTimeout(() => { plot.innerText = '🌾'; }, 3000);
                 } else if (plot.innerText === '🌾') {
-                    // Colher
                     plot.innerText = '🟫';
-                    plot.style.background = "#8d6e63";
                     state.gold += 10;
-                    state.wheat++;
+                    state.wheat += 1;
                     updateUI();
                 }
             };
@@ -86,15 +34,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateUI() {
         document.getElementById('ui-gold').innerText = state.gold;
-        document.getElementById('q-count').innerText = state.wheat;
-        localStorage.setItem('farm_rpg_save', JSON.stringify(state));
+        document.getElementById('ui-wheat').innerText = state.wheat;
     }
 
-    // --- MOVIMENTAÇÃO E CÂMERA ---
-
     window.addEventListener('keydown', (e) => {
-        if (document.getElementById('game-container').style.display === 'none') return;
-
         const step = 30;
         const key = e.key.toLowerCase();
 
@@ -113,24 +56,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function updateCamera() {
-        // Impedir de sair do mapa
+        // Limites
         state.pos.x = Math.max(0, Math.min(state.pos.x, WORLD_SIZE));
         state.pos.y = Math.max(0, Math.min(state.pos.y, WORLD_SIZE));
 
-        // Atualiza posição do jogador no mapa
+        // Personagem
         playerEl.style.left = state.pos.x + 'px';
         playerEl.style.top = state.pos.y + 'px';
 
-        // Centraliza a câmera no jogador
+        // Câmera (Mundo)
         const camX = (window.innerWidth / 2) - state.pos.x;
         const camY = (window.innerHeight / 2) - state.pos.y;
-        
-        // Move o mundo inteiro
         worldEl.style.transform = `translate(${camX}px, ${camY}px)`;
 
-        // Atualiza o minimapa
+        // Minimapa
         const mPlayer = document.getElementById('minimap-player');
-        mPlayer.style.left = (state.pos.x / WORLD_SIZE) * 120 + 'px';
-        mPlayer.style.top = (state.pos.y / WORLD_SIZE) * 120 + 'px';
+        mPlayer.style.left = (state.pos.x / WORLD_SIZE) * 100 + 'px';
+        mPlayer.style.top = (state.pos.y / WORLD_SIZE) * 100 + 'px';
     }
+
+    init();
 });

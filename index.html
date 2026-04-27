@@ -8,36 +8,12 @@
 </head>
 <body>
 
-    <div id="start-screen" class="screen">
-        <div class="menu-card">
-            <h1>🌾 SERTÃO RPG</h1>
-            <div class="menu-buttons">
-                <button id="btn-play">JOGAR</button>
-                <button id="btn-load">CARREGAR</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="custom-screen" class="screen" style="display:none;">
-        <div class="menu-card">
-            <h2>Novo Fazendeiro</h2>
-            <input type="text" id="char-name" placeholder="Nome do Personagem" maxlength="12">
-            <div class="skin-selector">
-                <button class="skin-opt" data-skin="🧑‍🌾">A</button>
-                <button class="skin-opt" data-skin="👩‍🌾">B</button>
-                <button class="skin-opt" data-skin="👨‍🌾">C</button>
-            </div>
-            <div id="preview-box">🧑‍🌾</div>
-            <button id="btn-confirm-start">COMEÇAR AVENTURA</button>
-        </div>
-    </div>
-
-    <div id="game-container" style="display:none;">
-        <div id="night-overlay"></div>
-        
+    <div id="game-container">
         <div id="hud">
-            <div class="info"><b>Fazendeiro:</b> <span id="ui-name">---</span> | 💰 R$ <span id="ui-gold">0</span></div>
-            <div id="quest">Objetivo: Colha trigos (<span id="q-count">0</span>/3)</div>
+            <div class="info">
+                💰 R$ <span id="ui-gold">0</span> | 
+                🌾 <span id="ui-wheat">0</span>
+            </div>
         </div>
 
         <div id="minimap-container">
@@ -49,9 +25,9 @@
         <div id="world-container">
             <div id="world">
                 <div class="plot" style="top: 400px; left: 400px;">🟫</div>
-                <div class="plot" style="top: 400px; left: 480px;">🟫</div>
-                <div class="plot" style="top: 480px; left: 400px;">🟫</div>
-                <div class="plot" style="top: 480px; left: 480px;">🟫</div>
+                <div class="plot" style="top: 400px; left: 500px;">🟫</div>
+                <div class="plot" style="top: 500px; left: 400px;">🟫</div>
+                <div class="plot" style="top: 500px; left: 500px;">🟫</div>
                 
                 <div id="player">🧑‍🌾</div>
             </div>

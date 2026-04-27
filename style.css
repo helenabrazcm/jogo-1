@@ -1,67 +1,21 @@
-:root { 
-    --grass: #7cb342; 
-    --brown: #5d4037; 
-}
+:root { --grass: #7cb342; }
+body { margin: 0; overflow: hidden; font-family: sans-serif; background: #1a1a1a; }
 
-body { 
-    margin: 0; 
-    overflow: hidden; 
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-    background: #1a1a1a; 
-}
+#game-container { position: relative; width: 100vw; height: 100vh; }
 
-.screen {
-    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    background: #2e7d32; display: flex; align-items: center; justify-content: center;
-    z-index: 1000;
-}
-
-.menu-card {
-    background: white; padding: 30px; border-radius: 20px;
-    text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.4);
-    min-width: 300px;
-}
-
-.menu-buttons, .skin-selector { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
-.skin-selector { flex-direction: row; justify-content: center; }
-
-button { 
-    padding: 15px; border: none; border-radius: 10px; 
-    cursor: pointer; font-weight: bold; background: #43a047; 
-    color: white; transition: 0.2s; 
-}
-
-button:hover { background: #1b5e20; transform: scale(1.05); }
-
-#char-name {
-    padding: 10px; width: 80%; border-radius: 8px; border: 2px solid #ccc; margin-bottom: 10px;
-}
-
-#preview-box { font-size: 60px; margin: 20px 0; }
-
-/* JOGO */
-#game-container { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
-
-#world-container {
-    width: 100%; height: 100%;
-    background: var(--grass);
-}
+#world-container { width: 100%; height: 100%; background: var(--grass); }
 
 #world { 
-    position: absolute; 
-    width: 3000px; height: 3000px; 
+    position: absolute; width: 3000px; height: 3000px; 
     background-image: radial-gradient(#8bc34a 1px, transparent 1px);
-    background-size: 40px 40px; /* Efeito de grade no gramado */
-    transition: transform 0.1s ease-out; /* Movimento suave da câmera */
+    background-size: 50px 50px;
+    transition: transform 0.15s ease-out; 
 }
 
 #player { 
-    position: absolute; 
-    font-size: 50px; 
-    z-index: 500; 
-    transition: transform 0.1s; 
-    pointer-events: none; 
-    margin-top: -25px; margin-left: -25px; /* Centraliza o emoji no ponto */
+    position: absolute; font-size: 50px; z-index: 500; 
+    transition: transform 0.1s; pointer-events: none;
+    margin-top: -25px; margin-left: -25px;
 }
 
 .plot { 
@@ -69,21 +23,11 @@ button:hover { background: #1b5e20; transform: scale(1.05); }
     background: #8d6e63; border: 3px solid #5d4037;
     display: flex; align-items: center; justify-content: center; 
     cursor: pointer; font-size: 30px; border-radius: 8px;
-    z-index: 100;
 }
 
-#hud { position: fixed; top: 20px; left: 20px; z-index: 2000; color: white; pointer-events: none; }
-.info { background: rgba(0,0,0,0.8); padding: 15px; border-radius: 10px; margin-bottom: 10px; }
-#quest { background: #fff; color: #333; padding: 12px; border-radius: 10px; border-left: 8px solid #2e7d32; font-weight: bold; }
+#hud { position: fixed; top: 20px; left: 20px; z-index: 1000; }
+.info { background: rgba(0,0,0,0.8); padding: 15px; border-radius: 10px; color: white; font-weight: bold; }
 
-#minimap-container { 
-    position: fixed; bottom: 20px; right: 20px; 
-    background: white; padding: 5px; border: 3px solid #333; z-index: 2000; 
-}
-#minimap { width: 120px; height: 120px; background: #9ccc65; position: relative; }
-#minimap-player { position: absolute; width: 8px; height: 8px; background: red; border-radius: 50%; }
-
-#night-overlay { 
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-    pointer-events: none; z-index: 1500; background: rgba(0,0,255, 0.1); 
-}
+#minimap-container { position: fixed; bottom: 20px; right: 20px; background: white; padding: 5px; border: 2px solid #333; }
+#minimap { width: 100px; height: 100px; background: #9ccc65; position: relative; }
+#minimap-player { position: absolute; width: 6px; height: 6px; background: red; border-radius: 50%; }
