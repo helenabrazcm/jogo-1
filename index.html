@@ -2,58 +2,40 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Pixel Farm Online</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sertão RPG Pro</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="day-night-filter"></div>
-
-    <div id="hud">
-        <div class="stats-box">
-            💰 <span id="m-gold">100</span> | ⭐ Nível <span id="m-lvl">1</span>
-            <div id="clock">06:00 AM</div>
-        </div>
-    </div>
-
-    <div id="leaderboard">
-        <h3>🏆 Top Fazendeiros</h3>
-        <ol id="rank-list">
-            <li>👑 Você: <span id="rank-gold">100</span></li>
-            <li>Player2: 2500</li>
-            <li>Player3: 1800</li>
-        </ol>
-    </div>
-
-    <div id="viewport">
+    <div id="game-container">
         <div id="world">
-            <div id="grid"></div>
-            
-            <div class="npc" id="npc-shop" onclick="talk('João: Quer comprar sementes?')"></div>
+            <div class="plot" style="top: 1400px; left: 1400px;">🟫</div>
+            <div class="plot" style="top: 1400px; left: 1480px;">🟫</div>
+            <div class="plot" style="top: 1480px; left: 1400px;">🟫</div>
+            <div class="plot" style="top: 1480px; left: 1480px;">🟫</div>
 
-            <div id="player"></div>
-        </div>
-    </div>
-
-    <div id="inventory-overlay" class="hidden">
-        <div class="inventory-window">
-            <h2>🎒 Mochila de Itens</h2>
-            <div class="inv-grid">
-                <div class="inv-slot">🌽 Milho: <span id="inv-corn">0</span></div>
-                <div class="inv-slot">🥛 Leite: <span id="inv-milk">0</span></div>
-                <div class="inv-slot">🥚 Ovos: <span id="inv-eggs">0</span></div>
+            <div id="player">
+                <div class="character-body">
+                    <div class="hat"></div>
+                    <div class="head"></div>
+                    <div class="torso"></div>
+                    <div class="arm left"></div>
+                    <div class="arm right"></div>
+                    <div class="leg left"></div>
+                    <div class="leg right"></div>
+                </div>
             </div>
-            <p><small>Pressione [E] para sair</small></p>
         </div>
-    </div>
 
-    <div id="ui-container">
-        <div class="hotbar">
-            <div class="slot active" data-tool="hoe" onclick="setTool('hoe', this)">⛏️</div>
-            <div class="slot" data-tool="seed" onclick="setTool('seed', this)">🌱</div>
-            <div class="slot" data-tool="water" onclick="setTool('water', this)">💧</div>
-            <div class="slot" data-tool="fence" onclick="setTool('fence', this)">🚧</div>
-            <div class="slot" data-tool="hand" onclick="setTool('hand', this)">✋</div>
+        <div id="hud">
+            <div class="status-card">
+                <div class="info">💰 Ouro: <span id="ui-gold">0</span></div>
+                <div class="inventory">
+                    <div class="slot">🌾 Trigo: <span id="ui-wheat">0</span></div>
+                </div>
+            </div>
+            <div id="quest">Use WASD para andar | Clique perto da terra para cultivar</div>
         </div>
     </div>
 

@@ -1,61 +1,102 @@
-:root {
-    --ui-panel: #fdf5e6;
-    --border: #5d4037;
+:root { 
+    --grass: #689f38; 
+    --dirt: #5d4037;
+    --player-skin: #ffccbc;
+    --player-shirt: #d32f2f;
 }
 
-body { margin: 0; overflow: hidden; background: #222; font-family: 'Courier New', Courier, monospace; }
-
-/* Filtro de Tempo */
-#day-night-filter {
-    position: fixed; width: 100vw; height: 100vh;
-    pointer-events: none; z-index: 500; transition: background 5s;
+body { 
+    margin: 0; 
+    overflow: hidden; 
+    background: #222; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
 }
 
-/* Ranking */
-#leaderboard {
-    position: fixed; top: 20px; right: 20px;
-    background: var(--ui-panel); border: 4px solid var(--border);
-    padding: 10px; z-index: 600; border-radius: 8px; width: 180px;
+#game-container { 
+    width: 100vw; 
+    height: 100vh; 
+    position: relative; 
 }
 
-/* Mundo e Chão */
-#world { position: absolute; width: 2000px; height: 2000px; background-color: #78ab46; }
-
-.tile { position: absolute; width: 80px; height: 80px; background-size: cover; }
-.plowed { background-color: #6d4c41; border-radius: 4px; box-shadow: inset 0 0 10px #000; }
-.wet { border: 3px solid #3498db; box-sizing: border-box; }
-
-/* PERSONAGEM (Troque a URL pela sua imagem) */
-#player {
-    position: absolute; width: 48px; height: 48px;
-    background-image: url('https://vignette.wikia.nocookie.net/stardewvalley/images/a/ac/Farmer.png');
-    background-size: contain; background-repeat: no-repeat;
-    z-index: 100; transition: transform 0.1s;
+#world { 
+    position: absolute; 
+    width: 4000px; 
+    height: 4000px; 
+    background-color: var(--grass);
+    /* Efeito de textura de grama */
+    background-image: 
+        radial-gradient(#558b2f 15%, transparent 15%),
+        radial-gradient(#558b2f 15%, transparent 15%);
+    background-size: 60px 60px;
+    background-position: 0 0, 30px 30px;
+    will-change: transform;
 }
 
-.npc {
-    position: absolute; left: 1000px; top: 800px; width: 48px; height: 48px;
-    background-image: url('https://stardewvalleywiki.com/mediawiki/images/0/07/Pierre.png');
-    background-size: contain; cursor: pointer;
+/* --- ESTILO DO PERSONAGEM --- */
+#player { 
+    position: absolute; 
+    width: 40px; 
+    height: 40px; 
+    z-index: 100; 
+    will-change: left, top;
 }
 
-/* INVENTÁRIO (Abaixo de tudo, mas centralizado na tela) */
-#inventory-overlay {
-    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    background: rgba(0,0,0,0.7); z-index: 2000;
-    display: flex; justify-content: center; align-items: center;
-}
-.inventory-window {
-    background: var(--ui-panel); border: 6px solid var(--border);
-    padding: 20px; border-radius: 15px; width: 400px; text-align: center;
-}
-.hidden { display: none !important; }
+.character-body { position: relative; width: 100%; height: 100%; }
 
-/* UI */
-#hud { position: fixed; top: 20px; left: 20px; z-index: 600; }
-.stats-box { background: var(--ui-panel); border: 4px solid var(--border); padding: 10px; border-radius: 8px; font-weight: bold; }
+.head { 
+    position: absolute; top: -12px; left: 10px; width: 20px; height: 20px; 
+    background: var(--player-skin); border-radius: 4px; z-index: 5;
+}
 
-#ui-container { position: fixed; bottom: 20px; width: 100%; display: flex; justify-content: center; z-index: 600; }
-.hotbar { display: flex; background: var(--ui-panel); border: 4px solid var(--border); padding: 10px; border-radius: 12px; gap: 8px; pointer-events: all; }
-.slot { width: 60px; height: 60px; background: white; border: 2px solid #ccc; display: flex; align-items: center; justify-content: center; font-size: 30px; cursor: pointer; border-radius: 8px; }
-.slot.active { border: 4px solid #f1c40f; transform: translateY(-10px); background: #fffde7; }
+.hat {
+    position: absolute; top: -20px; left: 2px; width: 36px; height: 12px;
+    background: #fbc02d; border-radius: 20px 20px 0 0; z-index: 6;
+    border-bottom: 3px solid #f9a825;
+}
+
+.torso { 
+    position: absolute; top: 8px; left: 8px; width: 24px; height: 22px; 
+    background: var(--player-shirt); border-radius: 3px; z-index: 4;
+}
+
+.leg { 
+    position: absolute; bottom: -12px; width: 9px; height: 16px; 
+    background: #0d47a1; border-radius: 2px;
+}
+.leg.left { left: 8px; }
+.leg.right { left: 23px; }
+
+/* Animação de caminhada */
+.walking .leg.left { animation: legMove 0.3s infinite alternate; }
+.walking .leg.right { animation: legMove 0.3s infinite alternate-reverse; }
+
+@keyframes legMove {
+    from { transform: translateY(0); }
+    to { transform: translateY(-10px); }
+}
+
+/* --- PLANTAÇÃO --- */
+.plot { 
+    position: absolute; width: 65px; height: 65px; 
+    background: var(--dirt); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; cursor: pointer; border: 4px solid #4e342e;
+    transition: transform 0.1s;
+    user-select: none;
+}
+.plot:hover { transform: scale(1.05); filter: brightness(1.2); }
+
+/* --- HUD --- */
+#hud { position: fixed; top: 20px; left: 20px; z-index: 1000; pointer-events: none; }
+.status-card { 
+    background: rgba(255, 255, 255, 0.95); padding: 15px 25px; 
+    border-radius: 15px; border-bottom: 5px solid #bdc3c7;
+    display: flex; gap: 30px; align-items: center;
+    pointer-events: all;
+}
+.info { font-size: 1.4em; font-weight: 800; color: #2e7d32; }
+.slot { background: #f1f8e9; padding: 8px 20px; border-radius: 30px; border: 2px solid #c5e1a5; color: #333; font-weight: bold; }
+#quest { 
+    margin-top: 12px; background: rgba(0,0,0,0.7); color: white; 
+    padding: 10px 18px; border-radius: 8px; font-size: 0.85em; 
+}
