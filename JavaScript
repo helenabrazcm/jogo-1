@@ -1,44 +1,58 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+const menuScreen = document.getElementById('menu-screen');
+const startButton = document.getElementById('start-button');
+const ui = document.getElementById('ui');
+
 canvas.width = 600;
 canvas.height = 400;
 
 // Estado do Jogo
+let gameRunning = false;
+
 const player = {
     x: 300, y: 200, size: 30, speed: 4,
     seeds: 5, gold: 100
 };
 
-const plots = []; // Canteiros de plantação
+const plots = [];
 const TILE_SIZE = 50;
 
-// Inicializa 6 canteiros de terra
+// Inicializa canteiros
 for(let i = 0; i < 3; i++) {
     for(let j = 0; j < 2; j++) {
         plots.push({
-            x: 100 + i * 80,
-            y: 100 + j * 80,
+            x: 150 + i * 100,
+            y: 120 + j * 80,
             width: TILE_SIZE,
             height: TILE_SIZE,
-            state: 'empty', // 'empty', 'planted', 'ready'
+            state: 'empty',
             timer: 0
         });
     }
 }
 
-// Controle de Teclas
 const keys = {};
 window.onkeydown = (e) => keys[e.key] = true;
 window.onkeyup = (e) => keys[e.key] = false;
 
+// FUNÇÃO PARA INICIAR O JOGO
+startButton.addEventListener('click', () => {
+    menuScreen.style.display = 'none'; // Esconde menu
+    ui.style.display = 'block';        // Mostra interface
+    gameRunning = true;
+    gameLoop();                        // Inicia o loop
+});
+
 function update() {
-    // Movimentação
+    if (!gameRunning) return;
+
     if (keys['ArrowUp']) player.y -= player.speed;
     if (keys['ArrowDown']) player.y += player.speed;
     if (keys['ArrowLeft']) player.x -= player.speed;
     if (keys['ArrowRight']) player.x += player.speed;
 
-    // Lógica de Plantação (Espaço)
+    // Plantação
     if (keys[' ']) {
         plots.forEach(plot => {
             if (checkCollision(player, plot) && plot.state === 'empty' && player.seeds > 0) {
@@ -50,21 +64,9 @@ function update() {
         });
     }
 
-    // Lógica de Colheita (V)
-    if (keys['v'] || keys['V']) {
-        plots.forEach(plot => {
-            if (checkCollision(player, plot) && plot.state === 'ready') {
-                plot.state = 'empty';
-                player.gold += 20;
-                player.seeds += 1; // Ganha semente de volta para continuar jogando
-                updateUI();
-            }
-        });
-    }
-
-    // Verificar crescimento (5 segundos para crescer)
+    // Crescimento (3 segundos)
     plots.forEach(plot => {
-        if (plot.state === 'planted' && Date.now() - plot.timer > 5000) {
+        if (plot.state === 'planted' && Date.now() - plot.timer > 3000) {
             plot.state = 'ready';
         }
     });
@@ -83,28 +85,34 @@ function updateUI() {
 }
 
 function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Fundo
+    ctx.fillStyle = "#2ecc71";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Desenhar Canteiros
+    // Canteiros
     plots.forEach(plot => {
-        if (plot.state === 'empty') ctx.fillStyle = '#8b4513'; // Marrom
-        else if (plot.state === 'planted') ctx.fillStyle = '#f1c40f'; // Amarelo (semente)
-        else ctx.fillStyle = '#e67e22'; // Laranja (pronto)
+        if (plot.state === 'empty') ctx.fillStyle = '#8b4513';
+        else if (plot.state === 'planted') ctx.fillStyle = '#6d4c41'; // Terra molhada
+        else ctx.fillStyle = '#f1c40f'; // Planta pronta
         
         ctx.fillRect(plot.x, plot.y, plot.width, plot.height);
-        ctx.strokeStyle = '#5d2e0a';
-        ctx.strokeRect(plot.x, plot.y, plot.width, plot.height);
+        
+        // Se plantado, desenha um brotinho
+        if(plot.state === 'planted') {
+            ctx.fillStyle = '#27ae60';
+            ctx.fillRect(plot.x + 20, plot.y + 20, 10, 10);
+        }
     });
 
-    // Desenhar Jogador
+    // Jogador
     ctx.fillStyle = '#3498db';
     ctx.fillRect(player.x, player.y, player.size, player.size);
 }
 
 function gameLoop() {
-    update();
-    draw();
-    requestAnimationFrame(gameLoop);
+    if (gameRunning) {
+        update();
+        draw();
+        requestAnimationFrame(gameLoop);
+    }
 }
-
-gameLoop();
