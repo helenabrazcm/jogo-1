@@ -1,117 +1,110 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const player = document.getElementById('player');
-    const world = document.getElementById('world');
-    
-    let state = {
-        gold: 0,
-        wheat: 0,
-        pos: { x: 1500, y: 1500 }, // Posição inicial no centro
-        speed: 6,
-        keys: {}
-    };
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = 600;
+canvas.height = 400;
 
-    // Captura de teclado
-    window.addEventListener('keydown', e => state.keys[e.key.toLowerCase()] = true);
-    window.addEventListener('keyup', e => state.keys[e.key.toLowerCase()] = false);
+// Estado do Jogo
+const player = {
+    x: 300, y: 200, size: 30, speed: 4,
+    seeds: 5, gold: 100
+};
 
-    // Loop Principal do Jogo (60 FPS)
-    function gameLoop() {
-        update();
-        draw();
-        requestAnimationFrame(gameLoop);
+const plots = []; // Canteiros de plantação
+const TILE_SIZE = 50;
+
+// Inicializa 6 canteiros de terra
+for(let i = 0; i < 3; i++) {
+    for(let j = 0; j < 2; j++) {
+        plots.push({
+            x: 100 + i * 80,
+            y: 100 + j * 80,
+            width: TILE_SIZE,
+            height: TILE_SIZE,
+            state: 'empty', // 'empty', 'planted', 'ready'
+            timer: 0
+        });
     }
+}
 
-    function update() {
-        let moving = false;
-        let vx = 0;
-        let vy = 0;
+// Controle de Teclas
+const keys = {};
+window.onkeydown = (e) => keys[e.key] = true;
+window.onkeyup = (e) => keys[e.key] = false;
 
-        // Lógica de Movimento
-        if (state.keys['w'] || state.keys['arrowup']) { vy = -state.speed; moving = true; }
-        if (state.keys['s'] || state.keys['arrowdown']) { vy = state.speed; moving = true; }
-        if (state.keys['a'] || state.keys['arrowleft']) { 
-            vx = -state.speed; 
-            moving = true; 
-            player.style.transform = 'scaleX(-1)'; // Vira para a esquerda
-        }
-        if (state.keys['d'] || state.keys['arrowright']) { 
-            vx = state.speed; 
-            moving = true; 
-            player.style.transform = 'scaleX(1)'; // Vira para a direita
-        }
+function update() {
+    // Movimentação
+    if (keys['ArrowUp']) player.y -= player.speed;
+    if (keys['ArrowDown']) player.y += player.speed;
+    if (keys['ArrowLeft']) player.x -= player.speed;
+    if (keys['ArrowRight']) player.x += player.speed;
 
-        // Atualiza posição com base na velocidade
-        state.pos.x += vx;
-        state.pos.y += vy;
-
-        // Limites do mapa (4000x4000)
-        state.pos.x = Math.max(0, Math.min(3960, state.pos.x));
-        state.pos.y = Math.max(0, Math.min(3960, state.pos.y));
-
-        // Ativa animação de passos
-        if (moving) {
-            player.classList.add('walking');
-        } else {
-            player.classList.remove('walking');
-        }
-    }
-
-    function draw() {
-        // Posiciona o jogador no mundo
-        player.style.left = state.pos.x + 'px';
-        player.style.top = state.pos.y + 'px';
-
-        // Calcula a posição da câmera para centralizar no jogador
-        const camX = (window.innerWidth / 2) - state.pos.x;
-        const camY = (window.innerHeight / 2) - state.pos.y;
-        
-        // Move o mundo inteiro (câmera)
-        world.style.transform = `translate(${camX}px, ${camY}px)`;
-    }
-
-    // Mecânica de Plantação e Colheita
-    document.querySelectorAll('.plot').forEach(plot => {
-        plot.addEventListener('click', () => {
-            // Calcula distância entre jogador e o canteiro
-            const plotX = parseInt(plot.style.left);
-            const plotY = parseInt(plot.style.top);
-            const dist = Math.hypot(state.pos.x - plotX, state.pos.y - plotY);
-            
-            // Só interage se estiver perto (raio de 150px)
-            if(dist > 150) {
-                console.log("Muito longe para interagir!");
-                return;
-            }
-
-            if (plot.innerText === '🟫') {
-                // Fase 1: Plantar
-                plot.innerText = '🌱';
-                
-                // Fase 2: Crescer (após 3 segundos)
-                setTimeout(() => {
-                    if(plot.innerText === '🌱') plot.innerText = '🌿';
-                }, 3000);
-
-                // Fase 3: Pronto para colher (após 6 segundos)
-                setTimeout(() => {
-                    if(plot.innerText === '🌿') plot.innerText = '🌾';
-                }, 6000);
-
-            } else if (plot.innerText === '🌾') {
-                // Colher
-                plot.innerText = '🟫';
-                state.gold += 15;
-                state.wheat += 1;
+    // Lógica de Plantação (Espaço)
+    if (keys[' ']) {
+        plots.forEach(plot => {
+            if (checkCollision(player, plot) && plot.state === 'empty' && player.seeds > 0) {
+                plot.state = 'planted';
+                plot.timer = Date.now();
+                player.seeds--;
                 updateUI();
             }
         });
-    });
-
-    function updateUI() {
-        document.getElementById('ui-gold').innerText = state.gold;
-        document.getElementById('ui-wheat').innerText = state.wheat;
     }
 
-    // Iniciar o jogo
-    gameLoop();
-});
+    // Lógica de Colheita (V)
+    if (keys['v'] || keys['V']) {
+        plots.forEach(plot => {
+            if (checkCollision(player, plot) && plot.state === 'ready') {
+                plot.state = 'empty';
+                player.gold += 20;
+                player.seeds += 1; // Ganha semente de volta para continuar jogando
+                updateUI();
+            }
+        });
+    }
+
+    // Verificar crescimento (5 segundos para crescer)
+    plots.forEach(plot => {
+        if (plot.state === 'planted' && Date.now() - plot.timer > 5000) {
+            plot.state = 'ready';
+        }
+    });
+}
+
+function checkCollision(p, plot) {
+    return p.x < plot.x + plot.width &&
+           p.x + p.size > plot.x &&
+           p.y < plot.y + plot.height &&
+           p.y + p.size > plot.y;
+}
+
+function updateUI() {
+    document.getElementById('seeds').innerText = player.seeds;
+    document.getElementById('gold').innerText = player.gold;
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Desenhar Canteiros
+    plots.forEach(plot => {
+        if (plot.state === 'empty') ctx.fillStyle = '#8b4513'; // Marrom
+        else if (plot.state === 'planted') ctx.fillStyle = '#f1c40f'; // Amarelo (semente)
+        else ctx.fillStyle = '#e67e22'; // Laranja (pronto)
+        
+        ctx.fillRect(plot.x, plot.y, plot.width, plot.height);
+        ctx.strokeStyle = '#5d2e0a';
+        ctx.strokeRect(plot.x, plot.y, plot.width, plot.height);
+    });
+
+    // Desenhar Jogador
+    ctx.fillStyle = '#3498db';
+    ctx.fillRect(player.x, player.y, player.size, player.size);
+}
+
+function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();

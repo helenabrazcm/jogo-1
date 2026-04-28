@@ -2,43 +2,17 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sertão RPG Pro</title>
+    <title>Mini Stardew JS</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
     <div id="game-container">
-        <div id="world">
-            <div class="plot" style="top: 1400px; left: 1400px;">🟫</div>
-            <div class="plot" style="top: 1400px; left: 1480px;">🟫</div>
-            <div class="plot" style="top: 1480px; left: 1400px;">🟫</div>
-            <div class="plot" style="top: 1480px; left: 1480px;">🟫</div>
-
-            <div id="player">
-                <div class="character-body">
-                    <div class="hat"></div>
-                    <div class="head"></div>
-                    <div class="torso"></div>
-                    <div class="arm left"></div>
-                    <div class="arm right"></div>
-                    <div class="leg left"></div>
-                    <div class="leg right"></div>
-                </div>
-            </div>
-        </div>
-
-        <div id="hud">
-            <div class="status-card">
-                <div class="info">💰 Ouro: <span id="ui-gold">0</span></div>
-                <div class="inventory">
-                    <div class="slot">🌾 Trigo: <span id="ui-wheat">0</span></div>
-                </div>
-            </div>
-            <div id="quest">Use WASD para andar | Clique perto da terra para cultivar</div>
+        <canvas id="gameCanvas"></canvas>
+        <div id="ui">
+            <p>Sementes: <span id="seeds">5</span> | Ouro: $<span id="gold">100</span></p>
+            <p><small>Use as Setas para mover | Espaço para Plantar | V para Colher</small></p>
         </div>
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>
