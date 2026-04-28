@@ -9,14 +9,19 @@
     <div id="game-container">
         <div id="menu-screen">
             <h1>MINI VALLEY</h1>
-            <button id="start-button">Iniciar Fazenda</button>
-            <p>Use as setas para mover e Espaço para plantar</p>
+            <button id="start-button">INICIAR JOGO</button>
+            <div class="instructions">
+                <p>⬆️⬇️⬅️➡️ Mover</p>
+                <p>⌨️ [Espaço] Plantar</p>
+                <p>⌨️ [V] Colher</p>
+            </div>
         </div>
 
         <canvas id="gameCanvas"></canvas>
         
         <div id="ui" style="display: none;">
-            <p>Sementes: <span id="seeds">5</span> | Ouro: $<span id="gold">100</span></p>
+            <span>Sementes: <b id="seeds">5</b></span>
+            <span>Ouro: <b id="gold">100</b></span>
         </div>
     </div>
     <script src="script.js"></script>

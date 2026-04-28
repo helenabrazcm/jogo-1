@@ -7,76 +7,78 @@ const ui = document.getElementById('ui');
 canvas.width = 600;
 canvas.height = 400;
 
-// Estado do Jogo
 let gameRunning = false;
 
+// Dados do Jogador
 const player = {
-    x: 300, y: 200, size: 30, speed: 4,
+    x: 285, y: 185, size: 30, speed: 4,
     seeds: 5, gold: 100
 };
 
+// Sistema de Plantação
 const plots = [];
-const TILE_SIZE = 50;
-
-// Inicializa canteiros
 for(let i = 0; i < 3; i++) {
     for(let j = 0; j < 2; j++) {
         plots.push({
-            x: 150 + i * 100,
-            y: 120 + j * 80,
-            width: TILE_SIZE,
-            height: TILE_SIZE,
-            state: 'empty',
+            x: 160 + i * 100,
+            y: 130 + j * 80,
+            width: 50, height: 50,
+            state: 'empty', // empty, planted, ready
             timer: 0
         });
     }
 }
 
 const keys = {};
-window.onkeydown = (e) => keys[e.key] = true;
-window.onkeyup = (e) => keys[e.key] = false;
+window.addEventListener('keydown', (e) => keys[e.code] = true);
+window.addEventListener('keyup', (e) => keys[e.code] = false);
 
-// FUNÇÃO PARA INICIAR O JOGO
+// FUNÇÃO PARA COMEÇAR
 startButton.addEventListener('click', () => {
-    menuScreen.style.display = 'none'; // Esconde menu
-    ui.style.display = 'block';        // Mostra interface
+    menuScreen.style.display = 'none';
+    ui.style.display = 'block';
     gameRunning = true;
-    gameLoop();                        // Inicia o loop
+    gameLoop(); 
 });
 
 function update() {
     if (!gameRunning) return;
 
-    if (keys['ArrowUp']) player.y -= player.speed;
-    if (keys['ArrowDown']) player.y += player.speed;
-    if (keys['ArrowLeft']) player.x -= player.speed;
-    if (keys['ArrowRight']) player.x += player.speed;
+    // Movimento
+    if (keys['ArrowUp'] && player.y > 0) player.y -= player.speed;
+    if (keys['ArrowDown'] && player.y < canvas.height - player.size) player.y += player.speed;
+    if (keys['ArrowLeft'] && player.x > 0) player.x -= player.speed;
+    if (keys['ArrowRight'] && player.x < canvas.width - player.size) player.x += player.speed;
 
-    // Plantação
-    if (keys[' ']) {
-        plots.forEach(plot => {
-            if (checkCollision(player, plot) && plot.state === 'empty' && player.seeds > 0) {
+    // Ações
+    plots.forEach(plot => {
+        let collision = player.x < plot.x + plot.width &&
+                        player.x + player.size > plot.x &&
+                        player.y < plot.y + plot.height &&
+                        player.y + player.size > plot.y;
+
+        if (collision) {
+            // Plantar com Espaço
+            if (keys['Space'] && plot.state === 'empty' && player.seeds > 0) {
                 plot.state = 'planted';
                 plot.timer = Date.now();
                 player.seeds--;
                 updateUI();
             }
-        });
-    }
+            // Colher com V
+            if (keys['KeyV'] && plot.state === 'ready') {
+                plot.state = 'empty';
+                player.gold += 50;
+                player.seeds += 1;
+                updateUI();
+            }
+        }
 
-    // Crescimento (3 segundos)
-    plots.forEach(plot => {
-        if (plot.state === 'planted' && Date.now() - plot.timer > 3000) {
+        // Crescimento (5 segundos)
+        if (plot.state === 'planted' && Date.now() - plot.timer > 5000) {
             plot.state = 'ready';
         }
     });
-}
-
-function checkCollision(p, plot) {
-    return p.x < plot.x + plot.width &&
-           p.x + p.size > plot.x &&
-           p.y < plot.y + plot.height &&
-           p.y + p.size > plot.y;
 }
 
 function updateUI() {
@@ -85,27 +87,29 @@ function updateUI() {
 }
 
 function draw() {
-    // Fundo
-    ctx.fillStyle = "#2ecc71";
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Desenha Grama
+    ctx.fillStyle = "#81c784";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Canteiros
+    // Desenha Canteiros
     plots.forEach(plot => {
-        if (plot.state === 'empty') ctx.fillStyle = '#8b4513';
-        else if (plot.state === 'planted') ctx.fillStyle = '#6d4c41'; // Terra molhada
-        else ctx.fillStyle = '#f1c40f'; // Planta pronta
+        if (plot.state === 'empty') ctx.fillStyle = '#795548';
+        else if (plot.state === 'planted') ctx.fillStyle = '#5d4037';
+        else ctx.fillStyle = '#ffa000'; // Pronto para colher
         
         ctx.fillRect(plot.x, plot.y, plot.width, plot.height);
         
-        // Se plantado, desenha um brotinho
+        // Detalhe do broto
         if(plot.state === 'planted') {
-            ctx.fillStyle = '#27ae60';
+            ctx.fillStyle = '#2e7d32';
             ctx.fillRect(plot.x + 20, plot.y + 20, 10, 10);
         }
     });
 
-    // Jogador
-    ctx.fillStyle = '#3498db';
+    // Desenha Jogador
+    ctx.fillStyle = '#1e88e5';
     ctx.fillRect(player.x, player.y, player.size, player.size);
 }
 
