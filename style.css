@@ -1,97 +1,55 @@
 :root {
-    --neon-blue: #00f3ff;
-    --neon-pink: #ff00ff;
-    --bg-dark: #0a0a0a;
+    --left: #c242ad; --down: #00ffff; --up: #12ff00; --right: #f9393f;
 }
 
 body {
-    margin: 0;
-    background: var(--bg-dark);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    color: white;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    overflow: hidden;
+    background: #1a1a1a;
+    display: flex; justify-content: center; align-items: center;
+    height: 100vh; margin: 0; font-family: 'Arial Black', sans-serif;
+    color: white; overflow: hidden;
 }
 
-.game-wrapper {
-    position: relative;
-    width: 320px;
-    height: 550px;
-    border: 4px solid #333;
-    background: #111;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+#game-container {
+    position: relative; width: 400px; height: 600px;
+    background: #222; border: 4px solid #444;
 }
 
-#game-area {
-    display: flex;
-    width: 100%;
-    height: 100%;
-    position: relative;
-    overflow: hidden;
+#ui {
+    position: absolute; width: 100%; text-align: center; top: 120px; z-index: 5;
 }
 
-.lane {
-    flex: 1;
-    border-right: 1px solid #222;
-    position: relative;
+.receptors {
+    display: flex; justify-content: space-around;
+    padding: 20px; background: rgba(0,0,0,0.5);
 }
 
-#score-board {
+.receptor, .note {
+    width: 60px; height: 60px;
+    border: 4px solid #555; display: flex;
+    justify-content: center; align-items: center;
+    font-size: 30px; border-radius: 10px;
+}
+
+/* Cores das Setas */
+.type-0 { color: var(--left); border-color: var(--left); }
+.type-1 { color: var(--down); border-color: var(--down); }
+.type-2 { color: var(--up); border-color: var(--up); }
+.type-3 { color: var(--right); border-color: var(--right); }
+
+.active { background: white; transform: scale(1.1); }
+
+.note {
     position: absolute;
-    top: 20px;
-    width: 100%;
-    text-align: center;
-    font-size: 3rem;
-    font-weight: bold;
-    z-index: 10;
-    pointer-events: none;
-    text-shadow: 0 0 10px var(--neon-blue);
+    background: #000;
 }
 
-.tile {
-    position: absolute;
-    width: 100%;
-    height: 140px;
-    background: linear-gradient(to bottom, var(--neon-blue), #0057ff);
-    box-shadow: inset 0 0 15px rgba(255,255,255,0.5);
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.tile.hit {
-    animation: explode 0.2s forwards;
-}
-
-@keyframes explode {
-    to { opacity: 0; transform: scale(1.2); }
-}
-
-#menu {
-    position: absolute;
-    inset: 0;
-    background: rgba(0,0,0,0.9);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+#start-screen {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.9);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
     z-index: 100;
 }
 
 button {
-    background: transparent;
-    color: var(--neon-pink);
-    border: 2px solid var(--neon-pink);
-    padding: 15px 40px;
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: 0.3s;
-    box-shadow: 0 0 10px var(--neon-pink);
-}
-
-button:hover {
-    background: var(--neon-pink);
-    color: white;
+    padding: 15px 30px; font-size: 20px; cursor: pointer;
+    background: var(--up); border: none; font-weight: bold;
 }

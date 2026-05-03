@@ -1,80 +1,99 @@
-const gameArea = document.getElementById('game-area');
-const scoreBoard = document.getElementById('score-board');
-const menu = document.getElementById('menu');
-const lanes = document.querySelectorAll('.lane');
+const noteLane = document.getElementById('note-lane');
+const feedback = document.getElementById('feedback');
+const scoreEl = document.getElementById('score');
+const comboEl = document.getElementById('combo');
 
 let score = 0;
-let speed = 4;
-let isPlaying = false;
-let tiles = [];
+let combo = 0;
+let gameActive = false;
+let notes = [];
+const keys = ['ArrowLeft', 'ArrowDown', 'ArrowUp', 'ArrowRight'];
 
 function startGame() {
+    document.getElementById('start-screen').style.display = 'none';
+    gameActive = true;
     score = 0;
-    speed = 4;
-    isPlaying = true;
-    tiles = [];
-    gameArea.querySelectorAll('.tile').forEach(t => t.remove());
-    scoreBoard.innerText = score;
-    menu.style.display = 'none';
+    combo = 0;
+    gameLoop();
     
-    spawnTile();
-    update();
+    // Spawner de notas (em um jogo real, isso seguiria o BPM da música)
+    setInterval(() => {
+        if(gameActive) createNote();
+    }, 600);
 }
 
-function spawnTile() {
-    if (!isPlaying) return;
+function createNote() {
+    const type = Math.floor(Math.random() * 4);
+    const note = document.createElement('div');
+    note.className = `note type-${type}`;
+    note.innerHTML = ['←', '↓', '↑', '→'][type];
+    note.style.left = (type * 100 + 20) + 'px';
+    note.style.top = '650px'; // Começa embaixo
     
-    const laneIndex = Math.floor(Math.random() * 4);
-    const tile = document.createElement('div');
-    tile.className = 'tile';
-    tile.style.top = '-150px';
-    
-    tile.addEventListener('mousedown', (e) => {
-        e.stopPropagation();
-        if (!tile.classList.contains('hit')) {
-            tile.classList.add('hit');
-            score++;
-            scoreBoard.innerText = score;
-            speed += 0.1; // Aceleração gradual
-            setTimeout(() => {
-                tile.remove();
-                tiles = tiles.filter(t => t !== tile);
-            }, 200);
-            spawnTile(); // Cria a próxima assim que clica nesta
-        }
-    });
-
-    lanes[laneIndex].appendChild(tile);
-    tiles.push(tile);
+    const noteObj = { el: note, type: type, y: 650 };
+    noteLane.appendChild(note);
+    notes.push(noteObj);
 }
 
-function update() {
-    if (!isPlaying) return;
+function gameLoop() {
+    if (!gameActive) return;
 
-    for (let i = tiles.length - 1; i >= 0; i--) {
-        const tile = tiles[i];
-        let top = parseFloat(tile.style.top);
-        top += speed;
-        tile.style.top = top + 'px';
+    for (let i = notes.length - 1; i >= 0; i--) {
+        let n = notes[i];
+        n.y -= 5; // Velocidade da nota subindo
+        n.el.style.top = n.y + 'px';
 
-        // Perdeu: a peça passou do limite
-        if (top > 550) {
-            endGame();
-            return;
+        // Se passar da tela (Miss)
+        if (n.y < -50) {
+            n.el.remove();
+            notes.splice(i, 1);
+            resetCombo();
         }
     }
-
-    requestAnimationFrame(update);
+    requestAnimationFrame(gameLoop);
 }
 
-// Perdeu: clicou na área errada
-gameArea.addEventListener('mousedown', () => {
-    if (isPlaying) endGame();
+function resetCombo() {
+    combo = 0;
+    comboEl.innerText = `Combo: ${combo}`;
+    feedback.innerText = "MISS!";
+    feedback.style.color = "red";
+}
+
+// Input do teclado
+window.addEventListener('keydown', (e) => {
+    const keyIndex = keys.indexOf(e.key);
+    if (keyIndex === -1 || !gameActive) return;
+
+    // Efeito visual no receptor
+    const receptor = document.getElementById(`key-${keyIndex}`);
+    receptor.classList.add('active');
+    setTimeout(() => receptor.classList.remove('active'), 100);
+
+    // Checar se acertou alguma nota
+    const hitNoteIndex = notes.findIndex(n => 
+        n.type === keyIndex && n.y > 0 && n.y < 100
+    );
+
+    if (hitNoteIndex !== -1) {
+        const accuracy = Math.abs(notes[hitNoteIndex].y - 20); // 20 é a posição do receptor
+        
+        if (accuracy < 30) {
+            score += 100;
+            combo++;
+            feedback.innerText = "SICK!!";
+            feedback.style.color = "cyan";
+        } else {
+            score += 50;
+            combo++;
+            feedback.innerText = "GOOD";
+            feedback.style.color = "yellow";
+        }
+        
+        notes[hitNoteIndex].el.remove();
+        notes.splice(hitNoteIndex, 1);
+        
+        scoreEl.innerText = `Score: ${score}`;
+        comboEl.innerText = `Combo: ${combo}`;
+    }
 });
-
-function endGame() {
-    isPlaying = false;
-    menu.style.display = 'flex';
-    menu.querySelector('h1').innerText = "Fim de Jogo!";
-    menu.querySelector('p').innerText = `Você fez ${score} pontos`;
-}
