@@ -2,31 +2,35 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>JS Rhythm Battle</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rhythm Battle - FNF Style</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
     <div id="game-container">
         <div id="ui">
             <div id="score">Score: 0</div>
             <div id="combo">Combo: 0</div>
-            <div id="feedback">READY?</div>
+            <div id="feedback">PRONTO?</div>
         </div>
 
         <div class="receptors">
-            <div class="receptor" id="key-0">←</div>
-            <div class="receptor" id="key-1">↓</div>
-            <div class="receptor" id="key-2">↑</div>
-            <div class="receptor" id="key-3">→</div>
+            <div class="receptor type-0" id="key-0">←</div>
+            <div class="receptor type-1" id="key-1">↓</div>
+            <div class="receptor type-2" id="key-2">↑</div>
+            <div class="receptor type-3" id="key-3">→</div>
         </div>
 
         <div id="note-lane"></div>
 
         <div id="start-screen">
-            <h1>RHYTHM BATTLE</h1>
-            <button onclick="startGame()">START GAME</button>
+            <h1 class="title">RHYTHM BATTLE</h1>
+            <p>Use as SETAS do teclado</p>
+            <button id="btn-start">JOGAR</button>
         </div>
     </div>
+
     <script src="script.js"></script>
 </body>
 </html>

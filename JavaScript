@@ -2,24 +2,36 @@ const noteLane = document.getElementById('note-lane');
 const feedback = document.getElementById('feedback');
 const scoreEl = document.getElementById('score');
 const comboEl = document.getElementById('combo');
+const startScreen = document.getElementById('start-screen');
+const btnStart = document.getElementById('btn-start');
 
 let score = 0;
 let combo = 0;
 let gameActive = false;
 let notes = [];
+let spawnInterval;
 const keys = ['ArrowLeft', 'ArrowDown', 'ArrowUp', 'ArrowRight'];
 
+// Inicialização
+btnStart.onclick = () => startGame();
+
 function startGame() {
-    document.getElementById('start-screen').style.display = 'none';
+    startScreen.style.display = 'none';
     gameActive = true;
     score = 0;
     combo = 0;
-    gameLoop();
+    notes = [];
+    noteLane.innerHTML = '';
+    scoreEl.innerText = "Score: 0";
+    comboEl.innerText = "Combo: 0";
+    feedback.innerText = "GO!";
     
-    // Spawner de notas (em um jogo real, isso seguiria o BPM da música)
-    setInterval(() => {
+    requestAnimationFrame(gameLoop);
+    
+    if(spawnInterval) clearInterval(spawnInterval);
+    spawnInterval = setInterval(() => {
         if(gameActive) createNote();
-    }, 600);
+    }, 700);
 }
 
 function createNote() {
@@ -27,8 +39,10 @@ function createNote() {
     const note = document.createElement('div');
     note.className = `note type-${type}`;
     note.innerHTML = ['←', '↓', '↑', '→'][type];
-    note.style.left = (type * 100 + 20) + 'px';
-    note.style.top = '650px'; // Começa embaixo
+    
+    const laneWidth = 400 / 4;
+    note.style.left = (type * laneWidth + (laneWidth/2 - 30)) + 'px';
+    note.style.top = '650px'; 
     
     const noteObj = { el: note, type: type, y: 650 };
     noteLane.appendChild(note);
@@ -40,60 +54,59 @@ function gameLoop() {
 
     for (let i = notes.length - 1; i >= 0; i--) {
         let n = notes[i];
-        n.y -= 5; // Velocidade da nota subindo
+        n.y -= 4; 
         n.el.style.top = n.y + 'px';
 
-        // Se passar da tela (Miss)
-        if (n.y < -50) {
+        if (n.y < -60) {
             n.el.remove();
             notes.splice(i, 1);
-            resetCombo();
+            missNote();
         }
     }
     requestAnimationFrame(gameLoop);
 }
 
-function resetCombo() {
+function missNote() {
     combo = 0;
     comboEl.innerText = `Combo: ${combo}`;
-    feedback.innerText = "MISS!";
+    feedback.innerText = "ERROU!";
     feedback.style.color = "red";
 }
 
-// Input do teclado
-window.addEventListener('keydown', (e) => {
+window.onkeydown = (e) => {
+    if (!gameActive) return;
     const keyIndex = keys.indexOf(e.key);
-    if (keyIndex === -1 || !gameActive) return;
+    if (keyIndex === -1) return;
 
-    // Efeito visual no receptor
     const receptor = document.getElementById(`key-${keyIndex}`);
     receptor.classList.add('active');
     setTimeout(() => receptor.classList.remove('active'), 100);
 
-    // Checar se acertou alguma nota
     const hitNoteIndex = notes.findIndex(n => 
-        n.type === keyIndex && n.y > 0 && n.y < 100
+        n.type === keyIndex && n.y > -20 && n.y < 120
     );
 
     if (hitNoteIndex !== -1) {
-        const accuracy = Math.abs(notes[hitNoteIndex].y - 20); // 20 é a posição do receptor
-        
-        if (accuracy < 30) {
+        const noteY = notes[hitNoteIndex].y;
+        const diff = Math.abs(noteY - 20);
+
+        if (diff < 25) {
             score += 100;
-            combo++;
-            feedback.innerText = "SICK!!";
+            feedback.innerText = "PERFEITO!";
             feedback.style.color = "cyan";
         } else {
             score += 50;
-            combo++;
-            feedback.innerText = "GOOD";
+            feedback.innerText = "BOM";
             feedback.style.color = "yellow";
         }
-        
+
+        combo++;
         notes[hitNoteIndex].el.remove();
         notes.splice(hitNoteIndex, 1);
         
         scoreEl.innerText = `Score: ${score}`;
         comboEl.innerText = `Combo: ${combo}`;
+    } else {
+        missNote();
     }
-});
+};
