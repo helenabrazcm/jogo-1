@@ -1,51 +1,34 @@
-:root {
-    --left: #c242ad; --down: #00ffff; --up: #12ff00; --right: #f9393f;
-}
-
 body {
-    background: #1a1a1a;
-    display: flex; justify-content: center; align-items: center;
-    height: 100vh; margin: 0; font-family: 'Arial Black', sans-serif;
-    color: white; overflow: hidden;
-}
-
-#game-container {
-    position: relative; width: 400px; height: 600px;
-    background: #222; border: 4px solid #444;
+    margin: 0;
+    background: #222;
+    color: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
     overflow: hidden;
 }
 
+#game-container {
+    text-align: center;
+}
+
 #ui {
-    position: absolute; width: 100%; text-align: center; top: 120px; z-index: 5;
-    pointer-events: none;
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 10px;
 }
 
-#score, #combo { font-size: 1.2rem; text-shadow: 2px 2px black; }
-#feedback { font-size: 2rem; margin-top: 10px; font-style: italic; }
-
-.receptors {
-    display: flex; justify-content: space-around;
-    padding: 20px; background: rgba(0,0,0,0.7);
-    position: relative; z-index: 10;
+canvas {
+    background: #333; /* Cor do asfalto */
+    border: 4px solid #555;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    display: block;
 }
 
-.receptor, .note {
-    width: 60px; height: 60px;
-    border: 4px solid #555; display: flex;
-    justify-content: center; align-items: center;
-    font-size: 30px; border-radius: 10px;
-    box-sizing: border-box;
-}
-
-.type-0 { color: var(--left); border-color: var(--left); }
-.type-1 { color: var(--down); border-color: var(--down); }
-.type-2 { color: var(--up); border-color: var(--up); }
-.type-3 { color: var(--right); border-color: var(--right); }
-
-.active { background: white !important; transform: scale(1.1); transition: 0.1s; }
-
-.note {
-    position: absolute;
-    background: #000;
-    z-index: 2;
+.stats {
+    background: #444;
+    padding: 5px 15px;
+    border-radius: 5px;
 }

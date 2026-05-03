@@ -2,29 +2,17 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rhythm Battle - Sem Tela Inicial</title>
+    <title>Corrida 2D Multi-Player</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
     <div id="game-container">
         <div id="ui">
-            <div id="score">Score: 0</div>
-            <div id="combo">Combo: 0</div>
-            <div id="feedback">GO!</div>
+            <div class="stats">Jogador 1 (WASD): Nível <span id="lvl1">1</span></div>
+            <div class="stats">Jogador 2 (Setas): Nível <span id="lvl2">1</span></div>
         </div>
-
-        <div class="receptors">
-            <div class="receptor type-0" id="key-0">←</div>
-            <div class="receptor type-1" id="key-1">↓</div>
-            <div class="receptor type-2" id="key-2">↑</div>
-            <div class="receptor type-3" id="key-3">→</div>
-        </div>
-
-        <div id="note-lane"></div>
+        <canvas id="gameCanvas"></canvas>
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>
