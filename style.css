@@ -1,54 +1,97 @@
+:root {
+    --neon-blue: #00f3ff;
+    --neon-pink: #ff00ff;
+    --bg-dark: #0a0a0a;
+}
+
 body {
     margin: 0;
-    background-color: #2c3e50;
+    background: var(--bg-dark);
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
-    font-family: Arial, sans-serif;
-}
-
-#game-container {
-    position: relative;
-    width: 300px;
-    height: 500px;
-    background-color: #fff;
+    color: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     overflow: hidden;
-    border: 5px solid #333;
 }
 
-#score {
+.game-wrapper {
+    position: relative;
+    width: 320px;
+    height: 550px;
+    border: 4px solid #333;
+    background: #111;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+#game-area {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.lane {
+    flex: 1;
+    border-right: 1px solid #222;
+    position: relative;
+}
+
+#score-board {
     position: absolute;
-    top: 10px;
-    left: 10px;
-    z-index: 10;
-    font-size: 20px;
+    top: 20px;
+    width: 100%;
+    text-align: center;
+    font-size: 3rem;
     font-weight: bold;
-    color: #e74c3c;
+    z-index: 10;
+    pointer-events: none;
+    text-shadow: 0 0 10px var(--neon-blue);
 }
 
 .tile {
     position: absolute;
-    width: 75px; /* 300px / 4 colunas */
-    height: 125px;
-    background-color: #000;
+    width: 100%;
+    height: 140px;
+    background: linear-gradient(to bottom, var(--neon-blue), #0057ff);
+    box-shadow: inset 0 0 15px rgba(255,255,255,0.5);
+    border-radius: 4px;
     cursor: pointer;
 }
 
-#overlay {
-    display: none;
+.tile.hit {
+    animation: explode 0.2s forwards;
+}
+
+@keyframes explode {
+    to { opacity: 0; transform: scale(1.2); }
+}
+
+#menu {
     position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.8);
-    color: white;
+    inset: 0;
+    background: rgba(0,0,0,0.9);
+    display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 20;
+    z-index: 100;
 }
 
 button {
-    padding: 10px 20px;
-    font-size: 16px;
+    background: transparent;
+    color: var(--neon-pink);
+    border: 2px solid var(--neon-pink);
+    padding: 15px 40px;
+    font-size: 1.2rem;
     cursor: pointer;
+    transition: 0.3s;
+    box-shadow: 0 0 10px var(--neon-pink);
+}
+
+button:hover {
+    background: var(--neon-pink);
+    color: white;
 }

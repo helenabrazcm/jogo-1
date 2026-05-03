@@ -1,78 +1,80 @@
-const board = document.getElementById('board');
-const scoreElement = document.getElementById('score');
-const overlay = document.getElementById('overlay');
+const gameArea = document.getElementById('game-area');
+const scoreBoard = document.getElementById('score-board');
+const menu = document.getElementById('menu');
+const lanes = document.querySelectorAll('.lane');
 
 let score = 0;
-let gameSpeed = 3;
-let gameActive = true;
-let spawnInterval;
-let moveInterval;
+let speed = 4;
+let isPlaying = false;
+let tiles = [];
 
-function init() {
+function startGame() {
     score = 0;
-    gameSpeed = 3;
-    gameActive = true;
-    board.innerHTML = '';
-    overlay.style.display = 'none';
-    scoreElement.innerText = `Score: ${score}`;
+    speed = 4;
+    isPlaying = true;
+    tiles = [];
+    gameArea.querySelectorAll('.tile').forEach(t => t.remove());
+    scoreBoard.innerText = score;
+    menu.style.display = 'none';
     
-    // Cria uma nova tecla a cada 700ms
-    spawnInterval = setInterval(createTile, 700);
-    // Atualiza a posição das teclas
-    moveInterval = setInterval(moveTiles, 20);
+    spawnTile();
+    update();
 }
 
-function createTile() {
-    if (!gameActive) return;
+function spawnTile() {
+    if (!isPlaying) return;
+    
+    const laneIndex = Math.floor(Math.random() * 4);
     const tile = document.createElement('div');
-    const column = Math.floor(Math.random() * 4); // Escolhe uma das 4 colunas
+    tile.className = 'tile';
+    tile.style.top = '-150px';
     
-    tile.classList.add('tile');
-    tile.style.left = (column * 75) + 'px';
-    tile.style.top = '-125px'; // Começa fora da tela (acima)
-    
-    tile.onclick = function(e) {
-        e.stopPropagation(); // Impede o clique de chegar ao fundo
-        score++;
-        scoreElement.innerText = `Score: ${score}`;
-        if (score % 10 === 0) gameSpeed += 0.5; // Aumenta dificuldade
-        this.remove();
-    };
-    
-    board.appendChild(tile);
-}
-
-function moveTiles() {
-    if (!gameActive) return;
-    const tiles = document.querySelectorAll('.tile');
-    
-    tiles.forEach(tile => {
-        let top = parseFloat(tile.style.top);
-        top += gameSpeed;
-        tile.style.top = top + 'px';
-        
-        // Se a tecla passar do fundo sem ser clicada
-        if (top > 500) {
-            gameOver();
+    tile.addEventListener('mousedown', (e) => {
+        e.stopPropagation();
+        if (!tile.classList.contains('hit')) {
+            tile.classList.add('hit');
+            score++;
+            scoreBoard.innerText = score;
+            speed += 0.1; // Aceleração gradual
+            setTimeout(() => {
+                tile.remove();
+                tiles = tiles.filter(t => t !== tile);
+            }, 200);
+            spawnTile(); // Cria a próxima assim que clica nesta
         }
     });
+
+    lanes[laneIndex].appendChild(tile);
+    tiles.push(tile);
 }
 
-// Se clicar no fundo branco (fora da tecla preta), perde o jogo
-board.parentElement.onclick = function() {
-    if (gameActive) gameOver();
-};
+function update() {
+    if (!isPlaying) return;
 
-function gameOver() {
-    gameActive = false;
-    clearInterval(spawnInterval);
-    clearInterval(moveInterval);
-    overlay.style.display = 'flex';
+    for (let i = tiles.length - 1; i >= 0; i--) {
+        const tile = tiles[i];
+        let top = parseFloat(tile.style.top);
+        top += speed;
+        tile.style.top = top + 'px';
+
+        // Perdeu: a peça passou do limite
+        if (top > 550) {
+            endGame();
+            return;
+        }
+    }
+
+    requestAnimationFrame(update);
 }
 
-function resetGame() {
-    init();
-}
+// Perdeu: clicou na área errada
+gameArea.addEventListener('mousedown', () => {
+    if (isPlaying) endGame();
+});
 
-// Iniciar o jogo pela primeira vez
-init();
+function endGame() {
+    isPlaying = false;
+    menu.style.display = 'flex';
+    menu.querySelector('h1').innerText = "Fim de Jogo!";
+    menu.querySelector('p').innerText = `Você fez ${score} pontos`;
+}

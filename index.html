@@ -2,16 +2,23 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Piano Tiles Clone</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Piano Tiles</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="game-container">
-        <div id="score">Score: 0</div>
-        <div id="board"></div>
-        <div id="overlay">
-            <h1>Game Over!</h1>
-            <button onclick="resetGame()">Reiniciar</button>
+    <div class="game-wrapper">
+        <div id="score-board">0</div>
+        <div id="game-area">
+            <div class="lane"></div>
+            <div class="lane"></div>
+            <div class="lane"></div>
+            <div class="lane"></div>
+        </div>
+        <div id="menu">
+            <h1>Neon Tiles</h1>
+            <p>Não toque nas partes brancas!</p>
+            <button onclick="startGame()">START</button>
         </div>
     </div>
     <script src="script.js"></script>
