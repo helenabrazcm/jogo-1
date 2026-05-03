@@ -1,112 +1,121 @@
-const noteLane = document.getElementById('note-lane');
-const feedback = document.getElementById('feedback');
-const scoreEl = document.getElementById('score');
-const comboEl = document.getElementById('combo');
-const startScreen = document.getElementById('start-screen');
-const btnStart = document.getElementById('btn-start');
-
-let score = 0;
-let combo = 0;
-let gameActive = false;
-let notes = [];
-let spawnInterval;
-const keys = ['ArrowLeft', 'ArrowDown', 'ArrowUp', 'ArrowRight'];
-
-// Inicialização
-btnStart.onclick = () => startGame();
-
-function startGame() {
-    startScreen.style.display = 'none';
-    gameActive = true;
-    score = 0;
-    combo = 0;
-    notes = [];
-    noteLane.innerHTML = '';
-    scoreEl.innerText = "Score: 0";
-    comboEl.innerText = "Combo: 0";
-    feedback.innerText = "GO!";
+// Usamos o evento DOMContentLoaded para garantir que o HTML 
+// foi lido antes de iniciarmos o jogo.
+document.addEventListener('DOMContentLoaded', () => {
     
-    requestAnimationFrame(gameLoop);
-    
-    if(spawnInterval) clearInterval(spawnInterval);
-    spawnInterval = setInterval(() => {
-        if(gameActive) createNote();
-    }, 700);
-}
+    const noteLane = document.getElementById('note-lane');
+    const feedback = document.getElementById('feedback');
+    const scoreEl = document.getElementById('score');
+    const comboEl = document.getElementById('combo');
 
-function createNote() {
-    const type = Math.floor(Math.random() * 4);
-    const note = document.createElement('div');
-    note.className = `note type-${type}`;
-    note.innerHTML = ['←', '↓', '↑', '→'][type];
-    
-    const laneWidth = 400 / 4;
-    note.style.left = (type * laneWidth + (laneWidth/2 - 30)) + 'px';
-    note.style.top = '650px'; 
-    
-    const noteObj = { el: note, type: type, y: 650 };
-    noteLane.appendChild(note);
-    notes.push(noteObj);
-}
+    // Verificação de segurança: Se algum elemento sumiu, avisa no console
+    if (!noteLane || !feedback || !scoreEl || !comboEl) {
+        console.error("Erro: Verifique se os IDs no HTML estão corretos!");
+        return;
+    }
 
-function gameLoop() {
-    if (!gameActive) return;
+    let score = 0;
+    let combo = 0;
+    let gameActive = false;
+    let notes = [];
+    let spawnInterval;
+    const keys = ['ArrowLeft', 'ArrowDown', 'ArrowUp', 'ArrowRight'];
 
-    for (let i = notes.length - 1; i >= 0; i--) {
-        let n = notes[i];
-        n.y -= 4; 
-        n.el.style.top = n.y + 'px';
+    function startGame() {
+        gameActive = true;
+        score = 0;
+        combo = 0;
+        notes = [];
+        noteLane.innerHTML = '';
+        
+        requestAnimationFrame(gameLoop);
+        
+        // Intervalo para criar as notas
+        if(spawnInterval) clearInterval(spawnInterval);
+        spawnInterval = setInterval(() => {
+            if(gameActive) createNote();
+        }, 700);
+    }
 
-        if (n.y < -60) {
-            n.el.remove();
-            notes.splice(i, 1);
+    function createNote() {
+        if (!gameActive) return;
+        const type = Math.floor(Math.random() * 4);
+        const note = document.createElement('div');
+        note.className = `note type-${type}`;
+        note.innerHTML = ['←', '↓', '↑', '→'][type];
+        
+        const laneWidth = 400 / 4;
+        note.style.left = (type * laneWidth + (laneWidth/2 - 30)) + 'px';
+        note.style.top = '650px'; 
+        
+        const noteObj = { el: note, type: type, y: 650 };
+        noteLane.appendChild(note);
+        notes.push(noteObj);
+    }
+
+    function gameLoop() {
+        if (!gameActive) return;
+
+        for (let i = notes.length - 1; i >= 0; i--) {
+            let n = notes[i];
+            n.y -= 4; 
+            n.el.style.top = n.y + 'px';
+
+            if (n.y < -60) {
+                n.el.remove();
+                notes.splice(i, 1);
+                missNote();
+            }
+        }
+        requestAnimationFrame(gameLoop);
+    }
+
+    function missNote() {
+        combo = 0;
+        comboEl.innerText = `Combo: ${combo}`;
+        feedback.innerText = "ERROU!";
+        feedback.style.color = "red";
+    }
+
+    window.onkeydown = (e) => {
+        if (!gameActive) return;
+        const keyIndex = keys.indexOf(e.key);
+        if (keyIndex === -1) return;
+
+        const receptor = document.getElementById(`key-${keyIndex}`);
+        if (receptor) {
+            receptor.classList.add('active');
+            setTimeout(() => receptor.classList.remove('active'), 100);
+        }
+
+        const hitNoteIndex = notes.findIndex(n => 
+            n.type === keyIndex && n.y > -20 && n.y < 120
+        );
+
+        if (hitNoteIndex !== -1) {
+            const noteY = notes[hitNoteIndex].y;
+            const diff = Math.abs(noteY - 20);
+
+            if (diff < 25) {
+                score += 100;
+                feedback.innerText = "PERFEITO!";
+                feedback.style.color = "cyan";
+            } else {
+                score += 50;
+                feedback.innerText = "BOM";
+                feedback.style.color = "yellow";
+            }
+
+            combo++;
+            notes[hitNoteIndex].el.remove();
+            notes.splice(hitNoteIndex, 1);
+            
+            scoreEl.innerText = `Score: ${score}`;
+            comboEl.innerText = `Combo: ${combo}`;
+        } else {
             missNote();
         }
-    }
-    requestAnimationFrame(gameLoop);
-}
+    };
 
-function missNote() {
-    combo = 0;
-    comboEl.innerText = `Combo: ${combo}`;
-    feedback.innerText = "ERROU!";
-    feedback.style.color = "red";
-}
-
-window.onkeydown = (e) => {
-    if (!gameActive) return;
-    const keyIndex = keys.indexOf(e.key);
-    if (keyIndex === -1) return;
-
-    const receptor = document.getElementById(`key-${keyIndex}`);
-    receptor.classList.add('active');
-    setTimeout(() => receptor.classList.remove('active'), 100);
-
-    const hitNoteIndex = notes.findIndex(n => 
-        n.type === keyIndex && n.y > -20 && n.y < 120
-    );
-
-    if (hitNoteIndex !== -1) {
-        const noteY = notes[hitNoteIndex].y;
-        const diff = Math.abs(noteY - 20);
-
-        if (diff < 25) {
-            score += 100;
-            feedback.innerText = "PERFEITO!";
-            feedback.style.color = "cyan";
-        } else {
-            score += 50;
-            feedback.innerText = "BOM";
-            feedback.style.color = "yellow";
-        }
-
-        combo++;
-        notes[hitNoteIndex].el.remove();
-        notes.splice(hitNoteIndex, 1);
-        
-        scoreEl.innerText = `Score: ${score}`;
-        comboEl.innerText = `Combo: ${combo}`;
-    } else {
-        missNote();
-    }
-};
+    // Inicia o motor do jogo
+    startGame();
+});
