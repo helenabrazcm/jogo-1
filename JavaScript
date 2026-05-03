@@ -1,122 +1,78 @@
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const menuScreen = document.getElementById('menu-screen');
-const startButton = document.getElementById('start-button');
-const ui = document.getElementById('ui');
+const board = document.getElementById('board');
+const scoreElement = document.getElementById('score');
+const overlay = document.getElementById('overlay');
 
-canvas.width = 600;
-canvas.height = 400;
+let score = 0;
+let gameSpeed = 3;
+let gameActive = true;
+let spawnInterval;
+let moveInterval;
 
-let gameRunning = false;
+function init() {
+    score = 0;
+    gameSpeed = 3;
+    gameActive = true;
+    board.innerHTML = '';
+    overlay.style.display = 'none';
+    scoreElement.innerText = `Score: ${score}`;
+    
+    // Cria uma nova tecla a cada 700ms
+    spawnInterval = setInterval(createTile, 700);
+    // Atualiza a posição das teclas
+    moveInterval = setInterval(moveTiles, 20);
+}
 
-// Dados do Jogador
-const player = {
-    x: 285, y: 185, size: 30, speed: 4,
-    seeds: 5, gold: 100
+function createTile() {
+    if (!gameActive) return;
+    const tile = document.createElement('div');
+    const column = Math.floor(Math.random() * 4); // Escolhe uma das 4 colunas
+    
+    tile.classList.add('tile');
+    tile.style.left = (column * 75) + 'px';
+    tile.style.top = '-125px'; // Começa fora da tela (acima)
+    
+    tile.onclick = function(e) {
+        e.stopPropagation(); // Impede o clique de chegar ao fundo
+        score++;
+        scoreElement.innerText = `Score: ${score}`;
+        if (score % 10 === 0) gameSpeed += 0.5; // Aumenta dificuldade
+        this.remove();
+    };
+    
+    board.appendChild(tile);
+}
+
+function moveTiles() {
+    if (!gameActive) return;
+    const tiles = document.querySelectorAll('.tile');
+    
+    tiles.forEach(tile => {
+        let top = parseFloat(tile.style.top);
+        top += gameSpeed;
+        tile.style.top = top + 'px';
+        
+        // Se a tecla passar do fundo sem ser clicada
+        if (top > 500) {
+            gameOver();
+        }
+    });
+}
+
+// Se clicar no fundo branco (fora da tecla preta), perde o jogo
+board.parentElement.onclick = function() {
+    if (gameActive) gameOver();
 };
 
-// Sistema de Plantação
-const plots = [];
-for(let i = 0; i < 3; i++) {
-    for(let j = 0; j < 2; j++) {
-        plots.push({
-            x: 160 + i * 100,
-            y: 130 + j * 80,
-            width: 50, height: 50,
-            state: 'empty', // empty, planted, ready
-            timer: 0
-        });
-    }
+function gameOver() {
+    gameActive = false;
+    clearInterval(spawnInterval);
+    clearInterval(moveInterval);
+    overlay.style.display = 'flex';
 }
 
-const keys = {};
-window.addEventListener('keydown', (e) => keys[e.code] = true);
-window.addEventListener('keyup', (e) => keys[e.code] = false);
-
-// FUNÇÃO PARA COMEÇAR
-startButton.addEventListener('click', () => {
-    menuScreen.style.display = 'none';
-    ui.style.display = 'block';
-    gameRunning = true;
-    gameLoop(); 
-});
-
-function update() {
-    if (!gameRunning) return;
-
-    // Movimento
-    if (keys['ArrowUp'] && player.y > 0) player.y -= player.speed;
-    if (keys['ArrowDown'] && player.y < canvas.height - player.size) player.y += player.speed;
-    if (keys['ArrowLeft'] && player.x > 0) player.x -= player.speed;
-    if (keys['ArrowRight'] && player.x < canvas.width - player.size) player.x += player.speed;
-
-    // Ações
-    plots.forEach(plot => {
-        let collision = player.x < plot.x + plot.width &&
-                        player.x + player.size > plot.x &&
-                        player.y < plot.y + plot.height &&
-                        player.y + player.size > plot.y;
-
-        if (collision) {
-            // Plantar com Espaço
-            if (keys['Space'] && plot.state === 'empty' && player.seeds > 0) {
-                plot.state = 'planted';
-                plot.timer = Date.now();
-                player.seeds--;
-                updateUI();
-            }
-            // Colher com V
-            if (keys['KeyV'] && plot.state === 'ready') {
-                plot.state = 'empty';
-                player.gold += 50;
-                player.seeds += 1;
-                updateUI();
-            }
-        }
-
-        // Crescimento (5 segundos)
-        if (plot.state === 'planted' && Date.now() - plot.timer > 5000) {
-            plot.state = 'ready';
-        }
-    });
+function resetGame() {
+    init();
 }
 
-function updateUI() {
-    document.getElementById('seeds').innerText = player.seeds;
-    document.getElementById('gold').innerText = player.gold;
-}
-
-function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Desenha Grama
-    ctx.fillStyle = "#81c784";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Desenha Canteiros
-    plots.forEach(plot => {
-        if (plot.state === 'empty') ctx.fillStyle = '#795548';
-        else if (plot.state === 'planted') ctx.fillStyle = '#5d4037';
-        else ctx.fillStyle = '#ffa000'; // Pronto para colher
-        
-        ctx.fillRect(plot.x, plot.y, plot.width, plot.height);
-        
-        // Detalhe do broto
-        if(plot.state === 'planted') {
-            ctx.fillStyle = '#2e7d32';
-            ctx.fillRect(plot.x + 20, plot.y + 20, 10, 10);
-        }
-    });
-
-    // Desenha Jogador
-    ctx.fillStyle = '#1e88e5';
-    ctx.fillRect(player.x, player.y, player.size, player.size);
-}
-
-function gameLoop() {
-    if (gameRunning) {
-        update();
-        draw();
-        requestAnimationFrame(gameLoop);
-    }
-}
+// Iniciar o jogo pela primeira vez
+init();

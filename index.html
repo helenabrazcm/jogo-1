@@ -2,26 +2,16 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Mini Stardew JS</title>
+    <title>Piano Tiles Clone</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="game-container">
-        <div id="menu-screen">
-            <h1>MINI VALLEY</h1>
-            <button id="start-button">INICIAR JOGO</button>
-            <div class="instructions">
-                <p>⬆️⬇️⬅️➡️ Mover</p>
-                <p>⌨️ [Espaço] Plantar</p>
-                <p>⌨️ [V] Colher</p>
-            </div>
-        </div>
-
-        <canvas id="gameCanvas"></canvas>
-        
-        <div id="ui" style="display: none;">
-            <span>Sementes: <b id="seeds">5</b></span>
-            <span>Ouro: <b id="gold">100</b></span>
+        <div id="score">Score: 0</div>
+        <div id="board"></div>
+        <div id="overlay">
+            <h1>Game Over!</h1>
+            <button onclick="resetGame()">Reiniciar</button>
         </div>
     </div>
     <script src="script.js"></script>
