@@ -1,98 +1,111 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+const msgOverlay = document.getElementById('msg-overlay');
 
-canvas.width = 400;
-canvas.height = 600;
+canvas.width = 600;
+canvas.height = window.innerHeight * 0.9;
 
-// Configurações do Jogo
-let gameSpeed = 3;
-let frameCount = 0;
+// Variáveis de Estado
+let gameActive = false;
+let level = 1;
+let roadOffset = 0;
+let speed = 6;
 
-// Objetos dos Jogadores
-const player1 = { x: 100, y: 500, w: 30, h: 50, color: '#e74c3c', score: 0, level: 1 };
-const player2 = { x: 270, y: 500, w: 30, h: 50, color: '#3498db', score: 0, level: 1 };
+// Carregamento de Imagens
+const car1Img = new Image();
+car1Img.src = 'https://i.imgur.com/vH0HhU9.png'; 
+const car2Img = new Image();
+car2Img.src = 'https://i.imgur.com/Bf0NnO5.png';
 
-const obstacles = [];
+// Jogadores
+const p1 = { x: 100, y: canvas.height - 180, w: 90, h: 160, score: 0 };
+const p2 = { x: 410, y: canvas.height - 180, w: 90, h: 160, score: 0 };
+
 const keys = {};
 
-// Captura de Teclas
-window.addEventListener('keydown', e => keys[e.code] = true);
-window.addEventListener('keyup', e => keys[e.code] = false);
+// Listeners
+window.addEventListener('keydown', (e) => {
+    keys[e.code] = true;
+    if (e.code === 'Space' && !gameActive) startGame();
+});
+window.addEventListener('keyup', (e) => keys[e.code] = false);
 
-class Obstacle {
-    constructor() {
-        this.w = 40 + Math.random() * 40;
-        this.h = 20;
-        this.x = Math.random() * (canvas.width - this.w);
-        this.y = -this.h;
-    }
-    update() {
-        this.y += gameSpeed;
-    }
-    draw() {
-        ctx.fillStyle = '#f1c40f';
-        ctx.fillRect(this.x, this.y, this.w, this.h);
-    }
+function startGame() {
+    gameActive = true;
+    msgOverlay.style.display = 'none';
+    update();
 }
 
-function handleInput() {
-    // Player 1 (WASD)
-    if (keys['KeyA'] && player1.x > 0) player1.x -= 5;
-    if (keys['KeyD'] && player1.x < canvas.width - player1.w) player1.x += 5;
+function checkLevel() {
+    let topScore = Math.max(p1.score, p2.score);
+    let newLevel = Math.floor(topScore / 1000) + 1;
     
-    // Player 2 (Setas)
-    if (keys['ArrowLeft'] && player2.x > 0) player2.x -= 5;
-    if (keys['ArrowRight'] && player2.x < canvas.width - player2.w) player2.x += 5;
-}
-
-function checkCollision(p, o) {
-    return (p.x < o.x + o.w && p.x + p.w > o.x &&
-            p.y < o.y + o.h && p.y + p.h > o.y);
+    if (newLevel > level && level < 5) {
+        level = newLevel;
+        speed += 4;
+        document.getElementById('level').innerText = level;
+    }
 }
 
 function update() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    handleInput();
+    if (!gameActive) return;
 
-    // Gerar obstáculos
-    if (frameCount % 60 === 0) obstacles.push(new Obstacle());
+    // Movimento Player 1 (WASD)
+    if (keys['KeyW'] && p1.y > 0) p1.y -= 7;
+    if (keys['KeyS'] && p1.y < canvas.height - p1.h) p1.y += 7;
+    if (keys['KeyA'] && p1.x > 10) p1.x -= 7;
+    if (keys['KeyD'] && p1.x < canvas.width/2 - 100) p1.x += 7;
 
-    obstacles.forEach((obs, index) => {
-        obs.update();
-        obs.draw();
+    // Movimento Player 2 (Setas)
+    if (keys['ArrowUp'] && p2.y > 0) p2.y -= 7;
+    if (keys['ArrowDown'] && p2.y < canvas.height - p2.h) p2.y += 7;
+    if (keys['ArrowLeft'] && p2.x > canvas.width/2 + 10) p2.x -= 7;
+    if (keys['ArrowRight'] && p2.x < canvas.width - 100) p2.x += 7;
 
-        // Colisões
-        if (checkCollision(player1, obs) || checkCollision(player2, obs)) {
-            alert("Fim de Jogo! Um dos jogadores bateu.");
-            document.location.reload();
-        }
-
-        // Remover obstáculos fora da tela e aumentar "score"
-        if (obs.y > canvas.height) {
-            obstacles.splice(index, 1);
-            player1.score++;
-            player2.score++;
-            
-            // Subir de nível a cada 10 pontos
-            if (player1.score % 10 === 0) {
-                player1.level++;
-                player2.level++;
-                gameSpeed += 0.5; // Aumenta a dificuldade
-                document.getElementById('lvl1').innerText = player1.level;
-                document.getElementById('lvl2').innerText = player2.level;
-            }
-        }
-    });
-
-    // Desenhar Jogadores
-    ctx.fillStyle = player1.color;
-    ctx.fillRect(player1.x, player1.y, player1.w, player1.h);
+    // Pontuação
+    p1.score += speed / 10;
+    p2.score += speed / 10;
     
-    ctx.fillStyle = player2.color;
-    ctx.fillRect(player2.x, player2.y, player2.w, player2.h);
-
-    frameCount++;
+    checkLevel();
+    draw();
     requestAnimationFrame(update);
 }
 
-update();
+function drawRoad() {
+    ctx.fillStyle = "#333";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.fillStyle = "#FFF";
+    ctx.fillRect(5, 0, 5, canvas.height);
+    ctx.fillRect(canvas.width - 10, 0, 5, canvas.height);
+
+    ctx.strokeStyle = "#ffcc00";
+    ctx.lineWidth = 6;
+    ctx.setLineDash([40, 30]);
+    ctx.lineDashOffset = -roadOffset;
+    
+    ctx.beginPath();
+    ctx.moveTo(canvas.width / 2, 0);
+    ctx.lineTo(canvas.width / 2, canvas.height);
+    ctx.stroke();
+    
+    roadOffset += speed;
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawRoad();
+
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = "rgba(0,0,0,0.6)";
+    ctx.shadowOffsetY = 10;
+    
+    ctx.drawImage(car1Img, p1.x, p1.y, p1.w, p1.h);
+    ctx.drawImage(car2Img, p2.x, p2.y, p2.w, p2.h);
+    
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+
+    document.getElementById('p1-score').innerText = Math.floor(p1.score);
+    document.getElementById('p2-score').innerText = Math.floor(p2.score);
+}

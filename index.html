@@ -2,17 +2,28 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Corrida 2D Multi-Player</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Racing Realist - 2 Players</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
     <div id="game-container">
         <div id="ui">
-            <div class="stats">Jogador 1 (WASD): Nível <span id="lvl1">1</span></div>
-            <div class="stats">Jogador 2 (Setas): Nível <span id="lvl2">1</span></div>
+            <div class="stats">FASE: <span id="level">1</span>/5</div>
+            <div class="stats">P1: <span id="p1-score">0</span>m</div>
+            <div class="stats">P2: <span id="p2-score">0</span>m</div>
         </div>
+        
         <canvas id="gameCanvas"></canvas>
+
+        <div id="msg-overlay">
+            CORRIDA REALISTA<br>
+            <small style="font-size: 1rem;">P1: W,A,S,D | P2: Setas</small><br><br>
+            Pressione ESPAÇO para Iniciar
+        </div>
     </div>
+
     <script src="script.js"></script>
 </body>
 </html>
