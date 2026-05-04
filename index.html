@@ -3,29 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turbo JS - Pro Edition</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <title>Jogo da Velha Moderno</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+        }
+
+        h1 { color: #333; }
+
+        .status {
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .tabuleiro {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 10px;
+            background-color: #333;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .celula {
+            width: 100px;
+            height: 100px;
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .celula:hover { background-color: #e9ecef; }
+
+        .celula.vitoria {
+            background-color: #2ecc71;
+            color: white;
+        }
+
+        button {
+            margin-top: 30px;
+            padding: 10px 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        button:hover { background-color: #2980b9; }
+    </style>
 </head>
 <body>
 
-    <div id="game-container">
-        <div id="ui">
-            <div class="stats">PLAYER 1<span id="p1-score">0</span></div>
-            <div class="stats" style="text-align: center;">STAGE<span id="level">1</span></div>
-            <div class="stats" style="text-align: right; border-left: none; border-right: 4px solid #00f2ff;">PLAYER 2<span id="p2-score">0</span></div>
-        </div>
-        
-        <canvas id="gameCanvas"></canvas>
-
-        <div id="msg-overlay">
-            <h1 id="title">TURBO JS</h1>
-            <p class="controls-hint">P1: W,A,S,D | P2: SETAS</p>
-            <p id="sub-msg">AGUARDANDO CARREGAMENTO...</p>
-            <button id="start-btn" onclick="startGame()" style="display: none;">START RACE</button>
-        </div>
+    <h1>Jogo da Velha</h1>
+    <div class="status" id="status">Vez do Jogador: X</div>
+    
+    <div class="tabuleiro" id="tabuleiro">
+        <div class="celula" data-index="0"></div>
+        <div class="celula" data-index="1"></div>
+        <div class="celula" data-index="2"></div>
+        <div class="celula" data-index="3"></div>
+        <div class="celula" data-index="4"></div>
+        <div class="celula" data-index="5"></div>
+        <div class="celula" data-index="6"></div>
+        <div class="celula" data-index="7"></div>
+        <div class="celula" data-index="8"></div>
     </div>
 
-    <script src="script.js"></script>
+    <button onclick="reiniciarJogo()">Reiniciar Partida</button>
+
+    <script>
+        const statusDisplay = document.getElementById('status');
+        const celulas = document.querySelectorAll('.celula');
+        let jogoAtivo = true;
+        let jogadorAtual = "X";
+        let estadoJogo = ["", "", "", "", "", "", "", "", ""];
+
+        const condicoesVitoria = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // Linhas
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // Colunas
+            [0, 4, 8], [2, 4, 6]             // Diagonais
+        ];
+
+        function cliqueCelula(evento) {
+            const celulaClicada = evento.target;
+            const indice = parseInt(celulaClicada.getAttribute('data-index'));
+
+            if (estadoJogo[indice] !== "" || !jogoAtivo) return;
+
+            estadoJogo[indice] = jogadorAtual;
+            celulaClicada.innerText = jogadorAtual;
+            
+            verificarResultado();
+        }
+
+        function verificarResultado() {
+            let rodadaVencida = false;
+
+            for (let i = 0; i < condicoesVitoria.length; i++) {
+                const condicao = condicoesVitoria[i];
+                let a = estadoJogo[condicao[0]];
+                let b = estadoJogo[condicao[1]];
+                let c = estadoJogo[condicao[2]];
+
+                if (a === '' || b === '' || c === '') continue;
+                if (a === b && b === c) {
+                    rodadaVencida = true;
+                    // Destacar células vencedoras
+                    condicao.forEach(idx => celulas[idx].classList.add('vitoria'));
+                    break;
+                }
+            }
+
+            if (rodadaVencida) {
+                statusDisplay.innerText = `Jogador ${jogadorAtual} venceu!`;
+                jogoAtivo = false;
+                return;
+            }
+
+            if (!estadoJogo.includes("")) {
+                statusDisplay.innerText = "Empate! Deu velha!";
+                jogoAtivo = false;
+                return;
+            }
+
+            jogadorAtual = jogadorAtual === "X" ? "O" : "X";
+            statusDisplay.innerText = `Vez do Jogador: ${jogadorAtual}`;
+        }
+
+        function reiniciarJogo() {
+            jogoAtivo = true;
+            jogadorAtual = "X";
+            estadoJogo = ["", "", "", "", "", "", "", "", ""];
+            statusDisplay.innerText = `Vez do Jogador: X`;
+            celulas.forEach(celula => {
+                celula.innerText = "";
+                celula.classList.remove('vitoria');
+            });
+        }
+
+        celulas.forEach(celula => celula.addEventListener('click', cliqueCelula));
+    </script>
 </body>
 </html>
