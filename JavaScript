@@ -1,6 +1,8 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const msgOverlay = document.getElementById('msg-overlay');
+const startBtn = document.getElementById('start-btn');
+const subMsg = document.getElementById('sub-msg');
 
 canvas.width = 900;
 canvas.height = 600;
@@ -19,8 +21,24 @@ const themes = [
     { grass: "#1a0000", road: "#000", line: "#ffffff" }
 ];
 
-const car1Img = new Image(); car1Img.src = 'https://i.imgur.com/vH0HhU9.png';
-const car2Img = new Image(); car2Img.src = 'https://i.imgur.com/Bf0NnO5.png';
+// Carregamento de imagens com promessas para garantir que o jogo funcione
+const car1Img = new Image();
+const car2Img = new Image();
+let imagesLoaded = 0;
+
+function checkImages() {
+    imagesLoaded++;
+    if (imagesLoaded === 2) {
+        subMsg.innerText = "PRONTO PARA A CORRIDA!";
+        startBtn.style.display = "block";
+        draw(); // Desenha o frame inicial
+    }
+}
+
+car1Img.onload = checkImages;
+car2Img.onload = checkImages;
+car1Img.src = 'https://i.imgur.com/vH0HhU9.png';
+car2Img.src = 'https://i.imgur.com/Bf0NnO5.png';
 
 const p1 = { x: 200, y: 400, w: 70, h: 130, score: 0, tilt: 0 };
 const p2 = { x: 630, y: 400, w: 70, h: 130, score: 0, tilt: 0 };
@@ -28,15 +46,14 @@ const p2 = { x: 630, y: 400, w: 70, h: 130, score: 0, tilt: 0 };
 window.addEventListener('keydown', e => keys[e.code] = true);
 window.addEventListener('keyup', e => {
     keys[e.code] = false;
-    if (e.code.startsWith('Key')) p1.tilt = 0;
-    if (e.code.startsWith('Arrow')) p2.tilt = 0;
+    if (['KeyA', 'KeyD'].includes(e.code)) p1.tilt = 0;
+    if (['ArrowLeft', 'ArrowRight'].includes(e.code)) p2.tilt = 0;
 });
 
 function startGame() {
     if (gameActive) return;
     gameActive = true;
-    msgOverlay.style.opacity = '0';
-    setTimeout(() => msgOverlay.style.visibility = 'hidden', 500);
+    msgOverlay.style.display = 'none';
     update();
 }
 
@@ -44,13 +61,11 @@ function update() {
     if (!gameActive) return;
     let moveSpeed = 6 + (level * 0.5);
 
-    // Movimento P1
     if (keys['KeyW'] && p1.y > 50) p1.y -= moveSpeed;
     if (keys['KeyS'] && p1.y < canvas.height - 150) p1.y += moveSpeed;
     if (keys['KeyA'] && p1.x > 80) { p1.x -= moveSpeed; p1.tilt = -0.08; }
     if (keys['KeyD'] && p1.x < canvas.width/2 - 100) { p1.x += moveSpeed; p1.tilt = 0.08; }
 
-    // Movimento P2
     if (keys['ArrowUp'] && p2.y > 50) p2.y -= moveSpeed;
     if (keys['ArrowDown'] && p2.y < canvas.height - 150) p2.y += moveSpeed;
     if (keys['ArrowLeft'] && p2.x > canvas.width/2 + 30) { p2.x -= moveSpeed; p2.tilt = -0.08; }
@@ -75,23 +90,32 @@ function update() {
 
 function draw() {
     const theme = themes[level - 1];
+    
+    // Grama
     ctx.fillStyle = theme.grass;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Estrada
     ctx.fillStyle = theme.road;
     ctx.fillRect(70, 0, canvas.width - 140, canvas.height);
 
-    // Linhas Neon
-    ctx.shadowBlur = 15; ctx.shadowColor = theme.line;
+    // Linhas Neon Laterais
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = theme.line;
     ctx.fillStyle = theme.line;
     ctx.fillRect(75, 0, 4, canvas.height);
     ctx.fillRect(canvas.width - 79, 0, 4, canvas.height);
-    
-    // Faixa central
+    ctx.shadowBlur = 0;
+
+    // Linha central tracejada
     ctx.setLineDash([40, 60]);
     ctx.lineDashOffset = -roadOffset;
     ctx.strokeStyle = "rgba(255,255,255,0.3)";
-    ctx.strokeRect(canvas.width/2, 0, 2, canvas.height);
-    ctx.shadowBlur = 0;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(canvas.width/2, 0);
+    ctx.lineTo(canvas.width/2, canvas.height);
+    ctx.stroke();
 
     renderCar(car1Img, p1);
     renderCar(car2Img, p2);
@@ -104,15 +128,17 @@ function renderCar(img, car) {
     ctx.save();
     ctx.translate(car.x + car.w/2, car.y + car.h/2);
     ctx.rotate(car.tilt);
-    ctx.shadowBlur = 20; ctx.shadowColor = "black";
+    ctx.shadowBlur = 20; 
+    ctx.shadowColor = "black";
     ctx.drawImage(img, -car.w/2, -car.h/2, car.w, car.h);
     ctx.restore();
 }
 
 function gameWin() {
     gameActive = false;
-    msgOverlay.style.visibility = 'visible';
-    msgOverlay.style.opacity = '1';
+    msgOverlay.style.display = 'flex';
     document.getElementById('title').innerText = "FINISH!";
-    document.getElementById('sub-msg').innerText = p1.score > p2.score ? "P1 VENCEU!" : "P2 VENCEU!";
+    subMsg.innerText = p1.score > p2.score ? "P1 VENCEU!" : "P2 VENCEU!";
+    startBtn.innerText = "JOGAR NOVAMENTE";
+    startBtn.onclick = () => location.reload();
 }
