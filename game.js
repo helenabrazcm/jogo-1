@@ -1,4 +1,3 @@
-
 // ── Safe storage (works even when localStorage is blocked by sandbox) ──
 const _memStore = {};
 function safeLSGet(key){
@@ -1294,6 +1293,11 @@ let hoveredGhost=null;
 let gameActive=false,pointerLocked=false,fallbackMode=false;
 let vrSession=null, vrControllers=[], vrIsPresenting=false;
 let vrTempMatrix=null, vrSelectPressed={0:false,1:false};
+// Shinecon / Cardboard mobile VR
+let mobileVR=false;
+let mobileVROrient={alpha:0,beta:0,gamma:0,ok:false};
+let mobileVRBaseYaw=null;
+const MOBILE_EYE_SEP=0.064; // interpupillary distance
 let doorTransitioning=false,lastLockedDoorNotify=0;
 let isDragging=false,lastDragX=0,lastDragY=0,dragMoved=false;
 let yaw=0,pitch=0;
@@ -4484,7 +4488,7 @@ function setupControls(){
     gpAxisMap={lx:0,ly:1,rx:2,ry:3,calibrated:false};
     const id=(e.gamepad.id||'Joypad').slice(0,50);
     const axes=e.gamepad.axes?e.gamepad.axes.length:0;
-    notify('🎮 Conectado: '+id+' ('+axes+' eixos) — stick esq=andar, dir=olhar','good');
+    notify('🎮 Controle: '+id+' ('+axes+' eixos) — Shinecon/genérico OK','good');
   });
   window.addEventListener('gamepaddisconnected', e=>{
     if(gamepadIndex===e.gamepad.index) gamepadIndex=null;
@@ -4534,29 +4538,168 @@ function gpJustPressed(gp, i){
 function setupVR(){
   const btn = document.getElementById('vr-btn');
   if(!btn) return;
-  if(!navigator.xr){
-    btn.style.display='none';
-    return;
+  // Always show for Shinecon / mobile VR (phone in headset)
+  btn.classList.add('show');
+  btn.title = 'Shinecon VR / Cardboard / WebXR';
+
+  // Also check full WebXR headsets
+  if(navigator.xr){
+    navigator.xr.isSessionSupported('immersive-vr').then(ok=>{
+      if(ok) btn.textContent = '🥽 VR / Shinecon';
+    }).catch(()=>{});
   }
-  navigator.xr.isSessionSupported('immersive-vr').then(ok=>{
-    if(ok) btn.classList.add('show');
-  }).catch(()=>{});
 
   btn.addEventListener('click', async ()=>{
-    if(vrSession){
-      try{ await vrSession.end(); }catch(e){}
-      return;
+    // Exit if already in any VR mode
+    if(mobileVR){ exitMobileVR(); return; }
+    if(vrSession){ try{ await vrSession.end(); }catch(e){} return; }
+
+    // Prefer full WebXR if available (Quest etc.)
+    if(navigator.xr){
+      try{
+        const supported = await navigator.xr.isSessionSupported('immersive-vr');
+        if(supported){
+          const session = await navigator.xr.requestSession('immersive-vr', {
+            optionalFeatures: ['local-floor','bounded-floor','hand-tracking','layers']
+          });
+          await onVRSessionStarted(session);
+          return;
+        }
+      }catch(err){
+        console.warn('WebXR falhou, usando VR celular:', err);
+      }
     }
-    try{
-      const session = await navigator.xr.requestSession('immersive-vr', {
-        optionalFeatures: ['local-floor','bounded-floor','hand-tracking','layers']
-      });
-      await onVRSessionStarted(session);
-    }catch(err){
-      console.error(err);
-      notify('⚠️ Não foi possível entrar em VR: '+(err.message||err),'danger');
-    }
+    // Shinecon / cardboard / phone VR
+    enterMobileVR();
   });
+}
+
+function enterMobileVR(){
+  mobileVR = true;
+  vrIsPresenting = true;
+  const btn = document.getElementById('vr-btn');
+  if(btn){ btn.textContent='🚪 Sair do VR'; btn.classList.add('active'); }
+
+  // Hide UI chrome for immersion
+  ['hud-top','right-panel','box-panel','timer-wrap','crosshair','interact-hint','mobile-pad','speech-btn'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display='none';
+  });
+  const hint=document.getElementById('hud-bottom');
+  if(hint) hint.style.opacity='0.35';
+
+  // Fullscreen + landscape
+  const el = renderer.domElement;
+  const reqFS = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen;
+  if(reqFS) try{ reqFS.call(document.documentElement); }catch(e){}
+
+  // Request device orientation (iOS needs permission)
+  const enableOrient = ()=>{
+    window.addEventListener('deviceorientation', onDeviceOrientation, true);
+    mobileVROrient.ok = true;
+  };
+  if(typeof DeviceOrientationEvent !== 'undefined' &&
+     typeof DeviceOrientationEvent.requestPermission === 'function'){
+    DeviceOrientationEvent.requestPermission()
+      .then(state=>{
+        if(state==='granted') enableOrient();
+        else notify('⚠️ Permita o acesso ao giroscópio nas configurações','danger');
+      })
+      .catch(()=>enableOrient());
+  } else {
+    enableOrient();
+  }
+
+  // Lower pixel ratio for stereo performance on phones
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+  notify('🥽 Shinecon VR — gire a cabeça para olhar · controle para andar','good');
+  gameActive = true;
+}
+
+function exitMobileVR(){
+  mobileVR = false;
+  vrIsPresenting = false;
+  mobileVRBaseYaw = null;
+  window.removeEventListener('deviceorientation', onDeviceOrientation, true);
+  const btn = document.getElementById('vr-btn');
+  if(btn){ btn.textContent='🥽 Entrar em VR'; btn.classList.remove('active'); }
+  ['hud-top','right-panel','box-panel','timer-wrap','crosshair','mobile-pad','speech-btn'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display='';
+  });
+  const hb=document.getElementById('hud-bottom');
+  if(hb) hb.style.opacity='';
+  const xh=document.getElementById('crosshair');
+  if(xh) xh.style.display='';
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setViewport(0,0,innerWidth,innerHeight);
+  renderer.setScissorTest(false);
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  if(document.exitFullscreen) try{ document.exitFullscreen(); }catch(e){}
+  notify('🥽 Saiu do VR Shinecon','');
+}
+
+function onDeviceOrientation(e){
+  if(!mobileVR) return;
+  // alpha: compass (z), beta: front-back (x), gamma: left-right (y)
+  if(e.alpha===null || e.beta===null || e.gamma===null) return;
+  mobileVROrient.alpha = e.alpha;
+  mobileVROrient.beta = e.beta;
+  mobileVROrient.gamma = e.gamma;
+  mobileVROrient.ok = true;
+}
+
+function applyMobileVROrientation(){
+  if(!mobileVR || !mobileVROrient.ok || !camera) return;
+  // Convert device orientation to yaw/pitch (Cardboard-style)
+  const alpha = mobileVROrient.alpha * Math.PI/180; // 0..360
+  const beta  = mobileVROrient.beta  * Math.PI/180; // -180..180
+  const gamma = mobileVROrient.gamma * Math.PI/180; // -90..90
+
+  // Screen orientation offset
+  const orient = (typeof screen !== 'undefined' && screen.orientation && screen.orientation.angle) || window.orientation || 0;
+  const orientRad = orient * Math.PI/180;
+
+  // Simple mapping for phone in landscape inside Shinecon headset
+  // Looking: device beta ~ 90 when looking forward while lying in headset
+  let lookYaw = -alpha - orientRad;
+  let lookPitch = (beta - Math.PI/2);
+
+  if(mobileVRBaseYaw === null){
+    mobileVRBaseYaw = lookYaw;
+  }
+  yaw = lookYaw - mobileVRBaseYaw;
+  pitch = Math.max(-1.3, Math.min(1.3, lookPitch * 0.85));
+
+  camera.rotation.order = 'YXZ';
+  camera.rotation.y = yaw;
+  camera.rotation.x = pitch;
+  camera.rotation.z = 0;
+}
+
+function renderMobileStereo(){
+  // Side-by-side stereo for Shinecon / Cardboard
+  const w = innerWidth, h = innerHeight;
+  const half = Math.floor(w/2);
+  camera.aspect = (half) / h;
+  camera.updateProjectionMatrix();
+
+  // Left eye
+  camera.position.x -= MOBILE_EYE_SEP/2;
+  renderer.setViewport(0, 0, half, h);
+  renderer.setScissor(0, 0, half, h);
+  renderer.setScissorTest(true);
+  renderer.render(scene, camera);
+
+  // Right eye
+  camera.position.x += MOBILE_EYE_SEP;
+  renderer.setViewport(half, 0, half, h);
+  renderer.setScissor(half, 0, half, h);
+  renderer.render(scene, camera);
+
+  // Restore camera position
+  camera.position.x -= MOBILE_EYE_SEP/2;
 }
 
 async function onVRSessionStarted(session){
@@ -4874,11 +5017,18 @@ function updateGamepad(dt){
   }
 
   // —— CAMERA LOOK (right stick) ——
-  if(rx!==0 || ry!==0){
+  // Skip look override when mobileVR uses gyroscope for looking
+  if(!mobileVR && (rx!==0 || ry!==0)){
     yaw   -= rx * GP_LOOK_SPEED * dt;
     pitch -= ry * GP_LOOK_SPEED * dt;
     if(pitch >  1.4) pitch =  1.4;
     if(pitch < -1.4) pitch = -1.4;
+  }
+  // Shinecon single-stick: if no right stick, shoulder/d-pad can turn
+  if(mobileVR && rx===0 && ry===0){
+    // optional: buttons 6/7 or axes for turn while gyro looks
+    if(gpPressed(gp, 14)) yaw += 1.6 * dt;
+    if(gpPressed(gp, 15)) yaw -= 1.6 * dt;
   }
 
   if(camera){
@@ -5658,13 +5808,24 @@ function animate(){
   const dt=Math.min(clock.getDelta(),.05);
   updateVR(dt);
   updateGamepad(dt);
-  if(!vrIsPresenting) updateMovement(dt);
+  if(mobileVR){
+    applyMobileVROrientation();
+    // movement from Shinecon Bluetooth controller still via updateGamepad → _gpMove
+    updateMovement(dt);
+  } else if(!vrIsPresenting){
+    updateMovement(dt);
+  }
   updateLookTarget();
   updateBoxAnims(dt);
   updatePlacementAnims(dt);
   updateDoorAnims(dt);
   updateDayCycle(dt);
-  renderer.render(scene,camera);
+  if(mobileVR){
+    renderMobileStereo();
+  } else {
+    renderer.setScissorTest(false);
+    renderer.render(scene,camera);
+  }
 }
 function startRenderLoop(){
   // setAnimationLoop works for both desktop and WebXR
