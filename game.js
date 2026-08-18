@@ -4686,9 +4686,7 @@ function enterMobileVR(){
   const hint=document.getElementById('hud-bottom');
   if(hint) hint.style.opacity='0.25';
 
-  // Fullscreen
-  const reqFS = document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen;
-  if(reqFS) try{ reqFS.call(document.documentElement); }catch(e){}
+  // NÃO usar fullscreen — no Android ele bloqueia o mouse Bluetooth do SC-B03
 
   // Gyro
   const enableOrient = ()=>{
@@ -4709,21 +4707,36 @@ function enterMobileVR(){
 
   renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
   gameActive = true;
+  fallbackMode = true; // evita pointer lock no VR
+
+  // HID + controles de tela
+  window._scHIDBound = false; // força rebind limpo
   setupShineconHID();
   setupVRScreenControls();
 
-  // Unite SC-B03 cursor with VR
   scCursor.x = 0.5;
   scCursor.y = 0.5;
   scShowCursor(true);
   const cel=document.getElementById('sc-cursor');
   const st=document.getElementById('sc-status');
-  if(cel) cel.classList.add('vr');
-  if(st){ st.classList.add('vr'); st.textContent = '🥽 VR + SC-B03: joystick=cursor · confirmação=interagir · stick=andar'; }
+  if(cel){ cel.classList.add('vr'); cel.style.display='block'; }
+  if(st){
+    st.classList.add('vr');
+    st.style.display='block';
+    st.textContent = '🥽 VR: mexa o touchpad do SC-B03 para o cursor · clique para interagir';
+  }
 
-  if(navigator.getGamepads) navigator.getGamepads();
-  try{ renderer.domElement.focus(); document.body.focus(); window.focus(); }catch(e){}
-  notify('🥽 VR ativo: cabeça=olhar · SC-B03=cursor · stick=andar · clique=OK','good');
+  // Manter foco para receber teclado/mouse do controle
+  const keepFocus = ()=>{
+    if(!mobileVR) return;
+    try{ window.focus(); document.body.focus(); renderer.domElement.focus(); }catch(e){}
+    if(navigator.getGamepads) navigator.getGamepads();
+  };
+  keepFocus();
+  if(window._vrFocusTimer) clearInterval(window._vrFocusTimer);
+  window._vrFocusTimer = setInterval(keepFocus, 800);
+
+  notify('🥽 VR sem fullscreen (SC-B03 funciona). Cabeça=olhar · touchpad=cursor','good');
 }
 
 function exitMobileVR(){
@@ -4747,6 +4760,7 @@ function exitMobileVR(){
   camera.aspect = innerWidth/innerHeight;
   camera.updateProjectionMatrix();
   if(document.exitFullscreen) try{ document.exitFullscreen(); }catch(e){}
+  if(window._vrFocusTimer){ clearInterval(window._vrFocusTimer); window._vrFocusTimer=null; }
   teardownShineconHID();
   const cel=document.getElementById('sc-cursor');
   const st=document.getElementById('sc-status');
@@ -5193,7 +5207,7 @@ function scUpdateCursorDOM(){
 function scMoveCursor(dxPx, dyPx){
   // Touchpad/joystick → screen cursor
   // Slightly higher sensitivity in VR
-  const sens = mobileVR ? 0.0030 : 0.0022;
+  const sens = mobileVR ? 0.0055 : 0.0028;
   scCursor.x = Math.max(0.02, Math.min(0.98, scCursor.x + dxPx * sens));
   scCursor.y = Math.max(0.02, Math.min(0.98, scCursor.y + dyPx * sens));
   scCursor.lastSignal = performance.now();
@@ -5228,71 +5242,92 @@ function scInteractAtCursor(){
 }
 
 function setupShineconHID(){
-  if(window._scHIDBound) return;
-  window._scHIDBound = true;
+  // Always (re)bind — critical for VR after mode switch
+  if(window._scHIDHandlers){
+    const h = window._scHIDHandlers;
+    document.removeEventListener('pointermove', h.onMove, true);
+    document.removeEventListener('mousemove', h.onMove, true);
+    document.removeEventListener('pointerdown', h.onDown, true);
+    document.removeEventListener('mousedown', h.onDown, true);
+    document.removeEventListener('click', h.onDown, true);
+    document.removeEventListener('keydown', h.onKey, true);
+    document.removeEventListener('keyup', h.onKeyUp, true);
+  }
 
-  // SC-B03 touchpad = move virtual cursor (not walk)
   const onMove = (e)=>{
+    // Accept input whenever game is running (VR or not)
     if(!gameActive) return;
-    // Prefer movementX/Y (Bluetooth mouse)
-    let dx = e.movementX, dy = e.movementY;
-    if(dx===undefined || (dx===0 && dy===0 && e.clientX!=null)){
+    // Ignore pure touch-screen finger on the VR stick UI
+    if(e.pointerType==='touch' && e.target && e.target.closest && e.target.closest('#vr-controls')) return;
+
+    let dx = e.movementX;
+    let dy = e.movementY;
+    if(typeof dx !== 'number') dx = 0;
+    if(typeof dy !== 'number') dy = 0;
+
+    // Fallback: client delta (Android BT mouse often lacks movementX)
+    if(dx===0 && dy===0 && e.clientX!=null){
       if(scLastX!=null){
         dx = e.clientX - scLastX;
         dy = e.clientY - scLastY;
-      } else { dx=0; dy=0; }
-    }
-    if(e.clientX!=null){ scLastX=e.clientX; scLastY=e.clientY; }
-    // Ignore huge jumps (real touch on UI)
-    if(Math.abs(dx)>80 || Math.abs(dy)>80) return;
-    if(dx||dy){
-      scMoveCursor(dx, dy);
-      // mark remote connected
-      scCursor.lastSignal = performance.now();
-      if(!scCursor.active){
-        scShowCursor(true);
-        notify('🎮 SC-B03: joystick move o cursor · clique = interagir','good');
       }
     }
+    if(e.clientX!=null){ scLastX = e.clientX; scLastY = e.clientY; }
+
+    if(Math.abs(dx)<0.5 && Math.abs(dy)<0.5) return;
+    if(Math.abs(dx)>120 || Math.abs(dy)>120) return; // ignore teleports
+
+    scMoveCursor(dx, dy);
   };
 
   const onDown = (e)=>{
     if(!gameActive) return;
-    const t = e.target;
-    if(t && (t.id==='vr-stick-base'||t.id==='vr-stick-knob'||t.id==='vr-action-btn'||
-             t.id==='vr-btn'||t.closest?.('#vr-controls')||t.closest?.('#entry')||t.closest?.('#overlay'))) return;
-    // Confirmation click from SC-B03
-    if(e.button===0 || e.type==='click' || e.type==='pointerdown'){
-      // Only treat as remote confirm if cursor active or mobileVR
-      if(scCursor.active || mobileVR){
-        e.preventDefault();
-        scInteractAtCursor();
-      }
+    if(e.target && e.target.closest){
+      if(e.target.closest('#vr-controls')) return;
+      if(e.target.closest('#vr-btn')) return;
+      if(e.target.closest('#entry')) return;
+      if(e.target.closest('#overlay')) return;
+    }
+    // In VR OR when cursor is active: any click = confirm
+    if(mobileVR || scCursor.active){
+      if(e.cancelable) e.preventDefault();
+      scInteractAtCursor();
     }
   };
 
   const onKey = (e)=>{
     if(!gameActive) return;
-    const c=e.code||'', k=e.key||'';
-    if(c==='Enter'||c==='NumpadEnter'||c==='Space'||k==='Enter'||k===' '||
-       c==='MediaPlayPause'||c==='AudioVolumeUp'||c==='AudioVolumeDown'||
-       k==='a'||k==='A'||c==='KeyA'||e.keyCode===13||e.keyCode===32){
-      e.preventDefault();
+    const c = e.code||'';
+    const k = e.key||'';
+    const isConfirm =
+      c==='Enter'||c==='NumpadEnter'||c==='Space'||
+      k==='Enter'||k===' '||k==='Select'||
+      c==='MediaPlayPause'||c==='AudioVolumeUp'||c==='AudioVolumeDown'||
+      c==='KeyA'||k==='a'||k==='A'||
+      e.keyCode===13||e.keyCode===32||e.keyCode===179;
+
+    if(isConfirm){
+      if(e.cancelable) e.preventDefault();
       if(!scCursor.active) scShowCursor(true);
       scInteractAtCursor();
       return;
     }
-    if(k==='x'||k==='X'||c==='KeyX'){ if(carriedItem) rotateCarriedItem(-Math.PI/4); else scInteractAtCursor(); return; }
-    if(k==='b'||k==='B'||k==='y'||k==='Y'||c==='KeyB'||c==='KeyY'){
-      if(carriedItem) rotateCarriedItem(Math.PI/4); else scInteractAtCursor(); return;
+    if(c==='KeyX'||k==='x'||k==='X'){
+      if(carriedItem) rotateCarriedItem(-Math.PI/4); else scInteractAtCursor();
+      return;
     }
-    // Arrow keys can nudge cursor
-    const step=0.04;
+    if(c==='KeyB'||c==='KeyY'||k==='b'||k==='B'||k==='y'||k==='Y'){
+      if(carriedItem) rotateCarriedItem(Math.PI/4); else scInteractAtCursor();
+      return;
+    }
+    // D-pad / arrows nudge cursor
+    const step = mobileVR ? 0.06 : 0.04;
     if(c==='ArrowUp'){ scMoveCursor(0, -step*innerHeight); e.preventDefault(); }
     if(c==='ArrowDown'){ scMoveCursor(0, step*innerHeight); e.preventDefault(); }
     if(c==='ArrowLeft'){ scMoveCursor(-step*innerWidth, 0); e.preventDefault(); }
     if(c==='ArrowRight'){ scMoveCursor(step*innerWidth, 0); e.preventDefault(); }
   };
+  const onKeyUp = ()=>{};
 
   document.addEventListener('pointermove', onMove, true);
   document.addEventListener('mousemove', onMove, true);
@@ -5300,9 +5335,10 @@ function setupShineconHID(){
   document.addEventListener('mousedown', onDown, true);
   document.addEventListener('click', onDown, true);
   document.addEventListener('keydown', onKey, true);
+  document.addEventListener('keyup', onKeyUp, true);
 
-  // Always ready on phones — show tip once game starts
-  window._scHID = true;
+  window._scHIDHandlers = { onMove, onDown, onKey, onKeyUp };
+  window._scHIDBound = true;
 }
 
 function teardownShineconHID(){
@@ -5317,7 +5353,6 @@ function teardownShineconHID(){
 function updateShineconVR(dt){
   if(!gameActive) return;
 
-  // Poll gamepad: axes move CURSOR, buttons interact
   const pads = navigator.getGamepads ? navigator.getGamepads() : [];
   for(let i=0;i<pads.length;i++){
     const gp = pads[i];
@@ -5325,21 +5360,24 @@ function updateShineconVR(dt){
     gamepadIndex = i;
     const axes = gp.axes||[];
     let mx=0, my=0;
-    for(const [ai,aj] of [[0,1],[2,3]]){
-      const x=Number(axes[ai]||0), y=Number(axes[aj]||0);
-      if(Math.abs(x)>0.08||Math.abs(y)>0.08){ mx=x; my=y; break; }
+    // Try all axis pairs
+    for(let a=0;a+1<axes.length;a+=2){
+      const x=Number(axes[a]||0), y=Number(axes[a+1]||0);
+      if(Math.abs(x)>0.06||Math.abs(y)>0.06){ mx=x; my=y; break; }
     }
     if(mx||my){
-      // joystick → cursor (pixels per second)
-      scMoveCursor(mx * 900 * dt, my * 900 * dt);
+      if(!scCursor.active) scShowCursor(true);
+      // Faster cursor in VR
+      const speed = mobileVR ? 1400 : 900;
+      scMoveCursor(mx * speed * dt, my * speed * dt);
     }
     for(let b=0;b<(gp.buttons||[]).length;b++){
       if(gpJustPressed(gp,b)){
+        if(!scCursor.active) scShowCursor(true);
         scInteractAtCursor();
         break;
       }
     }
-    break;
   }
 }
 
