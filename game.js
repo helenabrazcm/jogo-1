@@ -4712,6 +4712,10 @@ function enterMobileVR(){
   // HID + controles de tela
   window._scHIDBound = false; // força rebind limpo
   setupShineconHID();
+  const baseEl=document.getElementById('vr-stick-base');
+  const btnEl=document.getElementById('vr-action-btn');
+  if(baseEl){ baseEl._vrBound=false; baseEl._vrListeners=false; }
+  if(btnEl) btnEl._vrBound=false;
   setupVRScreenControls();
 
   scCursor.x = 0.5;
@@ -4736,7 +4740,10 @@ function enterMobileVR(){
   if(window._vrFocusTimer) clearInterval(window._vrFocusTimer);
   window._vrFocusTimer = setInterval(keepFocus, 800);
 
-  notify('🥽 VR sem fullscreen (SC-B03 funciona). Cabeça=olhar · touchpad=cursor','good');
+  notify('🥽 VR: stick=andar · botão vermelho=OK · SC-B03 touchpad=cursor (se o celular permitir)','good');
+  // Force UI visible
+  const vcr=document.getElementById('vr-controls');
+  if(vcr){ vcr.classList.add('show'); vcr.style.display='block'; }
 }
 
 function exitMobileVR(){
@@ -5152,8 +5159,8 @@ function setupVRScreenControls(){
   };
 
   // Bind once
-  if(!base._vrBound){
-    base._vrBound = true;
+  if(!base._vrListeners){
+    base._vrListeners = true;
     base.addEventListener('touchstart', startStick, {passive:false});
     base.addEventListener('touchmove', moveStick, {passive:false});
     base.addEventListener('touchend', endStick, {passive:false});
@@ -5177,6 +5184,19 @@ function hideVRScreenControls(){
   scSetWalk(0,0);
 }
 
+function scSignalPulse(){
+  const p=document.getElementById('sc-pulse');
+  if(!p) return;
+  p.classList.remove('on');
+  void p.offsetWidth;
+  p.classList.add('on');
+  const st=document.getElementById('sc-status');
+  if(st){ st.style.display='block'; st.classList.add('on');
+    st.textContent = mobileVR
+      ? '🟢 SC-B03 sinal OK · touchpad=cursor · clique=interagir'
+      : '🟢 SC-B03 sinal OK · joystick move o cursor';
+  }
+}
 function scShowCursor(on){
   const el=document.getElementById('sc-cursor');
   const st=document.getElementById('sc-status');
@@ -5213,6 +5233,11 @@ function scMoveCursor(dxPx, dyPx){
   scCursor.lastSignal = performance.now();
   if(!scCursor.active) scShowCursor(true);
   scUpdateCursorDOM();
+  // throttle pulse visual
+  if(!window._scPulseAt || performance.now()-window._scPulseAt>400){
+    window._scPulseAt = performance.now();
+    scSignalPulse();
+  }
 }
 function scCursorNdc(){
   // Three.js NDC from screen position
@@ -5242,40 +5267,36 @@ function scInteractAtCursor(){
 }
 
 function setupShineconHID(){
-  // Always (re)bind — critical for VR after mode switch
   if(window._scHIDHandlers){
-    const h = window._scHIDHandlers;
-    document.removeEventListener('pointermove', h.onMove, true);
-    document.removeEventListener('mousemove', h.onMove, true);
-    document.removeEventListener('pointerdown', h.onDown, true);
-    document.removeEventListener('mousedown', h.onDown, true);
-    document.removeEventListener('click', h.onDown, true);
-    document.removeEventListener('keydown', h.onKey, true);
-    document.removeEventListener('keyup', h.onKeyUp, true);
+    const h=window._scHIDHandlers;
+    ['pointermove','mousemove','pointerdown','mousedown','click','keydown'].forEach(ev=>{
+      try{ document.removeEventListener(ev, h.onMove||h.onDown||h.onKey, true); }catch(e){}
+    });
+    try{
+      document.removeEventListener('pointermove', h.onMove, true);
+      document.removeEventListener('mousemove', h.onMove, true);
+      document.removeEventListener('pointerdown', h.onDown, true);
+      document.removeEventListener('mousedown', h.onDown, true);
+      document.removeEventListener('click', h.onDown, true);
+      document.removeEventListener('keydown', h.onKey, true);
+    }catch(e){}
   }
 
+  let lastCx=null, lastCy=null;
+
   const onMove = (e)=>{
-    // Accept input whenever game is running (VR or not)
     if(!gameActive) return;
-    // Ignore pure touch-screen finger on the VR stick UI
-    if(e.pointerType==='touch' && e.target && e.target.closest && e.target.closest('#vr-controls')) return;
+    if(e.target && e.target.closest && e.target.closest('#vr-controls')) return;
 
-    let dx = e.movementX;
-    let dy = e.movementY;
-    if(typeof dx !== 'number') dx = 0;
-    if(typeof dy !== 'number') dy = 0;
-
-    // Fallback: client delta (Android BT mouse often lacks movementX)
-    if(dx===0 && dy===0 && e.clientX!=null){
-      if(scLastX!=null){
-        dx = e.clientX - scLastX;
-        dy = e.clientY - scLastY;
-      }
+    let dx = (typeof e.movementX==='number') ? e.movementX : 0;
+    let dy = (typeof e.movementY==='number') ? e.movementY : 0;
+    if(dx===0 && dy===0 && typeof e.clientX==='number'){
+      if(lastCx!=null){ dx=e.clientX-lastCx; dy=e.clientY-lastCy; }
     }
-    if(e.clientX!=null){ scLastX = e.clientX; scLastY = e.clientY; }
+    if(typeof e.clientX==='number'){ lastCx=e.clientX; lastCy=e.clientY; scLastX=e.clientX; scLastY=e.clientY; }
 
-    if(Math.abs(dx)<0.5 && Math.abs(dy)<0.5) return;
-    if(Math.abs(dx)>120 || Math.abs(dy)>120) return; // ignore teleports
+    if(Math.abs(dx)<0.4 && Math.abs(dy)<0.4) return;
+    if(Math.abs(dx)>150 || Math.abs(dy)>150) return;
 
     scMoveCursor(dx, dy);
   };
@@ -5283,51 +5304,37 @@ function setupShineconHID(){
   const onDown = (e)=>{
     if(!gameActive) return;
     if(e.target && e.target.closest){
-      if(e.target.closest('#vr-controls')) return;
-      if(e.target.closest('#vr-btn')) return;
-      if(e.target.closest('#entry')) return;
-      if(e.target.closest('#overlay')) return;
+      if(e.target.closest('#vr-controls,#vr-btn,#entry,#overlay,#victory')) return;
     }
-    // In VR OR when cursor is active: any click = confirm
+    // Always interact in VR; outside VR only if cursor already active
     if(mobileVR || scCursor.active){
-      if(e.cancelable) e.preventDefault();
+      if(e.cancelable) try{ e.preventDefault(); }catch(err){}
+      scSignalPulse();
       scInteractAtCursor();
     }
   };
 
   const onKey = (e)=>{
     if(!gameActive) return;
-    const c = e.code||'';
-    const k = e.key||'';
-    const isConfirm =
-      c==='Enter'||c==='NumpadEnter'||c==='Space'||
-      k==='Enter'||k===' '||k==='Select'||
+    const c=e.code||'', k=e.key||'', kc=e.keyCode||0;
+    const confirm = c==='Enter'||c==='NumpadEnter'||c==='Space'||k==='Enter'||k===' '||
       c==='MediaPlayPause'||c==='AudioVolumeUp'||c==='AudioVolumeDown'||
-      c==='KeyA'||k==='a'||k==='A'||
-      e.keyCode===13||e.keyCode===32||e.keyCode===179;
-
-    if(isConfirm){
+      c==='KeyA'||k==='a'||k==='A'||kc===13||kc===32||kc===179||kc===175||kc===174;
+    if(confirm){
       if(e.cancelable) e.preventDefault();
       if(!scCursor.active) scShowCursor(true);
+      scSignalPulse();
       scInteractAtCursor();
       return;
     }
-    if(c==='KeyX'||k==='x'||k==='X'){
-      if(carriedItem) rotateCarriedItem(-Math.PI/4); else scInteractAtCursor();
-      return;
-    }
-    if(c==='KeyB'||c==='KeyY'||k==='b'||k==='B'||k==='y'||k==='Y'){
-      if(carriedItem) rotateCarriedItem(Math.PI/4); else scInteractAtCursor();
-      return;
-    }
-    // D-pad / arrows nudge cursor
-    const step = mobileVR ? 0.06 : 0.04;
-    if(c==='ArrowUp'){ scMoveCursor(0, -step*innerHeight); e.preventDefault(); }
-    if(c==='ArrowDown'){ scMoveCursor(0, step*innerHeight); e.preventDefault(); }
-    if(c==='ArrowLeft'){ scMoveCursor(-step*innerWidth, 0); e.preventDefault(); }
-    if(c==='ArrowRight'){ scMoveCursor(step*innerWidth, 0); e.preventDefault(); }
+    if(c==='KeyX'||k==='x'||k==='X'){ if(carriedItem) rotateCarriedItem(-Math.PI/4); else scInteractAtCursor(); return; }
+    if(c==='KeyY'||c==='KeyB'||k==='y'||k==='Y'||k==='b'||k==='B'){ if(carriedItem) rotateCarriedItem(Math.PI/4); else scInteractAtCursor(); return; }
+    const step=mobileVR?0.07:0.04;
+    if(c==='ArrowUp'){ scMoveCursor(0,-step*innerHeight); e.preventDefault(); }
+    if(c==='ArrowDown'){ scMoveCursor(0,step*innerHeight); e.preventDefault(); }
+    if(c==='ArrowLeft'){ scMoveCursor(-step*innerWidth,0); e.preventDefault(); }
+    if(c==='ArrowRight'){ scMoveCursor(step*innerWidth,0); e.preventDefault(); }
   };
-  const onKeyUp = ()=>{};
 
   document.addEventListener('pointermove', onMove, true);
   document.addEventListener('mousemove', onMove, true);
@@ -5335,9 +5342,12 @@ function setupShineconHID(){
   document.addEventListener('mousedown', onDown, true);
   document.addEventListener('click', onDown, true);
   document.addEventListener('keydown', onKey, true);
-  document.addEventListener('keyup', onKeyUp, true);
+  // Android sometimes fires these on remotes
+  window.addEventListener('pointermove', onMove, true);
+  window.addEventListener('mousemove', onMove, true);
+  window.addEventListener('keydown', onKey, true);
 
-  window._scHIDHandlers = { onMove, onDown, onKey, onKeyUp };
+  window._scHIDHandlers = { onMove, onDown, onKey };
   window._scHIDBound = true;
 }
 
