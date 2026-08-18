@@ -4685,12 +4685,7 @@ function enterMobileVR(){
   const hint=document.getElementById('hud-bottom');
   if(hint) hint.style.opacity='0.3';
 
-  // Hide SC-B03 cursor UI while disabled
-  scShowCursor(false);
-  const st=document.getElementById('sc-status');
-  if(st) st.style.display='none';
-
-  // Gyro for looking
+  // Gyro look
   const enableOrient = ()=>{
     window.addEventListener('deviceorientation', onDeviceOrientation, true);
     mobileVROrient.ok = true;
@@ -4700,25 +4695,36 @@ function enterMobileVR(){
     DeviceOrientationEvent.requestPermission()
       .then(state=>{ if(state==='granted') enableOrient(); else notify('⚠️ Permita o giroscópio','danger'); })
       .catch(()=>enableOrient());
-  } else {
-    enableOrient();
-  }
+  } else enableOrient();
 
   renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
   gameActive = true;
   fallbackMode = true;
 
-  // Only on-screen stick + OK button
+  // SC-B03 + on-screen backup
+  setupShineconHID();
   const baseEl=document.getElementById('vr-stick-base');
   const btnEl=document.getElementById('vr-action-btn');
   if(baseEl){ baseEl._vrBound=false; baseEl._vrListeners=false; }
   if(btnEl) btnEl._vrBound=false;
   setupVRScreenControls();
-
   const vcr=document.getElementById('vr-controls');
   if(vcr){ vcr.classList.add('show'); vcr.style.display='block'; }
 
-  notify('🥽 VR: cabeça=olhar · stick=andar · botão vermelho=interagir','good');
+  // Cursor ready for SC-B03
+  scCursor.x=0.5; scCursor.y=0.5;
+  scShowCursor(true);
+  const cel=document.getElementById('sc-cursor');
+  const st=document.getElementById('sc-status');
+  if(cel){ cel.classList.add('vr'); cel.style.display='block'; }
+  if(st){
+    st.classList.add('vr'); st.style.display='block';
+    st.textContent='🥽 VR: SC-B03 touchpad=cursor · clique=OK · stick=andar · cabeça=olhar';
+  }
+
+  try{ window.focus(); document.body.focus(); renderer.domElement.focus(); }catch(e){}
+  if(navigator.getGamepads) navigator.getGamepads();
+  notify('🥽 VR + SC-B03: touchpad move o cursor · confirmação interage','good');
 }
 
 function exitMobileVR(){
@@ -5202,7 +5208,7 @@ function scUpdateCursorDOM(){
 function scMoveCursor(dxPx, dyPx){
   // Touchpad/joystick → screen cursor
   // Slightly higher sensitivity in VR
-  const sens = mobileVR ? 0.0055 : 0.0028;
+  const sens = mobileVR ? 0.0045 : 0.0025;
   scCursor.x = Math.max(0.02, Math.min(0.98, scCursor.x + dxPx * sens));
   scCursor.y = Math.max(0.02, Math.min(0.98, scCursor.y + dyPx * sens));
   scCursor.lastSignal = performance.now();
@@ -5242,21 +5248,106 @@ function scInteractAtCursor(){
 }
 
 function setupShineconHID(){
-  // SC-B03 desativado temporariamente (Bluetooth HID instável no Chrome mobile)
+  if(window._scHIDBound) return;
   window._scHIDBound = true;
+
+  let lastX=null, lastY=null;
+
+  const isUI = (t)=>{
+    if(!t || !t.closest) return false;
+    return !!(t.closest('#vr-controls')||t.closest('#vr-btn')||t.closest('#entry')||
+              t.closest('#overlay')||t.closest('#victory')||t.closest('#hud-top')||
+              t.closest('#right-panel')||t.closest('#mobile-pad'));
+  };
+
+  const onMove = (e)=>{
+    if(!gameActive) return;
+    if(isUI(e.target)) return;
+    // Don't fight pointer-lock mouse look on desktop unless SC already active
+    if(pointerLocked && !scCursor.active && !mobileVR) return;
+
+    let dx = (typeof e.movementX==='number') ? e.movementX : 0;
+    let dy = (typeof e.movementY==='number') ? e.movementY : 0;
+    if(dx===0 && dy===0 && typeof e.clientX==='number'){
+      if(lastX!=null){ dx=e.clientX-lastX; dy=e.clientY-lastY; }
+    }
+    if(typeof e.clientX==='number'){ lastX=e.clientX; lastY=e.clientY; }
+
+    if(Math.abs(dx)<0.5 && Math.abs(dy)<0.5) return;
+    if(Math.abs(dx)>100 || Math.abs(dy)>100) return;
+
+    // Activate SC cursor mode on first signal
+    scMoveCursor(dx, dy);
+  };
+
+  const onDown = (e)=>{
+    if(!gameActive) return;
+    if(isUI(e.target)) return;
+    // Only steal clicks when SC cursor is active or in VR
+    if(!(scCursor.active || mobileVR)) return;
+    if(e.button!=null && e.button!==0) return;
+    if(e.cancelable) try{ e.preventDefault(); }catch(err){}
+    scInteractAtCursor();
+  };
+
+  const onKey = (e)=>{
+    if(!gameActive) return;
+    const c=e.code||'', k=e.key||'', kc=e.keyCode||0;
+    const confirm = c==='Enter'||c==='NumpadEnter'||c==='Space'||k==='Enter'||k===' '||
+      c==='MediaPlayPause'||c==='AudioVolumeUp'||c==='AudioVolumeDown'||
+      c==='KeyA'||(k==='a'||k==='A')||kc===13||kc===32||kc===179;
+    if(confirm){
+      if(e.cancelable) e.preventDefault();
+      if(!scCursor.active) scShowCursor(true);
+      scInteractAtCursor();
+      return;
+    }
+    if(c==='KeyX'||k==='x'||k==='X'){ if(carriedItem) rotateCarriedItem(-Math.PI/4); else if(scCursor.active) scInteractAtCursor(); return; }
+    if(c==='KeyY'||c==='KeyB'||k==='y'||k==='Y'||k==='b'||k==='B'){ if(carriedItem) rotateCarriedItem(Math.PI/4); else if(scCursor.active) scInteractAtCursor(); return; }
+    if(!scCursor.active && !mobileVR) return;
+    const step=0.05;
+    if(c==='ArrowUp'){ scMoveCursor(0,-step*innerHeight); e.preventDefault(); }
+    if(c==='ArrowDown'){ scMoveCursor(0,step*innerHeight); e.preventDefault(); }
+    if(c==='ArrowLeft'){ scMoveCursor(-step*innerWidth,0); e.preventDefault(); }
+    if(c==='ArrowRight'){ scMoveCursor(step*innerWidth,0); e.preventDefault(); }
+  };
+
+  document.addEventListener('pointermove', onMove, {capture:true, passive:true});
+  document.addEventListener('mousemove', onMove, {capture:true, passive:true});
+  document.addEventListener('pointerdown', onDown, true);
+  document.addEventListener('mousedown', onDown, true);
+  document.addEventListener('keydown', onKey, true);
+
+  window._scHIDHandlers = { onMove, onDown, onKey };
 }
 
 function teardownShineconHID(){
   hideVRScreenControls();
-  scLastX=null; scLastY=null; scSetWalk(0,0);
-  // Keep cursor if remote still sending signals; only hide after exit VR briefly
-  if(!mobileVR){
-    // leave cursor as-is so non-VR phone mode still works
-  }
+  scSetWalk(0,0);
 }
 
 function updateShineconVR(dt){
-  // SC-B03 desativado — sem poll de cursor/remote
+  if(!gameActive) return;
+  // Poll if OS exposes SC-B03 as gamepad
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  for(let i=0;i<pads.length;i++){
+    const gp=pads[i];
+    if(!gp||!gp.connected) continue;
+    gamepadIndex=i;
+    const axes=gp.axes||[];
+    let mx=0,my=0;
+    for(let a=0;a+1<axes.length;a+=2){
+      const x=Number(axes[a]||0), y=Number(axes[a+1]||0);
+      if(Math.abs(x)>0.08||Math.abs(y)>0.08){ mx=x; my=y; break; }
+    }
+    if(mx||my){
+      const spd = mobileVR ? 1200 : 800;
+      scMoveCursor(mx*spd*dt, my*spd*dt);
+    }
+    for(let b=0;b<(gp.buttons||[]).length;b++){
+      if(gpJustPressed(gp,b)){ scInteractAtCursor(); break; }
+    }
+  }
 }
 
 function updateGamepad(dt){
@@ -6240,13 +6331,9 @@ function animate(){
   }
   updateVR(dt);
   updateGamepad(dt);
-  if(mobileVR){
-    applyMobileVROrientation();
-  }
-  // Always move unless real WebXR headset session
-  if(!(renderer.xr && renderer.xr.isPresenting)){
-    updateMovement(dt);
-  }
+  updateShineconVR(dt);
+  if(mobileVR) applyMobileVROrientation();
+  if(!(renderer.xr && renderer.xr.isPresenting)) updateMovement(dt);
   updateLookTarget();
   updateBoxAnims(dt);
   updatePlacementAnims(dt);
@@ -6353,6 +6440,7 @@ document.getElementById('start-btn').addEventListener('click',()=>{
   walkInput={x:0,y:0};
   window._gpMove=null;
   window._shineconPad={x:0,y:0};
+  setupShineconHID();
   tryLock();
   renderer.domElement.focus();
   startTimer();
