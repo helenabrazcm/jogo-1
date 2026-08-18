@@ -169,3 +169,31 @@ canvas{display:block;outline:none}
 #music-btn{width:30px;height:30px;flex:0 0 auto;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;pointer-events:auto;transition:transform .15s,opacity .15s}
 #music-btn:hover{transform:scale(1.1)}
 #music-btn.muted{opacity:.4}
+
+/* VR on-screen controls (SC-B03 fallback + touch) */
+#vr-controls{
+  display:none; position:fixed; inset:0; z-index:120; pointer-events:none;
+}
+#vr-controls.show{display:block}
+#vr-stick-base{
+  position:fixed; left:28px; bottom:28px; width:120px; height:120px;
+  border-radius:50%; background:rgba(255,255,255,.12); border:2px solid rgba(255,220,160,.35);
+  pointer-events:auto; touch-action:none;
+}
+#vr-stick-knob{
+  position:absolute; left:50%; top:50%; width:54px; height:54px; margin:-27px 0 0 -27px;
+  border-radius:50%; background:rgba(255,210,120,.85); border:2px solid rgba(255,255,255,.5);
+  pointer-events:none; transition: none;
+}
+#vr-action-btn{
+  position:fixed; right:28px; bottom:36px; width:86px; height:86px; border-radius:50%;
+  background:rgba(232,100,50,.9); border:3px solid rgba(255,255,255,.45);
+  color:#fff; font-weight:800; font-size:13px; pointer-events:auto;
+  display:flex; align-items:center; justify-content:center; text-align:center;
+  box-shadow:0 6px 24px rgba(0,0,0,.4); touch-action:manipulation;
+}
+#vr-hint{
+  position:fixed; left:50%; top:12px; transform:translateX(-50%);
+  background:rgba(20,14,10,.75); color:#f5e6d0; font-size:11px; padding:6px 12px;
+  border-radius:16px; pointer-events:none; max-width:90%; text-align:center;
+}
