@@ -203,7 +203,7 @@ canvas{display:block;outline:none}
   display:none; position:fixed; width:28px; height:28px; margin:-14px 0 0 -14px;
   border:2.5px solid #ffd24a; border-radius:50%; background:rgba(255,210,74,.2);
   box-shadow:0 0 16px rgba(255,210,74,.55), inset 0 0 8px rgba(255,210,74,.35);
-  pointer-events:none; z-index:10000; transition: transform .05s linear;
+  pointer-events:none; z-index:10000; transition: none; will-change:left,top;
 }
 #sc-cursor.on{display:block}
 #sc-cursor.press{ transform:scale(.75); background:rgba(255,120,60,.45); border-color:#ff8a40; }
