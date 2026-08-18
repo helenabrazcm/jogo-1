@@ -1323,7 +1323,8 @@ let isDragging=false,lastDragX=0,lastDragY=0,dragMoved=false;
 let yaw=0,pitch=0;
 let lookVelX=0, lookVelY=0; // smoothed gamepad look
 const keys={};
-const SPEED=3.4;
+const SPEED=4.2;
+let walkInput={x:0,y:0}; // persistent WASD/stick/touchpad
 let placementAnims=[];
 
 function initThree(){
@@ -5062,6 +5063,8 @@ let vrStickActive=false;
 function scSetWalk(x, y){
   scMoveX = Math.max(-1, Math.min(1, x));
   scMoveY = Math.max(-1, Math.min(1, y));
+  walkInput.x = scMoveX;
+  walkInput.y = scMoveY;
   window._shineconPad = { x: scMoveX, y: scMoveY };
   window._gpMove = { x: scMoveX, y: scMoveY };
 }
@@ -5076,26 +5079,33 @@ function setupVRScreenControls(){
   const base = document.getElementById('vr-stick-base');
   const knob = document.getElementById('vr-stick-knob');
   const btn = document.getElementById('vr-action-btn');
-  if(!root || !base || !knob) return;
+  if(!root || !base || !knob){
+    console.warn('VR controls missing in DOM');
+    return;
+  }
 
   root.classList.add('show');
+  root.style.display = 'block';
+  root.style.pointerEvents = 'none';
+  base.style.pointerEvents = 'auto';
+  if(btn) btn.style.pointerEvents = 'auto';
 
   const setKnob = (nx, ny)=>{
-    // nx,ny -1..1
-    knob.style.transform = `translate(${nx*32}px, ${ny*32}px)`;
+    knob.style.transform = `translate(${nx*36}px, ${ny*36}px)`;
   };
   const fromEvent = (e)=>{
     const r = base.getBoundingClientRect();
     const cx = r.left + r.width/2, cy = r.top + r.height/2;
-    const t = e.touches ? e.touches[0] : e;
-    let dx = (t.clientX - cx) / (r.width/2);
-    let dy = (t.clientY - cy) / (r.height/2);
+    const t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]) || e;
+    if(!t || t.clientX===undefined) return;
+    let dx = (t.clientX - cx) / (r.width*0.45);
+    let dy = (t.clientY - cy) / (r.height*0.45);
     const mag = Math.hypot(dx, dy) || 1;
     if(mag > 1){ dx/=mag; dy/=mag; }
     scSetWalk(dx, dy);
     setKnob(dx, dy);
   };
-  const endStick = ()=>{
+  const endStick = (e)=>{
     vrStickActive=false;
     scSetWalk(0,0);
     setKnob(0,0);
@@ -5104,26 +5114,33 @@ function setupVRScreenControls(){
   const startStick = (e)=>{
     vrStickActive=true;
     e.preventDefault();
+    e.stopPropagation();
     fromEvent(e);
   };
   const moveStick = (e)=>{
     if(!vrStickActive) return;
     e.preventDefault();
+    e.stopPropagation();
     fromEvent(e);
   };
 
-  base.addEventListener('touchstart', startStick, {passive:false});
-  base.addEventListener('touchmove', moveStick, {passive:false});
-  base.addEventListener('touchend', endStick);
-  base.addEventListener('touchcancel', endStick);
-  base.addEventListener('mousedown', startStick);
-  window.addEventListener('mousemove', (e)=>{ if(vrStickActive) moveStick(e); });
-  window.addEventListener('mouseup', endStick);
+  // Bind once
+  if(!base._vrBound){
+    base._vrBound = true;
+    base.addEventListener('touchstart', startStick, {passive:false});
+    base.addEventListener('touchmove', moveStick, {passive:false});
+    base.addEventListener('touchend', endStick, {passive:false});
+    base.addEventListener('touchcancel', endStick, {passive:false});
+    base.addEventListener('mousedown', startStick);
+    window.addEventListener('mousemove', (e)=>{ if(vrStickActive) moveStick(e); });
+    window.addEventListener('mouseup', endStick);
+  }
 
-  if(btn){
+  if(btn && !btn._vrBound){
+    btn._vrBound = true;
     const fire = (e)=>{ e.preventDefault(); e.stopPropagation(); scRemoteInteract(); };
     btn.addEventListener('click', fire);
-    btn.addEventListener('touchend', fire, {passive:false});
+    btn.addEventListener('touchstart', fire, {passive:false});
   }
 }
 
@@ -5324,11 +5341,25 @@ function updateGamepad(dt){
   }
 
   // —— MOVE (left stick + D-pad) ——
-  window._gpMove = { x: lx, y: ly };
-  if(gpPressed(gp,12)) window._gpMove.y = -1; // up
-  if(gpPressed(gp,13)) window._gpMove.y =  1; // down
-  if(gpPressed(gp,14)) window._gpMove.x = -1; // left
-  if(gpPressed(gp,15)) window._gpMove.x =  1; // right
+  // In mobile VR, on-screen stick / SC-B03 owns walkInput — don't zero it
+  if(!mobileVR){
+    window._gpMove = { x: lx, y: ly };
+    if(gpPressed(gp,12)) window._gpMove.y = -1;
+    if(gpPressed(gp,13)) window._gpMove.y =  1;
+    if(gpPressed(gp,14)) window._gpMove.x = -1;
+    if(gpPressed(gp,15)) window._gpMove.x =  1;
+    if(lx||ly){ walkInput.x=lx; walkInput.y=ly; }
+    else if(!keys['KeyW']&&!keys['KeyA']&&!keys['KeyS']&&!keys['KeyD']&&
+            !keys['ArrowUp']&&!keys['ArrowDown']&&!keys['ArrowLeft']&&!keys['ArrowRight']){
+      // only clear if no keys held
+      if(Math.abs(walkInput.x)<0.05 && Math.abs(walkInput.y)<0.05){
+        walkInput.x=0; walkInput.y=0;
+      }
+    }
+  } else if(lx||ly){
+    // VR: only apply if gamepad actually has stick deflection
+    scSetWalk(lx, ly);
+  }
 
   // —— BUTTONS ——
   // PS4: 0=✕ Cross, 1=○ Circle, 2=□ Square, 3=△ Triangle
@@ -5401,51 +5432,60 @@ function updateGamepad(dt){
 
 function updateMovement(dt){
   if(!camera) return;
-  // Always apply look rotation
-  camera.rotation.order='YXZ';
-  camera.rotation.y=yaw;
-  camera.rotation.x=pitch;
-  camera.rotation.z=0;
+  // Look
+  if(!mobileVR){
+    camera.rotation.order='YXZ';
+    camera.rotation.y=yaw;
+    camera.rotation.x=pitch;
+    camera.rotation.z=0;
+  } else {
+    // yaw/pitch already set by gyro
+    camera.rotation.order='YXZ';
+    camera.rotation.y=yaw;
+    camera.rotation.x=pitch;
+    camera.rotation.z=0;
+  }
   if(!gameActive) return;
-  // Move on XZ plane relative to look direction
+
   const sin=Math.sin(yaw), cos=Math.cos(yaw);
-  // yaw=0 looks toward -Z
   const fwdX=-sin, fwdZ=-cos;
   const rgtX= cos, rgtZ=-sin;
-  let mx=0, mz=0;
-  if(keys['KeyW']||keys['ArrowUp'])   { mx+=fwdX; mz+=fwdZ; }
-  if(keys['KeyS']||keys['ArrowDown']) { mx-=fwdX; mz-=fwdZ; }
-  if(keys['KeyA']||keys['ArrowLeft']) { mx-=rgtX; mz-=rgtZ; }
-  if(keys['KeyD']||keys['ArrowRight']){ mx+=rgtX; mz+=rgtZ; }
-  // Gamepad / Shinecon SC-B03 touchpad (VR or desktop)
+
+  // Merge all input sources into walkInput (do not zero stick while held)
+  let ix = walkInput.x || 0;
+  let iy = walkInput.y || 0;
+
+  if(keys['KeyW']||keys['ArrowUp'])    iy -= 1;
+  if(keys['KeyS']||keys['ArrowDown'])  iy += 1;
+  if(keys['KeyA']||keys['ArrowLeft'])  ix -= 1;
+  if(keys['KeyD']||keys['ArrowRight']) ix += 1;
+
   if(window._gpMove){
-    let gx=window._gpMove.x, gy=window._gpMove.y;
-    if(mobileVR){
-      // Boost weak touchpad signal
-      if(Math.abs(gx)>0.08) gx = Math.sign(gx)*Math.min(1, Math.abs(gx)*1.35);
-      if(Math.abs(gy)>0.08) gy = Math.sign(gy)*Math.min(1, Math.abs(gy)*1.35);
-    }
-    if(gx||gy){
-      mx += (-gy)*fwdX + gx*rgtX;
-      mz += (-gy)*fwdZ + gx*rgtZ;
-    }
-    window._gpMove=null;
+    if(Math.abs(window._gpMove.x)>0.05) ix += window._gpMove.x;
+    if(Math.abs(window._gpMove.y)>0.05) iy += window._gpMove.y;
   }
-  if(window._shineconPad && (window._shineconPad.x || window._shineconPad.y)){
-    const sx=window._shineconPad.x, sy=window._shineconPad.y;
-    mx += (-sy)*fwdX + sx*rgtX;
-    mz += (-sy)*fwdZ + sx*rgtZ;
+  if(window._shineconPad){
+    if(Math.abs(window._shineconPad.x)>0.05) ix += window._shineconPad.x;
+    if(Math.abs(window._shineconPad.y)>0.05) iy += window._shineconPad.y;
   }
-  if(mx!==0||mz!==0){
+
+  // Clamp input
+  ix = Math.max(-1.5, Math.min(1.5, ix));
+  iy = Math.max(-1.5, Math.min(1.5, iy));
+
+  let mx = (-iy)*fwdX + ix*rgtX;
+  let mz = (-iy)*fwdZ + ix*rgtZ;
+
+  if(mx!==0 || mz!==0){
     const len=Math.hypot(mx,mz)||1;
-    const sp=SPEED*dt*GP_MOVE_MULT;
+    const sp=SPEED*dt*(mobileVR?1.15:1);
     camera.position.x += (mx/len)*sp;
     camera.position.z += (mz/len)*sp;
   }
-  // Clamp inside room
+
   if(G.rooms&&G.rooms[G.curRoom]){
     const rd=G.rooms[G.curRoom].def;
-    const mg=0.55;
+    const mg=0.5;
     const hx=rd.size.w/2-mg, hz=rd.size.d/2-mg;
     camera.position.x=Math.max(-hx, Math.min(hx, camera.position.x));
     camera.position.z=Math.max(-hz, Math.min(hz, camera.position.z));
