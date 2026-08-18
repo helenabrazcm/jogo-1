@@ -4708,8 +4708,10 @@ function enterMobileVR(){
 
   // Lower pixel ratio for stereo performance on phones
   renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
-  notify('🥽 VR: cabeça=olhar | Touchpad=andar | Confirmação/A=interagir','good');
+  notify('🥽 VR SC-B03: Touchpad=andar | Clique confirmação=interagir | Cabeça=olhar','good');
   gameActive = true;
+  // Wake gamepad API
+  if(navigator.getGamepads) navigator.getGamepads();
 }
 
 function exitMobileVR(){
@@ -5044,6 +5046,69 @@ function updateVR(dt){
       tip.position.z = -2.5;
     }
   });
+}
+
+// ══════════════════════════════════════════════════════
+//  SC-B03 — controle exclusivo no modo VR
+//  Touchpad = andar | Confirmation / A = interagir
+// ══════════════════════════════════════════════════════
+function updateShineconVR(dt){
+  if(!mobileVR || !gameActive) return;
+
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  let gp = null;
+  for(let i=0;i<pads.length;i++){
+    if(pads[i] && pads[i].connected){ gp = pads[i]; gamepadIndex = i; break; }
+  }
+
+  // Also accept HID mouse-touchpad movement
+  let mx = 0, my = 0;
+
+  if(gp){
+    const axes = gp.axes || [];
+    const dead = 0.1;
+    function ax(i){
+      const v = Number(axes[i]||0);
+      return Math.abs(v) < dead ? 0 : Math.max(-1, Math.min(1, v));
+    }
+    // Touchpad on SC-B03 → axes 0,1 (sometimes 2,3)
+    mx = ax(0); my = ax(1);
+    if(mx===0 && my===0){ mx = ax(2); my = ax(3); }
+    if(mx===0 && my===0 && axes.length>=2){
+      // raw without deadzone for very weak pads
+      const r0 = Number(axes[0]||0), r1 = Number(axes[1]||0);
+      if(Math.abs(r0)>0.05) mx = r0;
+      if(Math.abs(r1)>0.05) my = r1;
+    }
+
+    // Confirmation button (1/2/3 on box) + A → interact
+    // Scan all buttons — SC-B03 firmware varies
+    for(let b=0; b<(gp.buttons||[]).length; b++){
+      if(gpJustPressed(gp, b)){
+        // X/Y/B often higher indices — if carrying, rotate; else interact
+        if(carriedItem && (b===7||b===8||b===9||b===3)){
+          rotateCarriedItem(b===7||b===3 ? -Math.PI/4 : Math.PI/4);
+        } else {
+          onInteract();
+        }
+        break;
+      }
+    }
+  }
+
+  // HID touchpad mouse emulation while in VR
+  if(window._shineconPad){
+    if(Math.abs(window._shineconPad.x)>0.05) mx = window._shineconPad.x;
+    if(Math.abs(window._shineconPad.y)>0.05) my = window._shineconPad.y;
+  }
+
+  // Apply walk relative to head look (yaw from gyro)
+  if(mx || my){
+    window._gpMove = {
+      x: Math.max(-1, Math.min(1, mx * 1.4)),
+      y: Math.max(-1, Math.min(1, my * 1.4))
+    };
+  }
 }
 
 function updateGamepad(dt){
@@ -6002,11 +6067,9 @@ function animate(){
   updateGamepad(dt);
   if(mobileVR){
     applyMobileVROrientation();
-  }
-  // Desktop / normal: always apply movement + camera look
-  if(!mobileVR && !(renderer.xr && renderer.xr.isPresenting)){
+    updateShineconVR(dt); // SC-B03: andar + interagir
     updateMovement(dt);
-  } else if(mobileVR){
+  } else if(!(renderer.xr && renderer.xr.isPresenting)){
     updateMovement(dt);
   }
   updateLookTarget();
