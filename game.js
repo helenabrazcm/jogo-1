@@ -247,7 +247,7 @@ function labelTex(col){
 const ROOMS=[
 {
   id:'bedroom',name:'Quarto',
-  wallColor:0x4a4e54,floorColor:0xc8c0b0,trimColor:0x3a3e44,
+  wallColor:0x5a5048,floorColor:0xd4c8b0,trimColor:0x4a4038,
   size:{w:12,d:12,h:4.5},
   boxPositions:[{x:-5.2,z:5.0},{x:-3.2,z:5.1},{x:-1.2,z:4.9}],
   furniture:[
@@ -348,7 +348,7 @@ const ROOMS=[
 },
 {
   id:'bathroom',name:'Banheiro',
-  wallColor:0x6fa6a3,floorColor:0xd8d0c0,trimColor:0x5a6a68,
+  wallColor:0x7a9a90,floorColor:0xe0d4c0,trimColor:0x5a6a60,
   size:{w:9,d:9,h:4.2},
   boxPositions:[{x:-2.8,z:3.0},{x:0.5,z:3.1}],
   furniture:[
@@ -390,7 +390,7 @@ const ROOMS=[
 },
 {
   id:'kitchen',name:'Cozinha',
-  wallColor:0x7aaa68,floorColor:0xc4b478,trimColor:0x6a5028,
+  wallColor:0x8aaa70,floorColor:0xd0bc88,trimColor:0x6a5028,
   size:{w:12,d:12,h:4.5},
   boxPositions:[{x:-4,z:4.2},{x:-1.6,z:4.1},{x:0.6,z:4.2}],
   furniture:[
@@ -450,7 +450,7 @@ const ROOMS=[
 },
 {
   id:'office',name:'Escritório',
-  wallColor:0x7878b0,floorColor:0xa49484,trimColor:0x5a4a30,
+  wallColor:0x7a7088,floorColor:0xb8a890,trimColor:0x5a4a30,
   size:{w:12,d:12,h:4.5},
   boxPositions:[{x:-4,z:4.2},{x:-1.6,z:4.1},{x:0.6,z:4.2}],
   furniture:[
@@ -495,7 +495,7 @@ const ROOMS=[
 ]
 },
 {id:'living',name:'Sala',
-  wallColor:0x8a7a68,floorColor:0xb89868,trimColor:0x5a4a30,
+  wallColor:0x9a8a70,floorColor:0xc8a878,trimColor:0x5a4a30,
   size:{w:12,d:12,h:4.5},
   boxPositions:[{x:-3.5,z:4.0},{x:-1.0,z:4.1},{x:1.5,z:4.0}],
   furniture:[
@@ -594,21 +594,41 @@ const ROOMS=[
 const HOUSE_ROOM_IDS=['bedroom','bathroom','kitchen','office']; // must finish these to unlock yard
 
 // Random things the player can "say" — flavor speech bubble lines
+// ── História ──
+const STORY = {
+  title: "Uma nova casa, um novo começo",
+  blurb: "Depois de anos juntando caixas e adiações, chegou o dia: as chaves da casa nova estão na sua mão. Dentro de cada caixa há um pedaço da sua vida — o ursinho da infância, a caneca do primeiro emprego, fotos, livros, o edredom que ainda cheira a casa antiga. Organize tudo com carinho. Cada item no lugar certo faz deste espaço o seu lar.",
+  rooms: {
+    bedroom: "O quarto é o primeiro a ganhar vida. Cama, travesseiros, o silêncio depois da mudança...",
+    bathroom: "Banheiro pequeno, mas é seu. Toalhas, sabonete, o cheiro de casa limpa.",
+    kitchen: "A cozinha — onde as histórias começam de verdade. Panelas, temperos, café da manhã.",
+    office: "Um cantinho para trabalhar e sonhar. Livros, lampada, o notebook ainda na caixa.",
+    living: "A sala espera visitas e filmes. Sofá, controle, o vaso que quase quebrou na mudança.",
+    yard: "O quintal: churrasco, sol e a sensação de que, enfim, você chegou em casa."
+  }
+};
+
 const IDLE_LINES=[
-  "Cadê isso mesmo...?","Acho que vi uma caixa aqui.","Hmm, onde isso fica melhor?",
-  "Já tá ficando bonito aqui!","Essa caixa é pesada!","Quase lá!",
-  "Acho que essa caixa errou de casa.","Adoro organizar as coisas.","Onde eu coloquei aquilo mesmo?",
-  "Isso aqui fica perfeito ali.","Mudança é cansativo, mas vale a pena.","Será que tem mais caixas escondidas?",
-  "Esse lugar tá começando a parecer um lar.","Preciso de um café depois disso.","Quase terminando esse cômodo!"
+  "Cada caixa é um pedaço da vida antiga...","Isso aqui me lembra tanta coisa.",
+  "Onde isso ficava na casa velha?","Hmm, onde combina melhor?",
+  "Já tá parecendo um lar de verdade.","Essa caixa é pesada demais!",
+  "Quase lá — um cômodo de cada vez.","Adoro quando tudo encontra o lugar certo.",
+  "Será que tem mais alguma caixa escondida?","Mudança cansa, mas vale cada caixa.",
+  "Preciso de um café depois disso.","Esse cantinho ficou bonito.",
+  "O ursinho ainda cheira a infância...","Fotos, livros, memórias — tudo isso é meu.",
+  "Quando a última caixa sumir, é oficial: morei."
 ];
 const VISIT_LINES=[
-  "A VISITA TÁ CHEGANDO?! 😱","Rápido, rápido, RÁPIDO!","Não tem tempo a perder!",
-  "Cadê o resto das coisas?!","Vou só... jogar isso aqui rapidinho!","Respira... dá tempo ainda!",
-  "Por favor, não toquem a campainha ainda!","Quase lá, só mais um pouco!"
+  "A VISITA TÁ CHEGANDO?! 😱","Rápido — ainda tem caixa no meio da sala!",
+  "Não tem tempo a perder!","Cadê o resto das coisas?!",
+  "Vou só... ajeitar isso rapidinho!","Respira... ainda dá tempo!",
+  "Por favor, não toquem a campainha ainda!","Quase lá, só mais um pouco!",
+  "Eles não podem ver essa bagunça!"
 ];
 const VISIT_ARRIVED_LINES=[
-  "Ah não, chegaram! 😳","Bem-vindos... desculpa a bagunça!","Já vou aí! Só um segundinho!",
-  "Tá uma zona, mas entrem!","Fingam que não viram as caixas, hehe."
+  "Ah não, chegaram! 😳","Bem-vindos... desculpa a bagunça!",
+  "Já vou aí! Só um segundinho!","Tá uma zona, mas entrem!",
+  "Fingam que não viram as caixas, hehe.","A casa ainda está virando lar — bem-vindos!"
 ];
 
 // ══════════════════════════════════════════════════════
@@ -1017,10 +1037,10 @@ function phaseColors(phaseId, weatherId){
   const rainy = weatherId==='rain'||weatherId==='storm';
   const cloudy = weatherId==='cloudy'||rainy;
   const table = {
-    morning:   {hemiSky:0xffe0b8, hemiGround:0x7a5a40, amb:0xffe8c8, sun:0xffd088, sunInt:0.9,  ambInt:0.32, hemiInt:0.45, ceilInt:0.65, winInt:0.55, bg:0x1a1410, fog:0x1a1410, exposure:1.05},
-    afternoon: {hemiSky:0xffd0a0, hemiGround:0x6a4a30, amb:0xffdcb0, sun:0xffc080, sunInt:1.0,  ambInt:0.35, hemiInt:0.48, ceilInt:0.6,  winInt:0.6,  bg:0x18120e, fog:0x18120e, exposure:1.1},
-    evening:   {hemiSky:0xffb070, hemiGround:0x5a3820, amb:0xffc888, sun:0xffa050, sunInt:0.7,  ambInt:0.28, hemiInt:0.4,  ceilInt:0.95, winInt:0.4,  bg:0x140e0a, fog:0x140e0a, exposure:1.0},
-    night:     {hemiSky:0x282018, hemiGround:0x18140e, amb:0x403428, sun:0xb07040, sunInt:0.12, ambInt:0.22, hemiInt:0.18, ceilInt:1.4,  winInt:0.08, bg:0x0c0a08, fog:0x0c0a08, exposure:0.95},
+    morning:   {hemiSky:0xffe8d0, hemiGround:0x8a6a48, amb:0xfff0dc, sun:0xffe0a8, sunInt:0.85, ambInt:0.42, hemiInt:0.52, ceilInt:0.75, winInt:0.65, bg:0x1c1612, fog:0x1c1612, exposure:1.08},
+    afternoon: {hemiSky:0xffe0c0, hemiGround:0x7a5a38, amb:0xffe8c8, sun:0xffd090, sunInt:0.95, ambInt:0.45, hemiInt:0.55, ceilInt:0.7,  winInt:0.7,  bg:0x1a1410, fog:0x1a1410, exposure:1.12},
+    evening:   {hemiSky:0xffc090, hemiGround:0x6a4830, amb:0xffd8a8, sun:0xffb068, sunInt:0.65, ambInt:0.38, hemiInt:0.48, ceilInt:1.15, winInt:0.5,  bg:0x16100c, fog:0x16100c, exposure:1.05},
+    night:     {hemiSky:0x3a3028, hemiGround:0x201810, amb:0x504030, sun:0xc88850, sunInt:0.15, ambInt:0.32, hemiInt:0.25, ceilInt:1.55, winInt:0.12, bg:0x100c0a, fog:0x100c0a, exposure:1.0},
   };
   const base = Object.assign({}, table[phaseId] || table.afternoon);
 
@@ -1068,8 +1088,8 @@ function applyDayLighting(root, outdoor, w, d, h){
     sun.shadow.camera.near=1;sun.shadow.camera.far=40;
     sun.shadow.bias=-0.0003;sun.shadow.normalBias=0.03;
     root.add(sun); dayState.lights.sun=sun;
-    scene.background=new THREE.Color(phase==='night'?0x0a1020:phase==='evening'?0xc07040:0x8ec0e0);
-    scene.fog=new THREE.FogExp2(phase==='night'?0x0a1020:0xb0d0e8, weather==='storm'?0.04:0.028);
+    scene.background=new THREE.Color(phase==='night'?0x121018:phase==='evening'?0xd08050:0xa8c8e0);
+    scene.fog=new THREE.FogExp2(phase==='night'?0x121018:0xc0d8e8, weather==='storm'?0.035:0.022);
   } else {
     const hemi=new THREE.HemisphereLight(c.hemiSky, c.hemiGround, c.hemiInt);
     root.add(hemi); dayState.lights.hemi=hemi;
@@ -1085,15 +1105,15 @@ function applyDayLighting(root, outdoor, w, d, h){
     sun.shadow.bias=-0.00025;sun.shadow.normalBias=0.025;
     root.add(sun); dayState.lights.sun=sun;
     // Ceiling lamp
-    const ceil=new THREE.PointLight(0xffc878, c.ceilInt, 13, 1.7);
+    const ceil=new THREE.PointLight(0xffd090, c.ceilInt*1.15, 14, 1.55);
     ceil.position.set(0,h-0.35,0);root.add(ceil); dayState.lights.ceil=ceil;
     // Window lights
-    const win1=new THREE.PointLight(0xffb070, c.winInt, 8, 1.6);
+    const win1=new THREE.PointLight(0xffc088, c.winInt*1.1, 9, 1.5);
     win1.position.set(-2.8,h*.55,-d/2+0.55);root.add(win1); dayState.lights.win1=win1;
-    const win2=new THREE.PointLight(0xffa060, c.winInt*0.8, 7, 1.6);
+    const win2=new THREE.PointLight(0xffb878, c.winInt*0.9, 8, 1.5);
     win2.position.set(1.8,h*.55,-d/2+0.55);root.add(win2); dayState.lights.win2=win2;
     // Soft fill
-    const fill=new THREE.PointLight(0xc8d0e0, 0.15, 10, 2);
+    const fill=new THREE.PointLight(0xffe0c0, 0.22, 11, 1.8);
     fill.position.set(-w*0.25,h*0.45,d*0.2);root.add(fill); dayState.lights.fill=fill;
 
     scene.background=new THREE.Color(c.bg);
@@ -1308,8 +1328,8 @@ let placementAnims=[];
 
 function initThree(){
   scene=new THREE.Scene();
-  scene.background=new THREE.Color(0x0a0806);
-  scene.fog=new THREE.Fog(0x0a0806,12,28);
+  scene.background=new THREE.Color(0x1a1410);
+  scene.fog=new THREE.Fog(0x1a1410,14,32);
   camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,.1,100);
   camera.position.set(0,1.6,4.2);
   renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
@@ -1319,7 +1339,7 @@ function initThree(){
   renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   renderer.physicallyCorrectLights=true;
   renderer.toneMapping=THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure=0.95;
+  renderer.toneMappingExposure=1.08;
   if(THREE.sRGBEncoding!==undefined) renderer.outputEncoding=THREE.sRGBEncoding;
   clock=new THREE.Clock();
   document.getElementById('app').appendChild(renderer.domElement);
@@ -4385,8 +4405,7 @@ function setupControls(){
     if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)&&gameActive) e.preventDefault();
     if(e.code==='KeyT'&&gameActive) sayRandomLine(false);
     if(e.code==='KeyR'&&gameActive&&carriedItem){
-      carriedRotY = (carriedRotY + Math.PI/4) % (Math.PI*2);
-      if(handMesh) handMesh.rotation.y = carriedRotY;
+      rotateCarriedItem(Math.PI/4);
       notify('🔄 Rotacionado','');
     }
   });
@@ -4401,41 +4420,60 @@ function setupControls(){
 
   renderer.domElement.addEventListener('click', e=>{
     renderer.domElement.focus();
-    if(fallbackMode){
+    if(mobileVR) return;
+    if(fallbackMode || !pointerLocked){
       if(dragMoved){ dragMoved=false; return; }
-      onInteract();
+      if(!pointerLocked) tryLock();
+      // interact on click without drag
+      if(!dragMoved) onInteract();
       return;
     }
-    if(!pointerLocked){ tryLock(); return; }
     onInteract();
   });
 
-  // Single mouse-look handler
+  // Mouse look — pointer lock OR click-and-drag (fallback)
+  const LOOK_SENS = 0.0035;
   window.addEventListener('mousemove', e=>{
-    if(!gameActive) return;
-    if(pointerLocked && !fallbackMode){
-      yaw  -= e.movementX * 0.0022;
-      pitch-= e.movementY * 0.0022;
-      pitch = Math.max(-1.45, Math.min(1.45, pitch));
+    if(!gameActive || mobileVR) return;
+    // Pointer lock: free look
+    if(pointerLocked){
+      const mx = e.movementX || 0;
+      const my = e.movementY || 0;
+      if(mx || my){
+        yaw   -= mx * LOOK_SENS;
+        pitch -= my * LOOK_SENS;
+        pitch  = Math.max(-1.45, Math.min(1.45, pitch));
+      }
       return;
     }
-    if(fallbackMode && isDragging){
-      const dx=e.clientX-lastDragX, dy=e.clientY-lastDragY;
-      if(Math.abs(dx)>2||Math.abs(dy)>2) dragMoved=true;
-      lastDragX=e.clientX; lastDragY=e.clientY;
-      yaw  -= dx * 0.0028;
-      pitch-= dy * 0.0028;
-      pitch = Math.max(-1.45, Math.min(1.45, pitch));
+    // Fallback / always: drag with left OR right button
+    if(isDragging){
+      const dx = e.clientX - lastDragX;
+      const dy = e.clientY - lastDragY;
+      if(Math.abs(dx)>1 || Math.abs(dy)>1) dragMoved = true;
+      lastDragX = e.clientX;
+      lastDragY = e.clientY;
+      yaw   -= dx * LOOK_SENS;
+      pitch -= dy * LOOK_SENS;
+      pitch  = Math.max(-1.45, Math.min(1.45, pitch));
     }
   });
 
   renderer.domElement.addEventListener('mousedown', e=>{
-    if(fallbackMode && e.button===0){
-      isDragging=true; dragMoved=false;
-      lastDragX=e.clientX; lastDragY=e.clientY;
+    if(mobileVR) return;
+    if(e.button===0 || e.button===2){
+      isDragging = true;
+      dragMoved = false;
+      lastDragX = e.clientX;
+      lastDragY = e.clientY;
+      // Try pointer lock on left click if not locked
+      if(e.button===0 && !pointerLocked && !fallbackMode){
+        tryLock();
+      }
     }
   });
   window.addEventListener('mouseup', ()=>{ isDragging=false; });
+  renderer.domElement.addEventListener('contextmenu', e=> e.preventDefault());
 
   // Touch look
   renderer.domElement.addEventListener('touchstart', e=>{
@@ -4481,31 +4519,84 @@ function setupControls(){
   const speechBtn=document.getElementById('speech-btn');
   if(speechBtn) speechBtn.addEventListener('click',()=>sayRandomLine(false));
 
-  // Gamepad connect / disconnect
+  // Gamepad connect / disconnect (Shinecon SC-B03 Bluetooth)
   window.addEventListener('gamepadconnected', e=>{
     gamepadIndex=e.gamepad.index;
     gpPrevButtons={};
     gpAxisMap={lx:0,ly:1,rx:2,ry:3,calibrated:false};
-    const id=(e.gamepad.id||'Joypad').slice(0,50);
+    const id=(e.gamepad.id||'Shinecon').slice(0,50);
     const axes=e.gamepad.axes?e.gamepad.axes.length:0;
-    notify('🎮 Controle: '+id+' ('+axes+' eixos) — Shinecon/genérico OK','good');
+    const btns=e.gamepad.buttons?e.gamepad.buttons.length:0;
+    notify('🎮 Shinecon conectado: '+id+' · '+axes+' eixos · '+btns+' botões','good');
   });
   window.addEventListener('gamepaddisconnected', e=>{
     if(gamepadIndex===e.gamepad.index) gamepadIndex=null;
     notify('🎮 Controle desconectado','');
   });
+
+  // Shinecon SC-B03 often emulates KEYBOARD + MOUSE over Bluetooth
+  // Touchpad → mouse move; click/A → Enter or click; arrows on some firmwares
+  window._shineconPad = {x:0,y:0};
+  let shineconMouseTimer = null;
+  window.addEventListener('keydown', e=>{
+    // Extra HID keys some Shinecon firmwares send
+    if(!gameActive) return;
+    if(e.code==='Enter' || e.code==='NumpadEnter' || e.key==='Select'){
+      e.preventDefault();
+      onInteract();
+    }
+    // Media/select keys
+    if(e.key==='SoftLeft' || e.key==='SoftRight' || e.code==='MediaPlayPause'){
+      onInteract();
+    }
+  }, true);
+
+  // Shinecon touchpad-as-mouse ONLY when a gamepad is connected and not pointer-locked
+  window.addEventListener('mousemove', e=>{
+    if(!gameActive || pointerLocked || isDragging) return;
+    if(gamepadIndex===null && !mobileVR) return; // don't steal PC mouse
+    if(Math.abs(e.movementX)>40 || Math.abs(e.movementY)>40) return;
+    if(e.movementX===0 && e.movementY===0) return;
+    window._shineconPad.x = Math.max(-1, Math.min(1, e.movementX * 0.08));
+    window._shineconPad.y = Math.max(-1, Math.min(1, e.movementY * 0.08));
+    clearTimeout(shineconMouseTimer);
+    shineconMouseTimer = setTimeout(()=>{ window._shineconPad.x=0; window._shineconPad.y=0; }, 120);
+  }, true);
+
+  // Touchpad click = interact
+  window.addEventListener('mousedown', e=>{
+    if(!gameActive || pointerLocked) return;
+    // Button 0 from Shinecon confirmation
+    if(e.button===0 && !fallbackMode){
+      // Don't steal clicks when using UI — only when overlay hidden
+      const ov=document.getElementById('overlay');
+      const en=document.getElementById('entry');
+      if(ov && !ov.classList.contains('hidden')) return;
+      if(en && !en.classList.contains('hidden')) return;
+      // In mobile VR or when using remote, click = interact
+      if(mobileVR || gamepadIndex!==null){
+        onInteract();
+      }
+    }
+  }, true);
 }
 function tryLock(){
   try{
-    const p=renderer.domElement.requestPointerLock();
-    if(p&&p.catch) p.catch(()=>enterFallback());
-    setTimeout(()=>{ if(!pointerLocked) enterFallback(); }, 400);
+    const el = renderer.domElement;
+    const req = el.requestPointerLock || el.mozRequestPointerLock || el.webkitRequestPointerLock;
+    if(req){
+      const p = req.call(el);
+      if(p && p.catch) p.catch(()=>enterFallback());
+    } else {
+      enterFallback();
+    }
+    setTimeout(()=>{ if(!pointerLocked) enterFallback(); }, 500);
   }catch(e){ enterFallback(); }
 }
 function enterFallback(){
   if(fallbackMode) return;
   fallbackMode=true;
-  notify('🖱️ Arraste para olhar, clique para interagir','');
+  notify('🖱️ Segure o botão do mouse e arraste para olhar · clique solto para interagir','');
 }
 
 
@@ -4951,16 +5042,34 @@ function updateVR(dt){
 }
 
 function updateGamepad(dt){
-  // Works with Xbox, PlayStation AND generic PC joypads (SatelliteInt, etc.)
+  // Shinecon SC-B03 + Xbox/PS + generic PC joypads
+  // SC-B03 layout: touchpad (confirm), power, A X B Y
   const pads = navigator.getGamepads ? navigator.getGamepads() : [];
   let gp = null;
   for(let i=0;i<pads.length;i++){
     if(pads[i] && pads[i].connected){ gp=pads[i]; gamepadIndex=i; break; }
   }
-  if(!gp) return;
+
+  // —— Shinecon often pairs as keyboard/mouse HID ——
+  // Movement also comes from keys[] set by arrow/WASD listeners
+
+  if(!gp){
+    // No gamepad object — still allow touchpad-as-mouse via shineconMouse
+    if(window._shineconPad){
+      window._gpMove = {
+        x: window._shineconPad.x || 0,
+        y: window._shineconPad.y || 0
+      };
+    }
+    return;
+  }
 
   const a = gp.axes || [];
   const n = a.length;
+  const id = (gp.id || '').toLowerCase();
+  const isShinecon = id.includes('shine') || id.includes('sc-b') || id.includes('b03') ||
+                     id.includes('vr remote') || id.includes('cardboard') ||
+                     (n <= 4 && (gp.buttons||[]).length <= 12);
 
   function axisRaw(i){
     if(i===null||i===undefined||i<0||i>=n) return 0;
@@ -4969,124 +5078,113 @@ function updateGamepad(dt){
     return Math.abs(v) < GP_DEAD ? 0 : Math.max(-1, Math.min(1, v));
   }
 
-  // Auto-calibrate axis map once: find left + right sticks on generic pads
-  if(!gpAxisMap.calibrated && n >= 2){
-    // Default standard
-    gpAxisMap = {lx:0, ly:1, rx:2, ry:3, calibrated:true};
-    // Generic DirectInput (SatelliteInt / cheap USB): often 4 axes
-    // 0=LX 1=LY 2=RX 3=RY  OR  0=LX 1=LY 2=RY 3=RX
-    if(n >= 4){
-      gpAxisMap.rx = 2;
-      gpAxisMap.ry = 3;
-    }
-    // 6-axis pads (some PC clones): right stick on 2+5 or 3+4
-    if(n >= 6){
-      // Prefer axes that are near 0 at rest (sticks) over triggers at -1
-      // Keep 2,3 as default; user can re-detect by moving right stick
-    }
+  // Touchpad / stick → axes 0,1 on almost all Shinecon remotes
+  let lx = axisRaw(0);
+  let ly = axisRaw(1);
+  // Some map touchpad to axes 2,3
+  if(lx===0 && ly===0 && n>=4){
+    const tx=axisRaw(2), ty=axisRaw(3);
+    if(tx||ty){ lx=tx; ly=ty; }
   }
 
-  // Live remap: if axes 2,3 are dead but 4,5 or 2,5 move, use those
-  let lx = axisRaw(gpAxisMap.lx);
-  let ly = axisRaw(gpAxisMap.ly);
-  let rx = axisRaw(gpAxisMap.rx);
-  let ry = axisRaw(gpAxisMap.ry);
-
-  // If mapped right stick silent, scan ALL other axes for activity
-  if(rx===0 && ry===0 && n>=4){
-    const skip = new Set([gpAxisMap.lx, gpAxisMap.ly]);
-    let bestI=-1, bestJ=-1, bestMag=0;
-    for(let i=0;i<n;i++){
-      if(skip.has(i)) continue;
-      for(let j=i+1;j<n;j++){
-        if(skip.has(j)) continue;
-        const iv=axisRaw(i), jv=axisRaw(j);
-        const mag=Math.hypot(iv,jv);
-        if(mag > bestMag && mag > GP_DEAD){
-          bestMag=mag; bestI=i; bestJ=j;
-        }
-      }
-    }
-    if(bestI>=0){
-      rx = axisRaw(bestI);
-      ry = axisRaw(bestJ);
-      // Remember for next frames
-      gpAxisMap.rx = bestI;
-      gpAxisMap.ry = bestJ;
-    }
+  // Right stick only on full gamepads (not SC-B03)
+  let rx=0, ry=0;
+  if(!isShinecon && n>=4){
+    rx = axisRaw(2); ry = axisRaw(3);
   }
 
-  // —— CAMERA LOOK (right stick) ——
-  // Skip look override when mobileVR uses gyroscope for looking
-  if(!mobileVR && (rx!==0 || ry!==0)){
+  // Camera look (desktop gamepad only — in Shinecon VR, gyro looks)
+  if(!mobileVR && (rx||ry)){
     yaw   -= rx * GP_LOOK_SPEED * dt;
     pitch -= ry * GP_LOOK_SPEED * dt;
-    if(pitch >  1.4) pitch =  1.4;
-    if(pitch < -1.4) pitch = -1.4;
-  }
-  // Shinecon single-stick: if no right stick, shoulder/d-pad can turn
-  if(mobileVR && rx===0 && ry===0){
-    // optional: buttons 6/7 or axes for turn while gyro looks
-    if(gpPressed(gp, 14)) yaw += 1.6 * dt;
-    if(gpPressed(gp, 15)) yaw -= 1.6 * dt;
+    pitch = Math.max(-1.4, Math.min(1.4, pitch));
   }
 
-  if(camera){
+  if(camera && !mobileVR){
     camera.rotation.order='YXZ';
     camera.rotation.y=yaw;
     camera.rotation.x=pitch;
     camera.rotation.z=0;
   }
 
-  // —— MOVE (left stick) ——
+  // Movement from touchpad
   window._gpMove = { x: lx, y: ly };
 
-  // D-pad (standard 12-15) + generic button layout 4-7 sometimes used as d-pad
+  // D-pad if present
   if(gpPressed(gp,12)) window._gpMove.y = -1;
   if(gpPressed(gp,13)) window._gpMove.y =  1;
   if(gpPressed(gp,14)) window._gpMove.x = -1;
   if(gpPressed(gp,15)) window._gpMove.x =  1;
 
-  // Hat / POV axis (some PC joypads report d-pad as axis, value -1..1 stepped)
-  // Commonly last axis
-  if(n >= 7){
-    const hat = Number(a[n-1]);
-    // Not always hat; only if discrete values
+  // —— SHINECON SC-B03 BUTTONS ——
+  // Typical mapping when seen as gamepad:
+  //  0 = touchpad click / confirmation
+  //  1 = B or secondary
+  //  2 = A or X
+  //  3 = Y
+  // Also try many indices because OEMs remap freely
+
+  // Confirm / interact: touchpad click + A
+  const confirmBtns = isShinecon ? [0,1,2,3,4,5] : [0,1];
+  for(const b of (isShinecon ? [0,2,5,6] : [0,1])){
+    if(gpJustPressed(gp, b) && gameActive){
+      onInteract();
+      break;
+    }
   }
 
-  // —— BUTTONS (generic mapping) ——
-  // 0 = A/X (bottom or left face) interact
-  if(gpJustPressed(gp,0) && gameActive) onInteract();
-  if(gpJustPressed(gp,1) && gameActive) onInteract();
-  // Rotate item: face buttons 2,3 and shoulders 4,5,6,7
-  const rotL = [2,4,6];
-  const rotR = [3,5,7];
-  rotL.forEach(b=>{
-    if(gpJustPressed(gp,b) && carriedItem){
-      carriedRotY=(carriedRotY-Math.PI/4+Math.PI*2)%(Math.PI*2);
-      if(handMesh) handMesh.rotation.y=carriedRotY;
+  // A button — interact (common index 2 or 0)
+  // X — rotate left (index 3 or 2)
+  // B — rotate right / secondary interact
+  // Y — rotate other way
+  // Shinecon labels: A X / B Y
+  if(isShinecon){
+    // A (often btn 2 or 4)
+    if((gpJustPressed(gp,2)||gpJustPressed(gp,4)||gpJustPressed(gp,6)) && gameActive) onInteract();
+    // X rotate
+    if((gpJustPressed(gp,3)||gpJustPressed(gp,7)) && carriedItem){
+      rotateCarriedItem(-Math.PI/4);
     }
-  });
-  rotR.forEach(b=>{
-    if(gpJustPressed(gp,b) && carriedItem){
-      carriedRotY=(carriedRotY+Math.PI/4)%(Math.PI*2);
-      if(handMesh) handMesh.rotation.y=carriedRotY;
+    // B rotate other / interact if empty hand
+    if(gpJustPressed(gp,1)||gpJustPressed(gp,5)||gpJustPressed(gp,8)){
+      if(carriedItem){
+        rotateCarriedItem(Math.PI/4);
+      } else if(gameActive) onInteract();
     }
-  });
-  // Start / Select (8,9,10,11)
+    // Y rotate
+    if((gpJustPressed(gp,3)||gpJustPressed(gp,9)) && carriedItem){
+      rotateCarriedItem(Math.PI/4);
+    }
+  } else {
+    if(gpJustPressed(gp,0) && gameActive) onInteract();
+    if(gpJustPressed(gp,1) && gameActive) onInteract();
+    if(gpJustPressed(gp,2) && carriedItem){
+      rotateCarriedItem(-Math.PI/4);
+    }
+    if(gpJustPressed(gp,3) && carriedItem){
+      rotateCarriedItem(Math.PI/4);
+    }
+    if(gpJustPressed(gp,4) && carriedItem){
+      rotateCarriedItem(-Math.PI/4);
+    }
+    if(gpJustPressed(gp,5) && carriedItem){
+      rotateCarriedItem(Math.PI/4);
+    }
+  }
+
   if(gpJustPressed(gp,8)||gpJustPressed(gp,9)||gpJustPressed(gp,10)||gpJustPressed(gp,11)){
-    const id=(gp.id||'Joypad').slice(0,48);
-    notify('🎮 '+id+' | Esq:andar Dir:olhar | Botão 1:interagir | Eixos:'+n,'good');
+    notify('🎮 Shinecon: Touchpad=andar | Clique/A=interagir | X/Y=girar item','good');
   }
 }
 
 function updateMovement(dt){
-  if(!gameActive||!camera) return;
-  // Apply look
+  if(!camera) return;
+  // Always apply look rotation
   camera.rotation.order='YXZ';
   camera.rotation.y=yaw;
   camera.rotation.x=pitch;
   camera.rotation.z=0;
+  if(!gameActive) return;
   // Move on XZ plane relative to look direction
   const sin=Math.sin(yaw), cos=Math.cos(yaw);
   // yaw=0 looks toward -Z
@@ -5097,7 +5195,7 @@ function updateMovement(dt){
   if(keys['KeyS']||keys['ArrowDown']) { mx-=fwdX; mz-=fwdZ; }
   if(keys['KeyA']||keys['ArrowLeft']) { mx-=rgtX; mz-=rgtZ; }
   if(keys['KeyD']||keys['ArrowRight']){ mx+=rgtX; mz+=rgtZ; }
-  // Gamepad left stick
+  // Gamepad / Shinecon touchpad
   if(window._gpMove){
     const gx=window._gpMove.x, gy=window._gpMove.y;
     if(gx||gy){
@@ -5105,6 +5203,11 @@ function updateMovement(dt){
       mz += (-gy)*fwdZ + gx*rgtZ;
     }
     window._gpMove=null;
+  }
+  if(window._shineconPad && (window._shineconPad.x || window._shineconPad.y)){
+    const sx=window._shineconPad.x, sy=window._shineconPad.y;
+    mx += (-sy)*fwdX + sx*rgtX;
+    mz += (-sy)*fwdZ + sx*rgtZ;
   }
   if(mx!==0||mz!==0){
     const len=Math.hypot(mx,mz)||1;
@@ -5400,17 +5503,75 @@ function clearHandMesh(){
     handMesh=null;
   }
 }
+function makeHandViewmodel(side){
+  // side: 1 = right, -1 = left
+  const g = new THREE.Group();
+  const skin = new THREE.MeshStandardMaterial({color:0xe8b898, roughness:0.75, metalness:0.05});
+  const nail = new THREE.MeshStandardMaterial({color:0xf0d0c0, roughness:0.6});
+  // Palm
+  const palm = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.035, 0.11), skin);
+  palm.position.set(0, 0, 0); g.add(palm);
+  // Fingers (4)
+  for(let i=0;i<4;i++){
+    const f = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.022, 0.055), skin);
+    f.position.set((-0.03 + i*0.022)*side, 0.005, -0.075);
+    f.rotation.x = -0.35;
+    g.add(f);
+    const tip = new THREE.Mesh(new THREE.BoxGeometry(0.016, 0.018, 0.03), skin);
+    tip.position.set((-0.03 + i*0.022)*side, 0.0, -0.11);
+    tip.rotation.x = -0.55;
+    g.add(tip);
+  }
+  // Thumb
+  const thumb = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.025, 0.05), skin);
+  thumb.position.set(0.055*side, 0.01, -0.02);
+  thumb.rotation.y = -0.6*side;
+  thumb.rotation.x = -0.3;
+  g.add(thumb);
+  // Wrist
+  const wrist = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.04, 0.06), skin);
+  wrist.position.set(0, -0.01, 0.07); g.add(wrist);
+  // Sleeve cuff
+  const sleeve = new THREE.Mesh(
+    new THREE.BoxGeometry(0.085, 0.05, 0.07),
+    new THREE.MeshStandardMaterial({color:0x3a4a5c, roughness:0.85})
+  );
+  sleeve.position.set(0, -0.015, 0.12); g.add(sleeve);
+  g.scale.set(side, 1, 1);
+  return g;
+}
+function rotateCarriedItem(delta){
+  carriedRotY = (carriedRotY + delta + Math.PI*2) % (Math.PI*2);
+  if(handMesh){
+    handMesh.traverse(o=>{
+      if(o.userData && o.userData.isCarriedItem) o.rotation.y = carriedRotY;
+    });
+  }
+}
 function updateHandMesh(){
   clearHandMesh();
-  if(!carriedItem)return;
-  const m=makeItemMesh(carriedItem);
-  m.scale.setScalar(0.55);
-  m.rotation.y=carriedRotY;
-  // Attach in front of camera (viewmodel)
-  camera.add(m);
-  m.position.set(0.35, -0.28, -0.65);
-  m.rotation.x=0.15;
-  handMesh=m;
+  if(!carriedItem || !camera) return;
+  const root = new THREE.Group();
+  // Right hand (main holding)
+  const right = makeHandViewmodel(1);
+  right.position.set(0.22, -0.32, -0.55);
+  right.rotation.set(0.55, 0.25, -0.35);
+  root.add(right);
+  // Left hand (support)
+  const left = makeHandViewmodel(-1);
+  left.position.set(-0.12, -0.34, -0.58);
+  left.rotation.set(0.5, -0.2, 0.4);
+  root.add(left);
+  // Item between hands
+  const item = makeItemMesh(carriedItem);
+  item.scale.setScalar(0.5);
+  item.rotation.y = carriedRotY;
+  item.position.set(0.06, -0.22, -0.52);
+  item.rotation.x = 0.2;
+  item.userData.isCarriedItem = true;
+  root.add(item);
+  camera.add(root);
+  handMesh = root;
 }
 
 function pickItemFromBox(bi,room){
@@ -5592,6 +5753,7 @@ function switchRoom(ri){
   if(!G.rooms[ri].unlocked)return;
   G.curRoom=ri;carriedItem=null;hideCarryCard();hideGhosts();
   buildRoom(ri);
+  const _rd=G.rooms[arguments[0]]?.def||G.rooms[G.curRoom]?.def; if(_rd) setTimeout(()=>sayRoomIntro(_rd.id),700);
   const spawnYaw=G.rooms[ri].def.outdoor?0:Math.PI;
   camera.position.set(0,1.6,G.rooms[ri].def.outdoor?4.5:4);yaw=spawnYaw;pitch=0;
   renderPills();updateUI();
@@ -5806,13 +5968,19 @@ function spawnParticles(perfect){
 // ══════════════════════════════════════════════════════
 function animate(){
   const dt=Math.min(clock.getDelta(),.05);
+  // If XR flag stuck but not actually presenting, clear it
+  if(vrIsPresenting && !mobileVR && !(renderer.xr && renderer.xr.isPresenting)){
+    vrIsPresenting = false;
+  }
   updateVR(dt);
   updateGamepad(dt);
   if(mobileVR){
     applyMobileVROrientation();
-    // movement from Shinecon Bluetooth controller still via updateGamepad → _gpMove
+  }
+  // Desktop / normal: always apply movement + camera look
+  if(!mobileVR && !(renderer.xr && renderer.xr.isPresenting)){
     updateMovement(dt);
-  } else if(!vrIsPresenting){
+  } else if(mobileVR){
     updateMovement(dt);
   }
   updateLookTarget();
@@ -5915,6 +6083,7 @@ document.getElementById('start-btn').addEventListener('click',()=>{
     notify('🛠️ ADMIN — todos os cômodos liberados','good');
   }
   buildRoom(0);renderPills();updateUI();
+  setTimeout(()=>sayRandomLine(false, STORY.blurb.slice(0,120)+'…'), 800);
   if(!animate.__running){animate.__running=true;startRenderLoop();}
   gameActive=true;tryLock();
   renderer.domElement.focus();
@@ -5928,6 +6097,7 @@ document.getElementById('btn-restart').addEventListener('click',()=>{
   stopTimer();clearTimeout(speechTimer);
   gameActive=false;G.visitArrived=false;
   initGame();buildRoom(0);renderPills();updateUI();
+  setTimeout(()=>sayRandomLine(false, STORY.blurb.slice(0,120)+'…'), 800);
   camera.position.set(0,1.6,4);yaw=Math.PI;pitch=0;
   document.getElementById('overlay').classList.remove('hidden');
 });
