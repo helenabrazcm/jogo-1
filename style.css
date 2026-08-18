@@ -172,11 +172,11 @@ canvas{display:block;outline:none}
 
 /* VR on-screen controls (SC-B03 fallback + touch) */
 #vr-controls{
-  display:none; position:fixed; inset:0; z-index:120; pointer-events:none;
+  display:none; position:fixed; inset:0; z-index:9999; pointer-events:none;
 }
 #vr-controls.show{display:block}
 #vr-stick-base{
-  position:fixed; left:28px; bottom:28px; width:120px; height:120px;
+  position:fixed; left:24px; bottom:24px; width:140px; height:140px;
   border-radius:50%; background:rgba(255,255,255,.12); border:2px solid rgba(255,220,160,.35);
   pointer-events:auto; touch-action:none;
 }
@@ -197,3 +197,30 @@ canvas{display:block;outline:none}
   background:rgba(20,14,10,.75); color:#f5e6d0; font-size:11px; padding:6px 12px;
   border-radius:16px; pointer-events:none; max-width:90%; text-align:center;
 }
+
+/* SC-B03 virtual cursor */
+#sc-cursor{
+  display:none; position:fixed; width:28px; height:28px; margin:-14px 0 0 -14px;
+  border:2.5px solid #ffd24a; border-radius:50%; background:rgba(255,210,74,.2);
+  box-shadow:0 0 16px rgba(255,210,74,.55), inset 0 0 8px rgba(255,210,74,.35);
+  pointer-events:none; z-index:10000; transition: transform .05s linear;
+}
+#sc-cursor.on{display:block}
+#sc-cursor.press{ transform:scale(.75); background:rgba(255,120,60,.45); border-color:#ff8a40; }
+#sc-cursor-dot{
+  position:absolute; left:50%; top:50%; width:6px; height:6px; margin:-3px 0 0 -3px;
+  border-radius:50%; background:#ffd24a;
+}
+#sc-status{
+  display:none; position:fixed; top:10px; left:50%; transform:translateX(-50%);
+  background:rgba(20,14,10,.8); color:#ffd24a; font-size:11px; font-weight:700;
+  padding:6px 14px; border-radius:14px; z-index:10001; pointer-events:none;
+  border:1px solid rgba(255,210,74,.35);
+}
+#sc-status.on{display:block}
+
+#sc-cursor.vr{
+  width:36px; height:36px; margin:-18px 0 0 -18px;
+  border-width:3px; box-shadow:0 0 22px rgba(255,210,74,.7);
+}
+#sc-status.vr{ top:auto; bottom:12px; font-size:10px; opacity:.9; }
