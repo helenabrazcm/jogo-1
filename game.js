@@ -1302,7 +1302,7 @@ let carriedItem=null; let carriedRotY=0; let handMesh=null;
 let gamepadIndex=null;
 let gpPrevButtons={};
 const GP_DEAD=0.20;
-const GP_LOOK_SPEED=3.5;
+const GP_LOOK_SPEED=4.2;
 // Axis map for generic PC pads (SatelliteInt / DirectInput) — auto-filled
 let gpAxisMap={lx:0,ly:1,rx:2,ry:3,calibrated:false};
 const GP_MOVE_MULT=1.0;
@@ -4527,7 +4527,7 @@ function setupControls(){
     const id=(e.gamepad.id||'Shinecon').slice(0,50);
     const axes=e.gamepad.axes?e.gamepad.axes.length:0;
     const btns=e.gamepad.buttons?e.gamepad.buttons.length:0;
-    notify('🎮 Shinecon conectado: '+id+' · '+axes+' eixos · '+btns+' botões','good');
+    notify('🎮 Controle: '+id+' · '+axes+' eixos · '+btns+' botões','good');
   });
   window.addEventListener('gamepaddisconnected', e=>{
     if(gamepadIndex===e.gamepad.index) gamepadIndex=null;
@@ -4539,15 +4539,22 @@ function setupControls(){
   window._shineconPad = {x:0,y:0};
   let shineconMouseTimer = null;
   window.addEventListener('keydown', e=>{
-    // Extra HID keys some Shinecon firmwares send
+    // Shinecon SC-B03 confirmation often arrives as keyboard HID
     if(!gameActive) return;
-    if(e.code==='Enter' || e.code==='NumpadEnter' || e.key==='Select'){
-      e.preventDefault();
-      onInteract();
-    }
-    // Media/select keys
-    if(e.key==='SoftLeft' || e.key==='SoftRight' || e.code==='MediaPlayPause'){
-      onInteract();
+    const confirmKeys = [
+      'Enter','NumpadEnter','Space','Select',
+      'MediaPlayPause','MediaTrackNext','MediaTrackPrevious',
+      'SoftLeft','SoftRight','Escape'
+    ];
+    if(confirmKeys.includes(e.code) || confirmKeys.includes(e.key) ||
+       e.key==='Enter' || e.key===' ' || e.keyCode===13 || e.keyCode===32){
+      // Space/Enter from remote = confirmation button
+      if(e.code==='Space'||e.code==='Enter'||e.code==='NumpadEnter'||
+         e.key==='Enter'||e.key===' '||e.key==='Select'||
+         e.code==='MediaPlayPause'||e.keyCode===13||e.keyCode===32){
+        e.preventDefault();
+        onInteract();
+      }
     }
   }, true);
 
@@ -4563,20 +4570,18 @@ function setupControls(){
     shineconMouseTimer = setTimeout(()=>{ window._shineconPad.x=0; window._shineconPad.y=0; }, 120);
   }, true);
 
-  // Touchpad click = interact
+  // Shinecon confirmation = mouse left click (touchpad press)
   window.addEventListener('mousedown', e=>{
-    if(!gameActive || pointerLocked) return;
-    // Button 0 from Shinecon confirmation
-    if(e.button===0 && !fallbackMode){
-      // Don't steal clicks when using UI — only when overlay hidden
-      const ov=document.getElementById('overlay');
-      const en=document.getElementById('entry');
-      if(ov && !ov.classList.contains('hidden')) return;
-      if(en && !en.classList.contains('hidden')) return;
-      // In mobile VR or when using remote, click = interact
-      if(mobileVR || gamepadIndex!==null){
-        onInteract();
-      }
+    if(!gameActive) return;
+    if(e.button!==0) return;
+    const ov=document.getElementById('overlay');
+    const en=document.getElementById('entry');
+    if(ov && !ov.classList.contains('hidden')) return;
+    if(en && !en.classList.contains('hidden')) return;
+    // When using Shinecon remote (gamepad connected) or mobile VR: click = confirm/interact
+    if(mobileVR || gamepadIndex!==null){
+      e.preventDefault();
+      onInteract();
     }
   }, true);
 }
@@ -4703,7 +4708,7 @@ function enterMobileVR(){
 
   // Lower pixel ratio for stereo performance on phones
   renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
-  notify('🥽 Shinecon VR — gire a cabeça para olhar · controle para andar','good');
+  notify('🥽 VR: cabeça=olhar | Touchpad=andar | Confirmação/A=interagir','good');
   gameActive = true;
 }
 
@@ -5042,62 +5047,72 @@ function updateVR(dt){
 }
 
 function updateGamepad(dt){
-  // Shinecon SC-B03 + Xbox/PS + generic PC joypads
-  // SC-B03 layout: touchpad (confirm), power, A X B Y
+  // DualShock / PS4 (DGP-2016), Xbox, Shinecon SC-B03, generic
   const pads = navigator.getGamepads ? navigator.getGamepads() : [];
   let gp = null;
   for(let i=0;i<pads.length;i++){
     if(pads[i] && pads[i].connected){ gp=pads[i]; gamepadIndex=i; break; }
   }
 
-  // —— Shinecon often pairs as keyboard/mouse HID ——
-  // Movement also comes from keys[] set by arrow/WASD listeners
-
   if(!gp){
-    // No gamepad object — still allow touchpad-as-mouse via shineconMouse
     if(window._shineconPad){
-      window._gpMove = {
-        x: window._shineconPad.x || 0,
-        y: window._shineconPad.y || 0
-      };
+      window._gpMove = { x: window._shineconPad.x||0, y: window._shineconPad.y||0 };
     }
     return;
   }
 
   const a = gp.axes || [];
   const n = a.length;
+  const nb = (gp.buttons||[]).length;
   const id = (gp.id || '').toLowerCase();
-  const isShinecon = id.includes('shine') || id.includes('sc-b') || id.includes('b03') ||
-                     id.includes('vr remote') || id.includes('cardboard') ||
-                     (n <= 4 && (gp.buttons||[]).length <= 12);
+
+  // Detect controller family
+  const isPS = id.includes('dualshock') || id.includes('dualsense') ||
+               id.includes('playstation') || id.includes('wireless controller') ||
+               id.includes('dgp-') || id.includes('054c') || // Sony vendor
+               id.includes('saves') || id.includes('ps4') || id.includes('ps5');
+  // SC-B03 + any small Bluetooth VR remote
+  const isShinecon = !isPS && (
+    id.includes('shine') || id.includes('sc-b') || id.includes('b03') ||
+    id.includes('vr remote') || id.includes('cardboard') ||
+    id.includes('remote') || id.includes('hid') ||
+    (n<=4 && nb<=16) ||
+    (mobileVR && n<=6) // in Shinecon VR mode, prefer remote mapping
+  );
+  const isConsole = isPS || id.includes('xbox') || id.includes('xinput') || (!isShinecon && n>=4 && nb>=12);
 
   function axisRaw(i){
-    if(i===null||i===undefined||i<0||i>=n) return 0;
+    if(i<0 || i>=n) return 0;
     const v = Number(a[i]);
     if(isNaN(v)) return 0;
-    return Math.abs(v) < GP_DEAD ? 0 : Math.max(-1, Math.min(1, v));
+    // Touchpad on SC-B03 is less precise — smaller deadzone in VR
+    const dead = (mobileVR || isShinecon) ? 0.12 : GP_DEAD;
+    return Math.abs(v) < dead ? 0 : Math.max(-1, Math.min(1, v));
   }
 
-  // Touchpad / stick → axes 0,1 on almost all Shinecon remotes
-  let lx = axisRaw(0);
-  let ly = axisRaw(1);
-  // Some map touchpad to axes 2,3
-  if(lx===0 && ly===0 && n>=4){
-    const tx=axisRaw(2), ty=axisRaw(3);
-    if(tx||ty){ lx=tx; ly=ty; }
+  // —— STICKS ——
+  // Standard (PS4/Xbox): 0,1 left · 2,3 right
+  let lx = axisRaw(0), ly = axisRaw(1);
+  let rx = axisRaw(2), ry = axisRaw(3);
+  // Some browsers map DS4 right stick to 2,5
+  if(isConsole && rx===0 && ry===0 && n>=6){
+    if(axisRaw(2)||axisRaw(5)){ rx=axisRaw(2); ry=axisRaw(5); }
+  }
+  // Shinecon SC-B03: touchpad = walk (axes 0,1 or 2,3)
+  if(isShinecon || mobileVR){
+    rx=0; ry=0;
+    if(lx===0 && ly===0){
+      if(n>=4){ lx=axisRaw(2); ly=axisRaw(3); }
+      if(lx===0 && ly===0 && n>=2){ lx=axisRaw(0); ly=axisRaw(1); }
+    }
   }
 
-  // Right stick only on full gamepads (not SC-B03)
-  let rx=0, ry=0;
-  if(!isShinecon && n>=4){
-    rx = axisRaw(2); ry = axisRaw(3);
-  }
-
-  // Camera look (desktop gamepad only — in Shinecon VR, gyro looks)
-  if(!mobileVR && (rx||ry)){
-    yaw   -= rx * GP_LOOK_SPEED * dt;
-    pitch -= ry * GP_LOOK_SPEED * dt;
-    pitch = Math.max(-1.4, Math.min(1.4, pitch));
+  // —— LOOK (right stick) — always on console pads ——
+  if(!mobileVR && isConsole && (rx||ry)){
+    const lookSp = GP_LOOK_SPEED * (isPS ? 1.15 : 1);
+    yaw   -= rx * lookSp * dt;
+    pitch -= ry * lookSp * dt;
+    pitch  = Math.max(-1.4, Math.min(1.4, pitch));
   }
 
   if(camera && !mobileVR){
@@ -5107,73 +5122,79 @@ function updateGamepad(dt){
     camera.rotation.z=0;
   }
 
-  // Movement from touchpad
+  // —— MOVE (left stick + D-pad) ——
   window._gpMove = { x: lx, y: ly };
+  if(gpPressed(gp,12)) window._gpMove.y = -1; // up
+  if(gpPressed(gp,13)) window._gpMove.y =  1; // down
+  if(gpPressed(gp,14)) window._gpMove.x = -1; // left
+  if(gpPressed(gp,15)) window._gpMove.x =  1; // right
 
-  // D-pad if present
-  if(gpPressed(gp,12)) window._gpMove.y = -1;
-  if(gpPressed(gp,13)) window._gpMove.y =  1;
-  if(gpPressed(gp,14)) window._gpMove.x = -1;
-  if(gpPressed(gp,15)) window._gpMove.x =  1;
-
-  // —— SHINECON SC-B03 BUTTONS ——
-  // Typical mapping when seen as gamepad:
-  //  0 = touchpad click / confirmation
-  //  1 = B or secondary
-  //  2 = A or X
-  //  3 = Y
-  // Also try many indices because OEMs remap freely
-
-  // Confirm / interact: touchpad click + A
-  const confirmBtns = isShinecon ? [0,1,2,3,4,5] : [0,1];
-  for(const b of (isShinecon ? [0,2,5,6] : [0,1])){
-    if(gpJustPressed(gp, b) && gameActive){
-      onInteract();
-      break;
+  // —— BUTTONS ——
+  // PS4: 0=✕ Cross, 1=○ Circle, 2=□ Square, 3=△ Triangle
+  //      4=L1, 5=R1, 6=L2, 7=R2, 8=Share, 9=Options
+  // Xbox: 0=A, 1=B, 2=X, 3=Y
+  if(isConsole){
+    // Cross / A → interact
+    if(gpJustPressed(gp,0) && gameActive) onInteract();
+    // Circle / B → interact alternate
+    if(gpJustPressed(gp,1) && gameActive) onInteract();
+    // Square / X → rotate item left
+    if(gpJustPressed(gp,2) && carriedItem) rotateCarriedItem(-Math.PI/4);
+    // Triangle / Y → rotate item right
+    if(gpJustPressed(gp,3) && carriedItem) rotateCarriedItem(Math.PI/4);
+    // L1 / R1 rotate
+    if(gpJustPressed(gp,4) && carriedItem) rotateCarriedItem(-Math.PI/4);
+    if(gpJustPressed(gp,5) && carriedItem) rotateCarriedItem(Math.PI/4);
+    // Options / Start → tip
+    if(gpJustPressed(gp,9) || gpJustPressed(gp,8)){
+      notify(isPS
+        ? '🎮 PS4: Stick Esq=andar | Dir=olhar | ✕=interagir | □/△=girar'
+        : '🎮 Stick Esq=andar | Dir=olhar | A=interagir | X/Y=girar','good');
     }
-  }
-
-  // A button — interact (common index 2 or 0)
-  // X — rotate left (index 3 or 2)
-  // B — rotate right / secondary interact
-  // Y — rotate other way
-  // Shinecon labels: A X / B Y
-  if(isShinecon){
-    // A (often btn 2 or 4)
-    if((gpJustPressed(gp,2)||gpJustPressed(gp,4)||gpJustPressed(gp,6)) && gameActive) onInteract();
+    // Touchpad click on DS4 is often button 17
+    if(gpJustPressed(gp,17) && gameActive) onInteract();
+  } else if(isShinecon || mobileVR){
+    // SC-B03 (box labels):
+    //  1/2/3 confirmation (touchpad click) → INTERACT
+    //  6 A → INTERACT
+    //  7 X → rotate left
+    //  8 B → rotate right
+    //  9 Y → rotate right
+    // Firmware button indices vary; map broadly so confirmation always works in VR
+    let confirmed = false;
+    // Confirmation + A (interact)
+    for(const b of [0,1,2,3,4,5,6]){
+      if(gpJustPressed(gp,b) && gameActive){
+        onInteract();
+        confirmed = true;
+        break;
+      }
+    }
     // X rotate
-    if((gpJustPressed(gp,3)||gpJustPressed(gp,7)) && carriedItem){
+    if((gpJustPressed(gp,7)||gpJustPressed(gp,3)||gpJustPressed(gp,9)) && carriedItem){
       rotateCarriedItem(-Math.PI/4);
     }
-    // B rotate other / interact if empty hand
-    if(gpJustPressed(gp,1)||gpJustPressed(gp,5)||gpJustPressed(gp,8)){
-      if(carriedItem){
-        rotateCarriedItem(Math.PI/4);
-      } else if(gameActive) onInteract();
-    }
-    // Y rotate
-    if((gpJustPressed(gp,3)||gpJustPressed(gp,9)) && carriedItem){
+    // B / Y rotate
+    if((gpJustPressed(gp,8)||gpJustPressed(gp,5)||gpJustPressed(gp,10)||gpJustPressed(gp,1)) && carriedItem){
       rotateCarriedItem(Math.PI/4);
+    }
+    // Last resort: any button in VR = interact
+    if(!confirmed && mobileVR && gameActive){
+      const blen = (gp.buttons||[]).length;
+      for(let b=0;b<blen;b++){
+        if(gpJustPressed(gp,b)){ onInteract(); break; }
+      }
     }
   } else {
+    // Generic fallback
     if(gpJustPressed(gp,0) && gameActive) onInteract();
     if(gpJustPressed(gp,1) && gameActive) onInteract();
-    if(gpJustPressed(gp,2) && carriedItem){
-      rotateCarriedItem(-Math.PI/4);
+    if(gpJustPressed(gp,2) && carriedItem) rotateCarriedItem(-Math.PI/4);
+    if(gpJustPressed(gp,3) && carriedItem) rotateCarriedItem(Math.PI/4);
+    // Any remaining face button as confirm
+    for(const b of [4,5,6,7,8,9]){
+      if(gpJustPressed(gp,b) && gameActive){ onInteract(); break; }
     }
-    if(gpJustPressed(gp,3) && carriedItem){
-      rotateCarriedItem(Math.PI/4);
-    }
-    if(gpJustPressed(gp,4) && carriedItem){
-      rotateCarriedItem(-Math.PI/4);
-    }
-    if(gpJustPressed(gp,5) && carriedItem){
-      rotateCarriedItem(Math.PI/4);
-    }
-  }
-
-  if(gpJustPressed(gp,8)||gpJustPressed(gp,9)||gpJustPressed(gp,10)||gpJustPressed(gp,11)){
-    notify('🎮 Shinecon: Touchpad=andar | Clique/A=interagir | X/Y=girar item','good');
   }
 }
 
@@ -5195,9 +5216,14 @@ function updateMovement(dt){
   if(keys['KeyS']||keys['ArrowDown']) { mx-=fwdX; mz-=fwdZ; }
   if(keys['KeyA']||keys['ArrowLeft']) { mx-=rgtX; mz-=rgtZ; }
   if(keys['KeyD']||keys['ArrowRight']){ mx+=rgtX; mz+=rgtZ; }
-  // Gamepad / Shinecon touchpad
+  // Gamepad / Shinecon SC-B03 touchpad (VR or desktop)
   if(window._gpMove){
-    const gx=window._gpMove.x, gy=window._gpMove.y;
+    let gx=window._gpMove.x, gy=window._gpMove.y;
+    if(mobileVR){
+      // Boost weak touchpad signal
+      if(Math.abs(gx)>0.08) gx = Math.sign(gx)*Math.min(1, Math.abs(gx)*1.35);
+      if(Math.abs(gy)>0.08) gy = Math.sign(gy)*Math.min(1, Math.abs(gy)*1.35);
+    }
     if(gx||gy){
       mx += (-gy)*fwdX + gx*rgtX;
       mz += (-gy)*fwdZ + gx*rgtZ;
