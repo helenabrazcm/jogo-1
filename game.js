@@ -1325,7 +1325,23 @@ let lookVelX=0, lookVelY=0; // smoothed gamepad look
 const keys={};
 const SPEED=4.2;
 let walkInput={x:0,y:0}; // persistent WASD/stick/touchpad
-let scCursor={x:0.5,y:0.5,active:false,lastSignal:0}; // normalized 0..1 screen
+let scCursor={
+  x:0.5,y:0.5,           // target position 0..1
+  dx:0.5,dy:0.5,         // displayed (smoothed) position
+  vx:0,vy:0,             // velocity
+  active:false,lastSignal:0
+};
+// SC-B03 feel tuning
+const SC_CFG = {
+  sens: 0.0018,          // base sensitivity (desktop)
+  sensVR: 0.0028,        // VR sensitivity
+  dead: 0.35,            // ignore tiny jitter (px)
+  maxDelta: 48,          // clamp spike
+  smooth: 0.18,          // input low-pass (0..1, lower=smoother)
+  lerp: 0.22,            // visual follow speed
+  friction: 0.86,        // velocity friction after input stops
+  expo: 1.15             // response curve (>1 = finer near center)
+};
 let placementAnims=[];
 
 function initThree(){
@@ -5196,33 +5212,80 @@ function scShowCursor(on){
   if(on){
     if(scCursor.x==null) scCursor.x = 0.5;
     if(scCursor.y==null) scCursor.y = 0.5;
+    scCursor.dx = scCursor.x;
+    scCursor.dy = scCursor.y;
+    scCursor.vx = 0; scCursor.vy = 0;
     scUpdateCursorDOM();
   }
 }
 function scUpdateCursorDOM(){
   const el=document.getElementById('sc-cursor');
   if(!el) return;
-  el.style.left = (scCursor.x * innerWidth) + 'px';
-  el.style.top  = (scCursor.y * innerHeight) + 'px';
+  // Use smoothed display position
+  el.style.left = (scCursor.dx * innerWidth) + 'px';
+  el.style.top  = (scCursor.dy * innerHeight) + 'px';
+}
+function scApplyCurve(v){
+  // Smooth response: soft near zero, controlled at high speed
+  const s = Math.sign(v);
+  const a = Math.min(1, Math.abs(v));
+  return s * Math.pow(a, SC_CFG.expo);
 }
 function scMoveCursor(dxPx, dyPx){
-  // Touchpad/joystick → screen cursor
-  // Slightly higher sensitivity in VR
-  const sens = mobileVR ? 0.0045 : 0.0025;
-  scCursor.x = Math.max(0.02, Math.min(0.98, scCursor.x + dxPx * sens));
-  scCursor.y = Math.max(0.02, Math.min(0.98, scCursor.y + dyPx * sens));
+  // Filter noise
+  if(Math.abs(dxPx) < SC_CFG.dead) dxPx = 0;
+  if(Math.abs(dyPx) < SC_CFG.dead) dyPx = 0;
+  if(dxPx===0 && dyPx===0) return;
+
+  // Clamp spikes (Bluetooth glitches)
+  dxPx = Math.max(-SC_CFG.maxDelta, Math.min(SC_CFG.maxDelta, dxPx));
+  dyPx = Math.max(-SC_CFG.maxDelta, Math.min(SC_CFG.maxDelta, dyPx));
+
+  const sens = mobileVR ? SC_CFG.sensVR : SC_CFG.sens;
+
+  // Low-pass the delta into velocity for smooth glide
+  const ix = scApplyCurve(dxPx / SC_CFG.maxDelta) * SC_CFG.maxDelta * sens;
+  const iy = scApplyCurve(dyPx / SC_CFG.maxDelta) * SC_CFG.maxDelta * sens;
+
+  scCursor.vx = scCursor.vx * (1 - SC_CFG.smooth) + ix * SC_CFG.smooth * 6;
+  scCursor.vy = scCursor.vy * (1 - SC_CFG.smooth) + iy * SC_CFG.smooth * 6;
+
+  scCursor.x = Math.max(0.02, Math.min(0.98, scCursor.x + scCursor.vx));
+  scCursor.y = Math.max(0.02, Math.min(0.98, scCursor.y + scCursor.vy));
   scCursor.lastSignal = performance.now();
+
   if(!scCursor.active) scShowCursor(true);
-  scUpdateCursorDOM();
-  // throttle pulse visual
-  if(!window._scPulseAt || performance.now()-window._scPulseAt>400){
+
+  // pulse less often so it doesn't feel frantic
+  if(!window._scPulseAt || performance.now()-window._scPulseAt>700){
     window._scPulseAt = performance.now();
     scSignalPulse();
   }
 }
+function scSmoothCursorStep(dt){
+  // Visual lerp + residual velocity glide
+  if(!scCursor.active) return;
+  const now = performance.now();
+  // After input stops, ease velocity down
+  if(now - scCursor.lastSignal > 40){
+    scCursor.vx *= SC_CFG.friction;
+    scCursor.vy *= SC_CFG.friction;
+    if(Math.abs(scCursor.vx)<0.00005) scCursor.vx=0;
+    if(Math.abs(scCursor.vy)<0.00005) scCursor.vy=0;
+    if(scCursor.vx||scCursor.vy){
+      scCursor.x = Math.max(0.02, Math.min(0.98, scCursor.x + scCursor.vx));
+      scCursor.y = Math.max(0.02, Math.min(0.98, scCursor.y + scCursor.vy));
+    }
+  }
+  // Smooth display toward target
+  const k = 1 - Math.pow(1 - SC_CFG.lerp, Math.max(1, dt*60));
+  scCursor.dx += (scCursor.x - scCursor.dx) * k;
+  scCursor.dy += (scCursor.y - scCursor.dy) * k;
+  scUpdateCursorDOM();
+}
 function scCursorNdc(){
-  // Three.js NDC from screen position
-  return new THREE.Vector2(scCursor.x*2-1, -(scCursor.y*2-1));
+  // Aim with smoothed position
+  return new THREE.Vector2(scCursor.dx*2-1, -(scCursor.dy*2-1));
 }
 function scInteractAtCursor(){
   if(!gameActive) return;
@@ -5328,6 +5391,9 @@ function teardownShineconHID(){
 
 function updateShineconVR(dt){
   if(!gameActive) return;
+  // Smooth visual follow every frame
+  scSmoothCursorStep(dt);
+
   // Poll if OS exposes SC-B03 as gamepad
   const pads = navigator.getGamepads ? navigator.getGamepads() : [];
   for(let i=0;i<pads.length;i++){
@@ -5341,7 +5407,8 @@ function updateShineconVR(dt){
       if(Math.abs(x)>0.08||Math.abs(y)>0.08){ mx=x; my=y; break; }
     }
     if(mx||my){
-      const spd = mobileVR ? 1200 : 800;
+      // gentler gamepad→cursor
+      const spd = mobileVR ? 700 : 500;
       scMoveCursor(mx*spd*dt, my*spd*dt);
     }
     for(let b=0;b<(gp.buttons||[]).length;b++){
